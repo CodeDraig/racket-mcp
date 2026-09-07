@@ -39,6 +39,13 @@
 (define current-workflow-state (make-parameter #f))
 (define current-workflow-responses (make-parameter (hasheq)))
 (define current-workflow-invocation-key (make-parameter #f))
+(define (workflow-invocation-key workflow arguments)
+  (define (compute)
+    (or (current-workflow-invocation-key)
+        (and (workflow-descriptor-key workflow) ((workflow-descriptor-key workflow) arguments))))
+  (if (captured-workflow? workflow)
+      (call-with-executable-build (captured-workflow-build workflow) compute)
+      (compute)))
 ;; Installed only by the Tasks entry point; background task workers clear it.
 (define current-workflow-task-handoff (make-parameter #f))
 (define (recovery instance stage message)
@@ -158,7 +165,7 @@
         (create-instance! store principal (workflow-descriptor-name workflow) arguments
                           (workflow-descriptor-version workflow) executable-fingerprint (+ (clock) ttl)
                           (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))
-                          #:key (or (current-workflow-invocation-key) (and (workflow-descriptor-key workflow) ((workflow-descriptor-key workflow) arguments))))))
+                          #:key (workflow-invocation-key workflow arguments))))
   (unless (and (equal? principal (stored-instance-principal instance))
                (equal? arguments (stored-instance-arguments instance))
                (equal? (workflow-descriptor-name workflow) (stored-instance-operation instance)))
@@ -441,4 +448,4 @@
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
 
-(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff))
+(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))

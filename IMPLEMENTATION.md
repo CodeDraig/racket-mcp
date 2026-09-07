@@ -53,6 +53,7 @@ complete coverage of its surrounding milestone.
 | Effect policies | Transactional, idempotent, manual adapters; workflow/restart tests | Explicit intents and journaled recovery; instance claims exclude in-flight recovery; competing outcome repairs and retry waiting tested; exhaustive effect crash matrix remains |
 | Workflow executable compatibility | Version and source-form fingerprint stored | Imported helper changes are not included in build fingerprint; complete executable compatibility gate missing |
 | Tasks | `tasks.rkt`; tasks tests | Persist-before-return, polling, input update, owner checks, terminal immutability; task workers detached from request cancellation/output |
+| Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
 | Upstream adapters | `upstream.rkt`; upstream tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; durable MRTR/Tasks translation remains missing |
@@ -3113,3 +3114,50 @@ remaining SDK release gates stay open.
 The final distribution refresh and isolated dependency/documentation setup passed
 with no warning or undefined-tag matches. git diff --check passed. This final
 record changes no executable content after packaging.
+
+## Immediate task invocation keys (2026-09-07)
+
+A direct probe invoked the same immediate task twice with the same declared
+workflow key and received different task IDs. The immediate-task path created
+workflow instances without passing their key. It now computes the key once outside
+storage transactions, validates saved expiry and executable compatibility, and
+keys the task record to its workflow instance. The task retains its original
+creation response, so competing/repeated calls return one handle before and after
+completion or failure. Initial invocations without keys still create fresh work.
+
+Immediate task receipts live on the task record, not the workflow stage state.
+This permits task-optional synchronous and asynchronous invocations to share a
+keyed execution without invalidating an in-flight checkpoint/effect revision.
+Prepared task handoffs retain their existing transactional workflow receipt.
+Key callbacks on captured workflows now run under their sealed executable resolver,
+through the same private key helper used by ordinary workflow execution.
+
+The key suite passed 66 checks across memory and SQLite: eight concurrent callers,
+one recorded manual effect, changed arguments, principal isolation, expired keys,
+version mismatch, synchronous/task races, uncertain failure without replay, and
+unkeyed fresh tasks. Three separate executable processes passed 11 restart checks,
+retaining the initial task handle and evaluating the checkpoint once. The captured
+key fixture rejects an uncaptured dynamic import before its marker executes or
+workflow/task state is created. Combined captured-key/restart/boundary checks passed 36
+checks. The first effect fixture used incorrect perform syntax; adding its
+required #:adapter keyword corrected the fixture before these passing runs.
+
+This does not retrofit keys onto immediate tasks created by older builds that
+ignored the declaration. The manual records that limitation. Full verification
+follows; the remaining SDK release gates remain open.
+
+A final transaction-boundary check now rejects start-workflow-task inside the
+same store's caller-owned transaction before evaluating its key or creating state.
+This prevents returning a handle whose persistence depends on a later caller
+commit/rollback. The updated key suite passed 70 checks. The first full run passed
+3,542 native and 1,301 schema cases before this last guard; a fresh final run is
+performed below. The official task-composition rerun passed 2/2 checks under
+ test-artifacts/conformance-task-key-20260907-1717.
+
+Final verification passed sh scripts/check.sh: compilation, 3,546 native checks,
+all 1,301 pinned schema cases, and Scribble. All seven official Go probes passed.
+The rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
+passed without warning or undefined-tag matches. git diff --check passed. The
+current ledger row and this final evidence paragraph postdate packaging and change
+no executable content. Native verification remains Linux/Racket 9.2; the full SDK
+release remains incomplete.

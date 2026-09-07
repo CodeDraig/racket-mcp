@@ -95,6 +95,8 @@
 (define (start-workflow-task workflow store arguments principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)]
                              #:operation-name [operation-name #f]
                              #:state [handle #f] #:responses [responses (hasheq)])
+  (when (eq? (current-store-connection) (state-store-connection store))
+    (error 'start-workflow-task "task creation must own its storage transaction boundaries"))
   (define (handoff flow)
     (create-workflow-task workflow store arguments principal adapters custodian operation-name flow))
   (if (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
@@ -104,12 +106,14 @@
                       #:responses responses #:adapters adapters #:cancelled? (current-cancelled?)))
       (handoff #f)))
 (define (create-workflow-task workflow store arguments principal adapters custodian operation-name prepared-flow)
+  (define fingerprint (workflow-executable-fingerprint workflow adapters))
+  ;; User key computation runs outside the database transaction, once per call.
+  (define invocation-key
+    (and (not prepared-flow) (workflow-invocation-key workflow arguments)))
   ;; Once the handoff commits, schedule its runtime-owned worker before a request
   ;; break can escape. A process crash is recovered by the runtime startup scan.
   (define worker-breaks? (break-enabled))
   (parameterize-break #f
-    (define expiry (if prepared-flow (stored-instance-expires prepared-flow) (+ (mcp-current-seconds) 86400)))
-    (when (<= expiry (mcp-current-seconds)) (mcp-error -32602 "Task preparation has expired"))
     (define instance
       (store-transaction store
         (lambda ()
@@ -117,43 +121,56 @@
             (if prepared-flow
                 (load-instance store (stored-instance-handle prepared-flow))
                 (create-instance! store principal (workflow-descriptor-name workflow) arguments
-                                  (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters) expiry
-                                  (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq)))))
+                                  (workflow-descriptor-version workflow) fingerprint (+ (mcp-current-seconds) 86400)
+                                  (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))
+                                  #:key invocation-key)))
+          (define expiry (stored-instance-expires flow))
+          (when (<= expiry (mcp-current-seconds)) (mcp-error -32602 "Task preparation has expired"))
+          (unless (and (equal? (stored-instance-version flow) (workflow-descriptor-version workflow))
+                       (equal? (stored-instance-fingerprint flow) fingerprint))
+            (raise (exn:fail:recovery "workflow code is incompatible with saved execution"
+                                     (current-continuation-marks) (stored-instance-handle flow) #f)))
           (define previous (hash-ref (stored-instance-state flow) 'task-handoff #f))
+          (define candidate
+            (if previous
+                (owned store (hash-ref previous 'taskId) principal)
+                (create-instance! store principal (string-append "task:" (workflow-descriptor-name workflow)) arguments
+                                  (workflow-descriptor-version workflow) fingerprint expiry (hasheq 'task (hasheq))
+                                  #:key (string-append "workflow:" (stored-instance-handle flow)))))
           (cond
-            [previous
-             (define existing (owned store (hash-ref previous 'taskId) principal))
+            [(hash-has-key? (stored-instance-state candidate) 'workflow)
+             (define existing (owned store (stored-instance-handle candidate) principal))
              (unless (equal? operation-name (hash-ref (stored-instance-state existing) 'operationName #f))
                (mcp-error -32602 "Task handoff belongs to another operation"))
              existing]
             [else
              (when (and prepared-flow ((current-cancelled?)))
                (error 'start-workflow-task "execution cancelled before task handoff"))
-             (define instance
-               (create-instance! store principal (string-append "task:" (workflow-descriptor-name workflow)) arguments
-                                 (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters)
-                                 expiry (hasheq 'task (hasheq))))
              (define time (timestamp))
+             (define task
+               (hasheq 'taskId (stored-instance-handle candidate) 'status "working"
+                       'createdAt time 'lastUpdatedAt time
+                       'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))
+             (define created (hash-set task 'resultType "task"))
              (define updated
-               (update-instance! store instance
+               (update-instance! store candidate
                  (hasheq 'operationName operation-name
                          'capabilities (if (current-request-context) (request-context-capabilities (current-request-context)) (hasheq))
-                         'workflow (stored-instance-handle flow)
-                         'task (hasheq 'taskId (stored-instance-handle instance) 'status "working"
-                                       'createdAt time 'lastUpdatedAt time
-                                       'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))))
+                         'workflow (stored-instance-handle flow) 'task task 'creation-result created)))
+             ;; Prepared execution holds the workflow claim. Immediate keyed
+             ;; creation may share a running MRTR workflow, so its receipt lives
+             ;; only on the separately keyed task record and cannot stale a stage.
              (when prepared-flow
-               (define created (hash-set (hash-ref (stored-instance-state updated) 'task) 'resultType "task"))
                (update-instance! store flow (hash-set (stored-instance-state flow) 'task-handoff created))
                (record-event! store (stored-instance-handle flow)
-                              (hasheq 'kind "task-handoff" 'taskId (stored-instance-handle instance))))
+                              (hasheq 'kind "task-handoff" 'taskId (stored-instance-handle candidate))))
              updated]))))
     (when (equal? (hash-ref (hash-ref (stored-instance-state instance) 'task) 'status) "working")
       (resume-task/core workflow store (stored-instance-handle instance) principal
                         adapters custodian void #f worker-breaks?))
     (if prepared-flow
         (hash-ref (stored-instance-state (load-instance store (stored-instance-handle prepared-flow))) 'task-handoff)
-        (hash-set (hash-ref (stored-instance-state instance) 'task) 'resultType "task"))))
+        (hash-ref (stored-instance-state instance) 'creation-result))))
 (define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)])
   ;; A view restriction must reject resumption before accepting/persisting input.
   (void (workflow-executable-fingerprint workflow adapters))

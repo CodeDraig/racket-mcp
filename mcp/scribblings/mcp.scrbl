@@ -289,6 +289,24 @@ to scan explicitly; the latter returns worker thread events. A missing executabl
 is a startup error. Incompatible executable versions fail through the workflow
 compatibility check before execution.
 
+A workflow's @racket[#:key] callback also applies to immediate task execution.
+It runs once per initial invocation, outside SQLite transactions, using validated
+arguments. Captured workflows compute it under their sealed executable resolver.
+Task creation rejects a caller-owned transaction before key evaluation, so a
+returned task handle cannot depend on a subsequent caller commit or rollback.
+The key is scoped to the principal and workflow operation; reusing it with changed
+arguments fails. Expired instances and incompatible executable versions are not
+silently replaced.
+
+Concurrent initial calls with the same key retrieve one task handle and its saved
+creation response, even after the task completes or fails. A failed task remains
+failed; repeating the key does not retry an uncertain effect. Synchronous and task
+execution of a task-optional workflow share the keyed workflow execution. The
+task receipt is stored separately so attaching a task cannot disrupt an in-flight
+synchronous stage. Without a key, initial calls still create independent work.
+This does not retroactively deduplicate immediate tasks created by older builds
+that did not record their declared keys.
+
 @defform[(task-boundary stage-id)]{
 Declares a stable stage identity at which a task-enabled workflow hands off to
 background execution. It is valid only in the workflow stage grammar; it does not
