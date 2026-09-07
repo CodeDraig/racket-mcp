@@ -2444,3 +2444,40 @@ python3 scripts/package.py rebuilt the final clean distribution; isolated
 env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed, including
 documentation. git diff --check passed. Verification remains Linux/Racket 9.2;
 full scenario, compiler and release gates remain open.
+
+## Scenario outcomes and ordinary inherited submodules (2026-09-07)
+
+The preceding clock example exposed real scenario defects. The Racket module+
+implementation derives the implicit module-begin context from its first use.
+Language-exported wrappers now emit module+/module* forms in racket/base context
+while retaining all user body syntax. Ordinary inherited submodules therefore
+preserve the parent mcp-interface and do not run a nested interface-building
+module body. Explicit mcp/lang children still produce their own interfaces and
+manifests. The public clock example again uses module+ test for its imports.
+
+mcp/scenario supplies run-scenarios, reexported by the CLI. Each call instantiates
+the authored test submodule in a fresh namespace under its own custodian and
+reads that namespace's native raco/testing log. Logged failures raise after
+reporting counts, so the CLI can no longer return zero merely because RackUnit
+caught the assertion. Unhandled raised values propagate; cleanup shuts down
+owned resources on both success and failure. compiler-lib is now an explicit
+native dependency for this test-log API. No external harness runtime is involved.
+
+The 21 scenario regression checks cover repeated runs and groups, imported and
+macro-generated tests, parent interface visibility, test-local declarations,
+independent child manifests, an explicit ordinary child language, caught checks,
+exceptions, non-exception raises, missing test submodules, actual CLI exit codes,
+and socket cleanup after failure. Together with the clock example, raco test
+passed 22 tests. The initial explicit-child fixture incorrectly used mcp (the
+library) instead of mcp/lang (the module language); it was corrected before the
+passing run. These fixes close the two specific defects recorded above. Full
+scenario fault grammar, transports, and other release gates remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 3,030 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five official Go probes. python3 scripts/package.py rebuilt a clean
+distribution and isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
+--pkgs racket-mcp passed including documentation. An additional temporary-module
+probe passed a test-local tool declaration shadowing a parent tool's name.
+git diff --check passed. Evidence remains Linux/Racket 9.2; the complete SDK
+release and full fault-injection scenario language remain unfinished.

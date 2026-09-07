@@ -1,8 +1,16 @@
 #lang racket/base
 (require "main.rkt" "cli.rkt" "completion.rkt" "private/registration.rkt" racket/splicing
          (for-syntax racket/base racket/list syntax/parse "private/module-compiler.rkt"))
-(provide (except-out (all-from-out racket/base) #%module-begin) (all-from-out "main.rkt")
-         (rename-out [mcp-module-begin #%module-begin]))
+(provide (except-out (all-from-out racket/base) #%module-begin module+ module*) (all-from-out "main.rkt")
+         (rename-out [mcp-module-begin #%module-begin] [mcp-module+ module+] [mcp-module* module*]))
+;; The enclosing form supplies the implicit module-begin context. Keep that
+;; context in racket/base while preserving each user's body syntax unchanged.
+(define-syntax (mcp-module+ stx)
+  (syntax-parse stx
+    [(_ name:id body ...) (syntax/loc stx (module+ name body ...))]))
+(define-syntax (mcp-module* stx)
+  (syntax-parse stx
+    [(_ name:id language body ...) (syntax/loc stx (module* name language body ...))]))
 (define-syntax (mcp-module-begin stx)
   (syntax-parse stx
     [(_ form ...)

@@ -1295,3 +1295,32 @@ expiry with @tt{raco mcp scenario examples/clock-scenario.rkt}. Advancing logica
 time does not sleep or schedule threads. Transport deadlines, cleanup grace
 periods, and task-worker polling still use real alarm events. The complete
 scenario fault language and deterministic scheduling controls remain unfinished.
+
+@section[#:tag "scenario-runs"]{Scenario execution and submodules}
+
+@tt{raco mcp scenario module.rkt} runs the module's @tt{test} submodule in a fresh
+module registry and under a dedicated custodian. It reports Racket test-log
+results and fails when a test reports failure, even when RackUnit catches the
+assertion exception. Unhandled failures and a missing test submodule also fail
+the command. Resources owned by the run are shut down on return or exception.
+A prior run's results and instantiated modules do not carry into the next run.
+
+The equivalent @tt{run-scenarios} function is provided by @tt{mcp/scenario} and
+@tt{mcp/cli}. It accepts a module file path and returns a pair of failed and total
+test counts on success; reported test failures raise an exception. Frameworks
+using Racket's @tt{raco/testing} log participate in the same accounting. Successful
+code with no logged tests returns @tt{(0 . 0)}; the runner does not manufacture
+assertions. This tooling uses the declared native @tt{compiler-lib} dependency.
+
+Within @tt{#lang mcp}, @tt{module+} groups and @tt{module*} with @tt{#f} retain
+ordinary Racket module bodies. They inherit the parent interface binding instead
+of generating another interface and executable entry point. Repeated groups,
+imports, definitions and macro-generated groups compose normally. Declarations
+inside these ordinary submodules remain ordinary descriptor values and are not
+published in the parent's interface. To define an independent MCP child language,
+use an explicit language, for example @tt{(module* child mcp/lang ...)}.
+
+The clock example now uses an ordinary @tt{module+ test} RackUnit import followed
+by its authored @tt{scenario}. The existing scenario body remains Racket test
+code. The complete transport-selectable fault-injection language remains an
+implementation gate; this runner does not claim to supply it.

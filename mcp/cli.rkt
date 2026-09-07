@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
-         "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
-(provide main serve-interface read-manifest manifest-diff manifest->mermaid manifest->markdown)
+         "scenario.rkt" "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
+(provide run-scenarios main serve-interface read-manifest manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
@@ -38,7 +38,7 @@
     [(check) (parameterize ([current-namespace (make-base-namespace)])
                (expand (call-with-input-file path (lambda (in) (parameterize ([read-accept-reader #t]) (read-syntax path in))))))
              (displayln "Expansion checks passed.")]
-    [(scenario) (dynamic-require `(submod ,(module-path path) test) #f)]
+    [(scenario) (void (run-scenarios path))]
     [(snapshot) (define client (make-http-client path))
                 (write-json (capture-snapshot (lambda (method params) (http-client-call client method params)))) (newline)]
     [(diff) (unless (= (length args) 3) (error 'diff "two module paths required"))

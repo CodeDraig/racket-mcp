@@ -1,10 +1,10 @@
 #lang mcp
+(module+ test (require rackunit))
 
 (resource (time-snapshot) #:uri "clock:///snapshot" #:ttl-ms 2000
   (number->string (mcp-current-seconds)))
 
 (scenario cache-expiry
-  (local-require rackunit)
   (define clock (make-manual-clock #:seconds 100))
   (define rt (make-runtime mcp-interface #:clock clock))
   (define (read-time)
