@@ -2257,3 +2257,44 @@ Final validation: sh scripts/check.sh passed compilation, 2,762 native checks,
 all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
 passed all five Go SDK probes. git diff --check passed. These results cover
 Linux/Racket 9.2; the complete SDK release remains unfinished.
+
+## Static contract and workflow compatibility reports (2026-09-07)
+
+manifest-diff now compares deterministic published-identity maps, treating tools
+and workflow tools as the same wire identity and rejecting duplicate identities.
+It reports changed/unchanged fields and reasons for removals, newly required
+arguments, and changed known published resource URIs/templates. Other static
+changes require review. Compiler-owned source positions are ignored explicitly
+at declaration/stage/reference boundaries; schema data is never recursively
+stripped by matching field spelling. Reference provider sources remain identity
+evidence. Each report states behavior=not-compared.
+
+Workflow results distinguish known incompatible versions, workflow addition/
+removal, and changed stages. Equal stage metadata reports not-established-from-
+manifest, never executable compatibility. No arbitrary schema subsumption or
+handler equivalence is inferred. The CLI self-diff of examples/approval.rkt
+produces unchanged static fields while retaining that workflow limitation.
+
+The focused diff/completion suites passed 53 checks covering source relocation,
+application schema fields named source, required/optional changes, metadata/schema
+review, URI changes, versions/stages, tool/workflow identity, reference provider
+identity, duplicate rejection, stable order, and JSON encoding. An initial stale
+compiled export mismatch was resolved by recompiling dependent modules; an initial
+fixture parenthesis error was fixed before these passing runs. Full executable
+fingerprints, dynamic interface comparison and the remaining release gates stay
+open.
+
+A final reporting audit added a guard for incomplete older/dynamic argument
+metadata: absence of an arguments list or required flag is not evidence of an
+optional argument. Such cases require review rather than claiming a proven new
+requirement. The expanded diff suite passed all 28 checks. The preceding full
+run passed 2,788 native checks, 1,301 core schema cases, and Scribble; it preceded
+this final guard and is not the final-state full-suite result.
+
+Final validation: sh scripts/check.sh passed compilation, 2,790 native checks,
+all 1,301 pinned core schema cases, and Scribble after the missing-metadata guard.
+All five Go probes passed during this change before that CLI-only guard.
+python3 scripts/package.py rebuilt a clean distribution, and the isolated
+env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed against
+that distribution, including its documentation build. git diff --check passed.
+Native evidence remains Linux/Racket 9.2; full release gates remain open.

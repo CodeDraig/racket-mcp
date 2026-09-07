@@ -1,6 +1,6 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
-         "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
+         "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
 (provide main serve-interface read-manifest manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
@@ -20,18 +20,6 @@
                 (dynamic-wind void (lambda () (sync never-evt)) stop)]
         [else (error 'serve "unknown transport ~a" transport)]))
     (lambda () (custodian-shutdown-all (runtime-custodian runtime)) (when store (close-store! store)))))
-(define (manifest-diff before after)
-  (define (key d)
-    (if (eq? (hash-ref d 'kind) 'completion)
-        (list 'completion (hash-ref d 'name) (hash-ref d 'argument))
-        (cons (hash-ref d 'kind) (hash-ref d 'name))))
-  (define old (for/hash ([d (in-list before)]) (values (key d) d)))
-  (define new (for/hash ([d (in-list after)]) (values (key d) d)))
-  (append (for/list ([(k d) (in-hash old)] #:unless (hash-has-key? new k)) (hasheq 'change "breaking-removal" 'declaration (format "~a" k)))
-          (for/list ([(k d) (in-hash new)])
-            (hasheq 'change (cond [(not (hash-has-key? old k)) "added"]
-                                  [(equal? d (hash-ref old k)) "static-manifest-unchanged"] [else "review-required"])
-                    'declaration (format "~a" k)))))
 (define (main)
   (define transport "stdio") (define state #f) (define port 8000)
   (define args

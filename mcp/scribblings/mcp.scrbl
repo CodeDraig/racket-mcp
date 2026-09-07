@@ -1169,3 +1169,25 @@ application. Names and source references use code spans; descriptions are escape
 as text; schema code fences expand when necessary to preserve literal backticks.
 Generated documentation describes what the static manifest establishes, including
 its documented limits on helper analysis and dynamic composition.
+
+@section{Static compatibility reports}
+
+@tt{raco mcp diff before.rkt after.rkt} and @tt{manifest-diff} compare published
+static declarations. Reports are ordered deterministically and include changed
+and unchanged fields. Removed declarations are @tt{breaking-removal}; newly
+required arguments and changed known published resource URIs/templates are
+@tt{breaking-contract-change}. Other static changes require review. New
+declarations are reported as added. Duplicate published identities are errors.
+
+Compiler-owned source positions do not affect comparison. Resource-reference
+origins retain their source identity so distinct providers with the same name
+are not collapsed. Schema properties named @tt{source} or @tt{line} remain
+application data and still participate in comparison. Ordinary tools and workflow
+tools share one published identity for comparison.
+
+Every entry states that handler behavior was not compared. An unchanged static
+manifest does not establish handler equivalence or schema subsumption. Workflow
+reports identify known incompatible version changes, added/removed workflows, and
+stage changes requiring review. Identical stage metadata reports
+@tt{not-established-from-manifest}; compatible executable code still requires
+the runtime's independent version/fingerprint checks.
