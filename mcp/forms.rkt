@@ -1,8 +1,16 @@
 #lang racket/base
 (require racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
-         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" (only-in "schema.rkt" check-schema!)))
+         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform completion scenario define-mcp-extension)
 (begin-for-syntax
+  (define (check-literal-uri! uri ids)
+    (define text (syntax-parse uri #:literals (quote)
+                   [text:str (syntax-e #'text)] [(quote text:str) (syntax-e #'text)] [_ #f]))
+    (when text
+      (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error 'resource (exn-message e) uri))])
+        (for ([variable (in-list (uri-template-variables text))])
+          (unless (memq variable (map syntax-e ids))
+            (error 'resource "URI template references an undeclared argument: ~a" variable))))))
   ;; Inspect only reader literals and the lexically bound Racket quote form.
   ;; Computed schemas retain ordinary expression evaluation at instantiation.
   (define (check-literal-schema! value)
@@ -80,6 +88,7 @@
         (~optional (~seq #:ttl-ms ttl:expr) #:defaults ([ttl #'0]))
         #:workflow version:str body ...+)
      (define ids (syntax->list #'(a.id ...))) (check-binders ids stx)
+     (check-literal-uri! #'uri ids)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      (define hidden (car (generate-temporaries #'(name))))
      (define-values (program summaries)
@@ -99,6 +108,7 @@
         (~optional (~seq #:depends-on dependencies:expr) #:defaults ([dependencies #''()]))
         (~optional (~seq #:ttl-ms ttl:expr) #:defaults ([ttl #'0])) body:expr ...+)
      (define ids (syntax->list #'(a.id ...))) (check-binders ids stx)
+     (check-literal-uri! #'uri ids)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      (define hidden (car (generate-temporaries #'(name))))
      #`(begin (define-resource-value #,hidden (make-resource (symbol->string 'name) uri (mcp-handler (a.id ...) body ...) #:description description #:mime-type mime #:render renderer #:arguments (list #,@args) #:matcher matcher #:ttl-ms ttl

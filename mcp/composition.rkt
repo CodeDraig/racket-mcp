@@ -26,6 +26,9 @@
     (for/list ([d (in-list (interface-descriptor-resources iface))] #:when (keep? (resource-descriptor-name d)))
       (define old-uri (resource-descriptor-uri d))
       (define uri (hash-ref uris old-uri old-uri))
+      (unless (equal? (sort (uri-template-variables old-uri) symbol<?)
+                      (sort (uri-template-variables uri) symbol<?))
+        (error 'view "URI remapping must preserve template variables"))
       (define transformed
         (struct-copy resource-descriptor d [name (name (resource-descriptor-name d))] [uri uri]
                      [matcher (if (equal? uri old-uri) (resource-descriptor-matcher d) (uri-template-matcher uri))]))

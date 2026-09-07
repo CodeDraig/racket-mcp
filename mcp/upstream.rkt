@@ -65,11 +65,10 @@
          (error 'make-upstream-interface "Expected an upstream-template-adapter for ~a" uri))
        (define arguments
          (if adapter (upstream-template-adapter-arguments adapter)
-             (for/list ([name (in-list (remove-duplicates
-               (map (lambda (match) (substring match 1 (sub1 (string-length match))))
-                    (regexp-match* #px"\\{[A-Za-z_][A-Za-z_0-9]*\\}" uri))))])
-               (argument (string->symbol name) String #f #f))))
-       (build-resource wire uri arguments (and adapter (upstream-template-adapter-matcher adapter))))))
+             (for/list ([name (in-list (uri-template-variables uri))])
+               (argument name String #f #f))))
+       (build-resource wire uri arguments
+         (if adapter (upstream-template-adapter-matcher adapter) (uri-template-matcher uri))))))
   (define (local-reference uri)
     (define matches
       (filter values

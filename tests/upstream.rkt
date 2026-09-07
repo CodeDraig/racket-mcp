@@ -141,3 +141,13 @@
 (check-exn #rx"ambiguous resource reference"
   (lambda () (dispatch ambiguous-rt "tools/call" (hasheq '_meta (request-meta) 'name "show"))))
 (custodian-shutdown-all (runtime-custodian ambiguous-rt))
+
+;; Upstream argument extraction shares the RFC parser, including dotted names.
+(define dotted-snapshot
+  (hash-set domain-snapshot 'resources/templates/list
+    (hasheq 'resourceTemplates (list (hasheq 'name "dotted" 'uriTemplate "remote:///{9.a}")))))
+(define dotted-domain (make-upstream-interface dotted-snapshot (lambda (_m _p) (error 'peer "must not connect during construction"))))
+(define dotted-resource
+  (findf (lambda (d) (equal? (resource-descriptor-name d) "dotted")) (interface-descriptor-resources dotted-domain)))
+(check-equal? (map argument-name (resource-descriptor-arguments dotted-resource)) '(9.a))
+(check-equal? (resource-uri (dotted-resource "a:b")) "remote:///a%3Ab")

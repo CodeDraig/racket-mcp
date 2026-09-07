@@ -900,3 +900,36 @@ The tool, resource, and prompt constructors share argument checks: unique symbol
  argument is bound. Interface construction also validates argument and tool schemas
  supplied through raw public descriptors, and runtime construction performs those
  checks before recovery starts.
+
+@section{URI templates and inverse adapters}
+
+@tt{mcp/uri-template} provides @tt{check-uri-template!},
+@tt{uri-template-variables}, @tt{uri-template-expand}, and
+@tt{uri-template-matcher}. Parsing follows RFC 6570 with verified erratum 6937
+(apostrophes are permitted in literals). Invalid syntax and reserved, unsupported
+operators fail explicitly. Expansion supports the defined operators, Unicode,
+percent-encoded variable names, prefix modifiers, and exploded lists and maps.
+Missing and JSON null values are undefined; false remains a defined scalar.
+Composite values cannot use a prefix modifier. Map ordering is deterministic by
+symbolic key; scalar numbers and booleans use their JSON spelling.
+
+Reserved and fragment expansion preserve valid percent triplets. Other expansion
+operators encode the percent sign. Prefix lengths count Unicode characters and
+avoid splitting percent-encoded UTF-8 characters. Unicode literal text is encoded
+to a URI rather than copied as an IRI.
+
+Generated inverse matchers accept only single-variable simple expressions without
+modifiers. Repeated variables, adjacent variables, and separators that cannot
+unambiguously separate simple expansions require an explicit matcher. Captured
+values contain only unreserved characters or valid percent triplets and must
+decode as UTF-8. Returned values are strings; an application needing domain values
+or composite inverses supplies its own matcher. General overlap analysis between
+separate resource templates remains incomplete.
+
+Resource declarations validate template syntax and variable bindings even with an
+explicit matcher. Literal declaration errors carry source locations; computed
+URI expressions are checked during construction. URI remappings in views must
+preserve the template variable set. The independent URI Template corpus is pinned
+under @tt{vendor/uri-template-tests}, with provenance in @tt{vendor/LOCK.json};
+@tt{scripts/fetch-inputs.py uri-template-tests} explicitly refreshes that pinned
+input. Runtime and compilation perform no network fetch.

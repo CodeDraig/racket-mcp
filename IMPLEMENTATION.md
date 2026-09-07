@@ -1670,3 +1670,44 @@ schema cases, and Scribble without warnings. All five Go probes in
 sh scripts/check-interop.sh passed, as did git diff --check. Native evidence remains
 Linux/Racket 9.2. This improves constructor/schema equivalence; complete descriptor
 contract parity and the remaining compiler/integration/release gates remain open.
+
+## Checked RFC 6570 URI templates (2026-09-07)
+
+Replaced permissive expression splitting with a shared native parser supporting
+RFC 6570 variable names, operators, and modifiers. Invalid literals, malformed
+expressions, unsupported reserved operators, and invalid prefix modifiers fail
+explicitly. Expansion handles Unicode literal encoding, percent-triplet preservation
+for reserved/fragment expansion, percent-encoded variable names, undefined composite
+members, empty values, and Unicode prefix boundaries. Composite values reject prefix
+modifiers. The parser incorporates verified RFC erratum 6937 admitting apostrophes
+in literal text; the initial two corpus failures exposed that erratum.
+
+Generated inverse matchers now accept only unreserved characters and valid percent
+triplets in simple captures, require strict UTF-8 decoding, and reject ambiguous
+or complex templates without an explicit matcher. Resource construction checks
+syntax and declared variables even when a matcher is supplied. Literal declaration
+errors retain URI source locations. Views preserve variable sets across URI
+remappings. Upstream adapters use the same variable parser rather than their old
+ASCII-name regex; a full-suite failure exposed that remaining extractor and it was
+corrected before the final run. Dotted/digit-leading upstream variables have a
+separate regression.
+
+Pinned uri-templates/uritemplate-test at
+4171dac22aa67fc710b3f6df308a50bd08552986 under vendor/uri-template-tests, retaining
+LICENSE and README. Its six file hashes are included in vendor/LOCK.json, and the
+explicit fetch-inputs.py command supports this input. All 864 vendored file hashes
+were verified. The unmodified independent corpus passes all 270 cases; native URI
+regressions add 41 checks. No runtime/compile-time network fetching was introduced.
+General overlap analysis between separate resource templates remains incomplete;
+generated matchers return strings, and composite/domain inverses require adapters.
+
+References: https://www.rfc-editor.org/rfc/rfc6570 and the verified EID 6937
+correction recorded at https://www.ietf.org/rfc/inline-errata/rfc6570.html .
+
+Final validation: sh scripts/check.sh passed compilation, 1,957 native checks
+(including the 270 independent URI corpus cases), all 1,301 pinned JSON Schema
+core cases, and Scribble without warnings. All five Go probes passed against the
+new URI engine; after the upstream extractor correction, the focused upstream/URI
+suites passed 345 checks before the final dotted-variable regressions/full run.
+git diff --check passed. Native verification remains Linux/Racket 9.2; this is
+URI behavior coverage, not completion of the full SDK release gates.

@@ -3,6 +3,7 @@
 import hashlib, io, json, pathlib, tarfile, urllib.request, sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCES = {
+    "uri-template-tests": ("uri-templates/uritemplate-test", "4171dac22aa67fc710b3f6df308a50bd08552986", ("LICENSE", "README.md", "extended-tests.json", "negative-tests.json", "spec-examples-by-section.json", "spec-examples.json")),
     "go-sdk": ("modelcontextprotocol/go-sdk", "a5026ea7b727a59b166a06cf7ec4931a50cef427", ("",)),
     "conformance": ("modelcontextprotocol/conformance", "7022d786071e6d868dcd5cf19a8c30db7d811537", ("",)),
     "metaschemas": ("json-schema-org/json-schema-spec", "601a66c8b0f25246bf0e1fb488c5b5f030a79b72", ("schema.json", "meta/", "jsonschema-core", "jsonschema-validation")),
