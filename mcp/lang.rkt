@@ -55,4 +55,4 @@
                                               #:completions (append (reverse (filter completion-descriptor? declarations)) (apply append (map interface-descriptor-completions mounted)))))
         (provide #,interface-id)
         (define-values () (begin (#,finish) (values)))
-        (module+ main (serve-interface #,interface-id)))]))
+        (module+ main (serve-interface-command #,interface-id)))]))

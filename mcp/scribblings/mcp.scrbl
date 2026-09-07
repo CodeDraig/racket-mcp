@@ -1,5 +1,6 @@
 #lang scribble/manual
-@(require (for-label racket/base (only-in mcp tool schema shape resource text-result structured-result error-result load-interface interface-descriptor?)))
+@(require (for-label racket/base (only-in mcp tool schema shape resource text-result structured-result error-result load-interface interface-descriptor?)
+                     (only-in mcp/cli serve-interface-command)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
 
@@ -1601,4 +1602,25 @@ this instantiating loader.
 Recognizes an SDK interface descriptor, including descriptors returned by
 @racket[load-interface]. The predicate does not instantiate application modules
 or invoke handlers.
+}
+
+@section{Generated server commands}
+
+@defmodule[mcp/cli]
+@defproc[(serve-interface-command [interface interface-descriptor?]) void?]{
+Parses the current command-line arguments and serves an already-instantiated
+interface. Generated @tt{#lang mcp} main submodules call this function. It accepts
+@tt{--state}, @tt{--transport} and @tt{--port}; options use the same parser as the
+@tt{raco mcp} command. Unexpected positional arguments are rejected.
+
+For example, @tt{racket examples/approval.rkt --state approval.sqlite} runs the
+durable example over stdio. The state path remains mandatory for durable
+workflows. Application definitions and imports are not instantiated a second
+time by the command handler.
+
+Captured loading cannot be retroactively applied to an already-instantiated
+module. Supplying @tt{--runtime-build-id} here produces a diagnostic directing the
+caller to @tt{raco mcp --runtime-build-id ID [options] serve MODULE}; it does not
+silently ignore the identity or reload application definitions. The existing
+direct-path imported-helper compatibility limitation therefore remains.
 }

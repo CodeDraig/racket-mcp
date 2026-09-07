@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
          "loader.rkt" "scenario.rkt" "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
-(provide run-scenarios main serve-interface read-manifest manifest-diff manifest->mermaid manifest->markdown)
+(provide run-scenarios main serve-interface serve-interface-command read-manifest manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
@@ -20,15 +20,24 @@
                 (dynamic-wind void (lambda () (sync never-evt)) stop)]
         [else (error 'serve "unknown transport ~a" transport)]))
     (lambda () (custodian-shutdown-all (runtime-custodian runtime)) (when store (close-store! store)))))
-(define (main)
+(define (read-serving-options program)
   (define transport "stdio") (define state #f) (define port 8000) (define runtime-build-id #f)
   (define args
-    (command-line #:program "raco mcp"
+    (command-line #:program program
       #:once-each [("--transport") value "stdio or http" (set! transport value)]
       [("--state") value "SQLite state file" (set! state value)]
       [("--port") value "HTTP port" (set! port (string->number value))]
       [("--runtime-build-id") value "Immutable SDK/runtime build identity for captured loading" (set! runtime-build-id value)]
       #:args args args))
+  (values transport state port runtime-build-id args))
+(define (serve-interface-command interface)
+  (define-values (transport state port runtime-build-id args) (read-serving-options "mcp server"))
+  (unless (null? args) (error 'serve "unexpected positional arguments: ~s" args))
+  (when runtime-build-id
+    (error 'serve "captured loading requires raco mcp --runtime-build-id ID [options] serve MODULE; the direct module is already instantiated"))
+  (serve-interface interface #:transport transport #:state state #:port port))
+(define (main)
+  (define-values (transport state port runtime-build-id args) (read-serving-options "raco mcp"))
   (unless (>= (length args) 2) (error 'mcp "usage: raco mcp [options] serve|inspect|diagram|docs|check|scenario|snapshot|diff module [other-module]"))
   (define command (car args)) (define path (cadr args))
   (case (string->symbol command)

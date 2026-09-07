@@ -2993,3 +2993,35 @@ matches were found in the native/package logs. git diff --check passed. This las
 evidence paragraph postdates the package build and changes no executable content.
 Native evidence remains Linux/Racket 9.2; automatic provenance/default loading and
 the full SDK release remain incomplete.
+
+## Generated entry-point serving options (2026-09-07)
+
+A direct executable probe demonstrated that racket examples/approval.rkt --state
+PATH still failed with the missing-state diagnostic: the generated main called
+serve-interface without parsing arguments. The language now delegates to the
+SDK's serve-interface-command. It shares the CLI option parser and forwards
+--state, --transport and --port to serving, without loading application definitions
+again. Unexpected positional arguments are rejected. Direct --runtime-build-id
+use is rejected before SDK storage opens, with a diagnostic directing the caller
+to the captured raco mcp serving path; it is not silently ignored or implemented
+by double instantiation.
+
+A bounded subprocess regression starts a generated server with an explicit SQLite
+file, checkpoints at input, then resumes it in another direct-execution process.
+It verifies one application instantiation per process and hygiene against a user
+helper named serve-interface-command. It also checks positional argument rejection,
+continued missing-state enforcement and rejection of captured loading options
+without opening the requested state file. The focused direct-entry and captured
+CLI-restart suites passed 30 checks. README and Scribble document direct options
+and the separate captured-loading path. Full validation follows below.
+
+This closes option forwarding for the generated entry point. Automatic executable
+provenance and the direct-path imported-helper limitation remain open, along with
+the broader implementation and release gates.
+
+Final verification: sh scripts/check.sh passed compilation, 3,394 native checks,
+all 1,301 pinned schema cases and Scribble. All seven official Go probes passed,
+as did isolated raco setup --check-pkg-deps --pkgs racket-mcp. Native/package logs
+contained no warning or undefined-tag matches. git diff --check passed. This final
+ledger paragraph postdates the package build and changes no executable content.
+Evidence remains Linux/Racket 9.2; the complete SDK release is still unfinished.

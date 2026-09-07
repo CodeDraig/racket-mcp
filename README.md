@@ -18,6 +18,7 @@ This is not yet the completed seven-milestone release. See
 . scripts/racket-env.sh
 raco make examples/greeter.rkt
 racket examples/greeter.rkt
+racket examples/approval.rkt --state .cache/approval.sqlite
 ```
 
 The environment script isolates Racket packages and scratch files in this

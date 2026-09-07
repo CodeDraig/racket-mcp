@@ -1,0 +1,61 @@
+#lang racket/base
+(require rackunit racket/file racket/port racket/string mcp/stdio)
+(define directory (make-temporary-file "mcp-direct-entry-~a" 'directory))
+(define application (build-path directory "application.rkt"))
+(define database (build-path directory "state.sqlite"))
+(define instantiated (build-path directory "instantiated.txt"))
+(define (call [state #f])
+  (define-values (process out in err)
+    (subprocess #f #f #f (find-executable-path "racket") application "--state" database "--transport" "stdio"))
+  (define client (make-stdio-client out in #:timeout 15))
+  (dynamic-wind void
+    (lambda ()
+      (client-call client "tools/call"
+        (if state (hasheq 'name "approve" 'requestState state
+                          'inputResponses (hasheq 'answer (hasheq 'action "accept" 'content (hasheq 'ok #t))))
+            (hasheq 'name "approve"))
+        #:capabilities (hasheq 'elicitation (hasheq))))
+    (lambda ()
+      (client-close! client)
+      (unless (sync/timeout 5 process) (subprocess-kill process #t))
+      (subprocess-wait process)
+      (define stderr (port->string err)) (close-input-port err)
+      (check-equal? (subprocess-status process) 0 stderr))))
+(define (reject . args)
+  (define-values (process out in err)
+    (apply subprocess #f #f #f (find-executable-path "racket") application args))
+  (close-output-port in)
+  (dynamic-wind void
+    (lambda ()
+      (unless (sync/timeout 10 process) (subprocess-kill process #t))
+      (subprocess-wait process)
+      (check-not-equal? (subprocess-status process) 0)
+      (port->string err))
+    (lambda () (close-input-port out) (close-input-port err))))
+(dynamic-wind void
+  (lambda ()
+    (call-with-output-file application
+      (lambda (out)
+        (display "#lang mcp\n(server #:name \"direct\" #:version \"1\")\n" out)
+        (fprintf out "(call-with-output-file ~s #:exists 'append (lambda (out) (displayln \"once\" out)))\n"
+                 (path->string instantiated))
+        ;; A same-spelled user helper must not capture generated command code.
+        (display "(define (serve-interface-command . args) (error 'test \"hygiene failure\"))\n" out)
+        (display "(workflow (approve) #:version \"1\"
+                    (await-input [answer Any]
+                      (hasheq 'mode \"form\" 'message \"Continue?\" 'requestedSchema (object-schema (hasheq 'ok Boolean))))
+                    (text-result \"approved\"))\n" out)))
+    (define initial (hash-ref (call) 'result))
+    (check-equal? (hash-ref initial 'resultType) "input_required")
+    (check-true (file-exists? database))
+    (check-equal? (file->string instantiated) "once\n")
+    (define completed (hash-ref (call (hash-ref initial 'requestState)) 'result))
+    (check-equal? (hash-ref completed 'resultType) "complete")
+    (check-equal? (hash-ref (car (hash-ref completed 'content)) 'text) "approved")
+    (check-equal? (file->string instantiated) "once\nonce\n")
+    (check-true (string-contains? (reject "unexpected") "unexpected positional arguments"))
+    (define unused-state (build-path directory "unused.sqlite"))
+    (check-true (string-contains? (reject "--state" unused-state "--runtime-build-id" "test/1") "captured loading requires raco mcp"))
+    (check-false (file-exists? unused-state))
+    (check-true (string-contains? (reject) "explicit --state")))
+  (lambda () (delete-directory/files directory)))
