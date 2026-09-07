@@ -247,6 +247,17 @@ rejects changes while execution is active. After uncertainty, competing observed
 outcomes cannot both advance the same stage. Claims use the same single-host
 file/thread mechanism as Tasks, without keeping an application transaction open
 across an external adapter call.
+
+Checkpoint computation, branch selection, branch joins, completion handlers, and
+completion change-key callbacks retain this claim while running outside SQLite
+transactions. Task polling and cancellation can proceed while these callbacks
+block. Cancellation is checked again before their transitions commit; cancelled
+completion does not record change-outbox entries. Callbacks can run again after
+process loss before their transition commits, so persistent mutations belong in
+declared effects. Input construction and effect codecs have separate transaction
+boundaries; this is not a guarantee that all application callbacks run without a
+storage transaction.
+
 @racket[#:execution task] selects Tasks instead of MRTR. Durable serving requires
 an explicit state-file configuration. @racket[make-runtime] scans unexpired working
 tasks and starts recovery workers. Awaiting-input and terminal tasks stay unchanged.

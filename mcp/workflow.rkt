@@ -166,29 +166,8 @@
                  (define id (workflow-stage-id stage))
                  (define env (hash-ref state 'values))
                  (case (workflow-stage-kind stage)
-                   [(jump)
-                    ((workflow-stage-procedure stage) (decoded-env env))
-                    (define destination (index-of (map workflow-stage-id (workflow-descriptor-stages workflow)) (workflow-stage-adapter stage)))
-                    (update-instance! store instance (hash-set state 'position destination))
-                    (record-event! store (stored-instance-handle instance) (hasheq 'kind "join" 'stage (symbol->string id)))
-                    '(continue)]
-                   [(branch)
-                    (define selection ((workflow-stage-procedure stage) (decoded-env env)))
-                    (define targets (workflow-stage-adapter stage))
-                    (unless (and (exact-nonnegative-integer? selection) (< selection (length targets))) (error 'run-workflow "invalid branch selector"))
-                    (define destination (index-of (map workflow-stage-id (workflow-descriptor-stages workflow)) (list-ref targets selection)))
-                    (unless destination (error 'run-workflow "unresolved branch destination"))
-                    (update-instance! store instance (hash-set* state 'position destination 'values (hash-set env id selection)))
-                    (record-event! store (stored-instance-handle instance) (hasheq 'kind "branch" 'stage (symbol->string id) 'selection selection))
-                    '(continue)]
-                   [(complete)
-                    (define result ((workflow-stage-procedure stage) (decoded-env env)))
-                    (unless (valid? (workflow-stage-schema stage) result) (error 'run-workflow "invalid completion"))
-                    (unless (and (hash? result) (hash-ref result 'isError #f))
-                      (record-workflow-changes! store principal ((workflow-descriptor-changes workflow) arguments result)
-                                                #:handle (stored-instance-handle instance) #:stage id))
-                    (update-instance! store instance (hash-set* state 'status "completed" 'result result)) (list 'return result)]
-                   [(checkpoint) (list 'checkpoint stage (decoded-env env) instance)]
+                   [(jump branch complete checkpoint)
+                    (list (workflow-stage-kind stage) stage env instance)]
                    [(input-group)
                     (define ids (stage-inputs stage))
                     (define requests (hash-ref state 'pending-group (lambda () ((workflow-stage-procedure stage) (decoded-env env)))))
@@ -245,11 +224,49 @@
     (publish-workflow-changes!)
     (case (car action)
       [(return) (cadr action)] [(continue) (loop)]
+      [(jump branch complete)
+       (match-define (list kind stage env snapshot) action)
+       ;; The worker claim protects this stage while host code runs without
+       ;; SQLite's transaction. Cancellation must win before committing it.
+       (define value ((workflow-stage-procedure stage) (decoded-env env)))
+       (define id (workflow-stage-id stage))
+       (define state (stored-instance-state snapshot))
+       (define destination
+         (case kind
+           [(jump) (index-of (map workflow-stage-id (workflow-descriptor-stages workflow)) (workflow-stage-adapter stage))]
+           [(branch)
+            (define targets (workflow-stage-adapter stage))
+            (unless (and (exact-nonnegative-integer? value) (< value (length targets)))
+              (error 'run-workflow "invalid branch selector"))
+            (index-of (map workflow-stage-id (workflow-descriptor-stages workflow)) (list-ref targets value))]
+           [else #f]))
+       (define changes
+         (cond [(eq? kind 'complete)
+                (unless (valid? (workflow-stage-schema stage) value) (error 'run-workflow "invalid completion"))
+                (if (and (hash? value) (hash-ref value 'isError #f)) '()
+                    ((workflow-descriptor-changes workflow) arguments value))]
+               [else '()]))
+       (store-transaction store
+         (lambda ()
+           (when (cancelled?) (error 'run-workflow "execution cancelled"))
+           (case kind
+             [(jump)
+              (update-instance! store snapshot (hash-set state 'position destination))
+              (record-event! store (stored-instance-handle snapshot) (hasheq 'kind "join" 'stage (symbol->string id)))]
+             [(branch)
+              (unless destination (error 'run-workflow "unresolved branch destination"))
+              (update-instance! store snapshot (hash-set* state 'position destination 'values (hash-set env id value)))
+              (record-event! store (stored-instance-handle snapshot) (hasheq 'kind "branch" 'stage (symbol->string id) 'selection value))]
+             [(complete)
+              (record-workflow-changes! store principal changes #:handle (stored-instance-handle snapshot) #:stage id)
+              (update-instance! store snapshot (hash-set* state 'status "completed" 'result value))])))
+       (publish-workflow-changes!)
+       (if (eq? kind 'complete) value (loop))]
       [(checkpoint)
        (match-define (list _ stage env snapshot) action)
        ;; Replay-safe host computation may block. Keep the instance worker claim,
        ;; but release SQLite so polling, cancellation, and other instances proceed.
-       (define value ((workflow-stage-procedure stage) env))
+       (define value ((workflow-stage-procedure stage) (decoded-env env)))
        (store-transaction store
          (lambda ()
            (when (cancelled?) (error 'run-workflow "execution cancelled"))

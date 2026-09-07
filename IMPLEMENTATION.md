@@ -1827,3 +1827,30 @@ all 1,301 pinned JSON Schema core cases, and Scribble. git diff --check passed.
 No runtime implementation changed in this batch; the five Go probes were not
 rerun, and their preceding results remain historical evidence. Native verification
 is Linux/Racket 9.2; other platforms and the full release gates remain open.
+
+## Workflow control callbacks without SQLite lock ownership (2026-09-07)
+
+Branch selectors, branch joins, completion handlers, and completion change-key
+callbacks previously ran inside the stage transaction. A blocked callback could
+therefore prevent task polling or cancellation from acquiring storage. They now
+run under the existing exclusive instance worker claim but outside SQLite's
+transaction, then commit their stage transition and journal/outbox together.
+Cancellation is rechecked before committing. Checkpoint environment decoding also
+moves outside the transaction; this does not move checkpoint encoding, input
+construction, or effect/recovery codec callbacks out of their existing boundaries.
+Transactional effects retain their shared application/storage transaction.
+
+The new control-stage-lock suite passes 84 checks across branch, join, completion,
+and change-key callbacks, both with and without cancellation. Semaphores hold each
+callback while separate requests poll and cancel. The tests check transaction
+absence, responsive requests, one callback execution, completed normal results,
+and no cancelled transition, persistent value, result, or change outbox. Existing
+branch/control-flow/checkpoint/freshness suites passed 49 checks. Replay-safe host
+callbacks may run again after a crash before commit; this change does not promise
+exactly-once arbitrary application computation.
+
+Final validation: sh scripts/check.sh passed compilation, 2,328 native checks,
+all 1,301 pinned core schema cases, and Scribble. All five Go interoperability
+probes passed with sh scripts/check-interop.sh. git diff --check passed.
+Evidence remains Linux/Racket 9.2; remaining input/effect/codec callback ownership
+and the complete SDK release gates remain open.
