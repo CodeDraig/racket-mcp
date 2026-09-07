@@ -45,5 +45,5 @@
                                               #:prompts (append (reverse (filter prompt-descriptor? declarations)) (apply append (map interface-descriptor-prompts mounted)))
                                               #:completions (append (reverse (filter completion-descriptor? declarations)) (apply append (map interface-descriptor-completions mounted)))))
         (provide #,interface-id)
-        (#,finish)
+        (define-values () (begin (#,finish) (values)))
         (module+ main (serve-interface #,interface-id)))]))

@@ -2155,3 +2155,46 @@ Final validation: sh scripts/check.sh passed compilation, 2,698 native checks,
 all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
 passed all five official Go SDK probes. git diff --check passed. These are
 Linux/Racket 9.2 results; the overall SDK release remains incomplete.
+
+## Static lexical resource-reference manifests (2026-09-07)
+
+Resource declaration bindings now carry immutable source/name origin metadata.
+The public syntax-spec query preserves it across imports and renames. Owned
+handler expansion sends references to the existing per-module lexical collector;
+workflow stages use the same path. The finalizer now runs in a final generated
+RHS, after application RHS expansion, and syntax-local-lift-module emits an
+independent racket/base manifest submodule containing quoted data. Entries record
+resource-references and reference-analysis=lexical-handler-syntax. Origins are
+deduplicated/sorted; unavailable origin data is explicitly unknown. Runtime
+reference maps retain their independent identity checks.
+
+Probes established that use-site syntax properties are discarded by reference
+collection, while binding properties survive. A top-level or module-end finalizer
+ran too early; module+/module declarations lifted through the generic end-
+declaration API were expanded in expression context. A deferred module* could
+not access the parent's collector macro with an independent language. Those
+prototypes were removed. The final implementation uses the documented dedicated
+module-lifting API after RHS expansion and does not inherit the application.
+
+The new manifest fixture has both a throwing application and a throwing imported
+provider; reading the manifest succeeds without instantiating either. It checks
+renamed and macro-introduced references, forward references, workflow/resource
+workflow edges, shadowing, quotes, origin locations, deduplication, and repeat
+reads. Its 12 checks pass. Combined focused suites initially reported one wrong
+expected source line out of 68 checks; correcting the fixture's line expectation
+produced the passing manifest run. Dynamic composition manifests, separately
+defined helper analysis, higher-phase support and the broader release gates
+remain open.
+
+The first full build and Go run exposed a real matcher defect: server names are
+expressions, so free-identifier=? cannot compare every declaration name. The
+collector now checks identifier? before comparing owners. Adding a server to the
+throwing manifest fixture covers this case; the corrected focused manifest and
+compiler suites passed 39 checks. raco mcp inspect examples/multi-content.rkt
+shows both tool and prompt edges to pages with original binding source positions.
+
+Final validation: sh scripts/check.sh passed compilation, 2,710 native checks,
+all 1,301 pinned core schema cases, and Scribble. The corrected
+sh scripts/check-interop.sh run passed all five official Go SDK probes.
+git diff --check passed. Verification remains Linux/Racket 9.2; the complete
+SDK release gates remain open.

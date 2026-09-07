@@ -1121,4 +1121,17 @@ boundary. The workflow descriptor contributes references from every stage,
 including branches that may not execute, to its enclosing tool, resource, or
 prompt. Reading those references does not open storage, run a stage, or request
 input. Ordinary data-API workflows can declare relationships through the explicit
-interface map. Complete static manifest reference coverage remains unfinished.
+interface map.
+
+Manifest declaration entries include @tt{resource-references}, containing the
+original resource names and source locations, and @tt{reference-analysis} set to
+@tt{lexical-handler-syntax}. Imported aliases retain the declaration's original
+name. Repeated targets are deduplicated and sorted. Missing origin metadata is
+explicitly marked unknown. These fields describe references visible in handler
+and workflow-stage syntax; they do not prove that separately defined helpers or
+dynamic interface expressions introduce no additional references.
+
+The compiler emits the manifest after declaration right-hand sides expand, using
+Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
+quoted data only. Reading it does not instantiate the application or its imported
+resource providers. Compiling source still executes trusted transformers.

@@ -72,7 +72,7 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      #`(begin (define-operation-value name
          (make-tool (symbol->string 'name) (list #,@args)
-                    (mcp-bound-handler (a.id ...) body ...)
+                    (mcp-bound-handler name (a.id ...) body ...)
                     #:description description #:output (checked-schema-expression output) #:annotations annotations
                     #:changes (lambda (bound outcome)
                                 (let (#,@(for/list ([id ids]) #`[#,id (hash-ref bound '#,id)])) changes)))) (register-declaration name #:declaration tool name #,stx))]))
@@ -89,7 +89,11 @@
      (define ids (syntax->list #'(a.id ...))) (check-binders ids stx)
      (check-literal-uri! #'uri ids)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
-     (define hidden (car (generate-temporaries #'(name))))
+     (define hidden
+       (syntax-property (car (generate-temporaries #'(name))) 'mcp-resource-origin
+                        (hasheq 'name (syntax-e #'name) 'source (format "~a" (syntax-source #'name))
+                                'line (syntax-line #'name) 'column (syntax-column #'name)
+                                'position (syntax-position #'name) 'span (syntax-span #'name))))
      (define-values (program summaries)
        (compile-workflow #'(workflow-program (name a ...) #:version version body ...) #t #:summaries? #t))
      #`(begin
@@ -109,8 +113,12 @@
      (define ids (syntax->list #'(a.id ...))) (check-binders ids stx)
      (check-literal-uri! #'uri ids)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
-     (define hidden (car (generate-temporaries #'(name))))
-     #`(begin (define-resource-value #,hidden (make-resource (symbol->string 'name) uri (mcp-handler (a.id ...) body ...) #:description description #:mime-type mime #:render renderer #:arguments (list #,@args) #:matcher matcher #:ttl-ms ttl
+     (define hidden
+       (syntax-property (car (generate-temporaries #'(name))) 'mcp-resource-origin
+                        (hasheq 'name (syntax-e #'name) 'source (format "~a" (syntax-source #'name))
+                                'line (syntax-line #'name) 'column (syntax-column #'name)
+                                'position (syntax-position #'name) 'span (syntax-span #'name))))
+     #`(begin (define-resource-value #,hidden (make-resource (symbol->string 'name) uri (mcp-owned-handler name (a.id ...) body ...) #:description description #:mime-type mime #:render renderer #:arguments (list #,@args) #:matcher matcher #:ttl-ms ttl
                                         #:depends-on (lambda (bound) (let (#,@(for/list ([id ids]) #`[#,id (hash-ref bound '#,id)])) dependencies))))
               (define-syntax name (resource-binding (quote-syntax #,hidden) #,(length ids) 'name '(a.id ...)))
               (register-declaration name #:declaration resource name #,stx))]))
@@ -157,7 +165,7 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default) (attribute a.codec)))
      (define hidden (car (generate-temporaries #'(name))))
      #`(begin (define-operation-value #,hidden (make-prompt (symbol->string 'name) (list #,@args)
-                                (mcp-bound-handler (a.id ...) body ...)
+                                (mcp-bound-handler name (a.id ...) body ...)
                                 #:description description)) (define-syntax name (prompt-binding (quote-syntax #,hidden) 'name '(a.id ...)))
          (register-declaration name #:declaration prompt name #,stx))]))
 
@@ -212,7 +220,7 @@
      (define (compile-sequence forms bound prefix wrap [join #f])
        (when (null? forms) (raise-syntax-error #f "workflow requires a completion expression" stx))
        (define (proc expression)
-         #`(mcp-handler (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
+         #`(mcp-owned-handler name (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
        (define first (expand-workflow-extension (car forms))) (define tail (cdr forms))
        (define (node id kind schema procedure [adapter #f] [policy #f])
          (check-literal-schema! schema)
