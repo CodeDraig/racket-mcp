@@ -1066,3 +1066,19 @@ original resource name, and emits an ordinary tool containing a resource link.
 Its generated reference still receives core arity checks and interface mapping.
 This API does not prove the presence of dynamically composed targets or infer
 references hidden in arbitrary Racket computation.
+
+@section{Open higher-phase declaration gate}
+
+On the verified Racket 9.2 environment, a declaration created and then referenced
+inside @racket[begin-for-syntax] can fail with an unbound generated identifier.
+This affects ordinary references as well as checked reference helpers. The
+@tt{dev/check-phase-references.rkt} release probe reproduces the same failure in a
+minimal syntax-spec language that imports no MCP code. It tests phase 0 and phase 1
+for both that language and MCP and exits nonzero on any failure, with a bounded
+child-process timeout.
+
+Importing a declaration created at phase 0 for transformer use, and inspecting
+binding metadata at shifted phases, have passing tests. They do not establish
+higher-phase declaration/reference support. This is an unresolved acceptance gate,
+not an exception to the requested language scope. Run the probe with the repository
+Racket environment to verify a future correction.

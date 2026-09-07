@@ -2047,3 +2047,29 @@ distribution; env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp
 passed in the isolated package environment, including its documentation build.
 git diff --check passed. Evidence remains Linux/Racket 9.2; the recorded local
 higher-phase reference issue and the full SDK release gates remain open.
+
+## Isolated higher-phase declaration failure (2026-09-07)
+
+Added dev/check-phase-references.rkt as an explicit failing release probe. It
+constructs fresh source files and checks ordinary declaration references at phases
+0 and 1 in both MCP and a minimal syntax-spec-only language. The independent
+language imports no MCP code. Child processes have a 20-second timeout; any failed
+case makes the command exit nonzero. This is not an expected-failure unit test and
+its failures are not counted as passing SDK evidence.
+
+On Linux/Racket 9.2, both phase-0 cases exit 0 and both phase-1 cases exit 1 with
+unbound generated identifiers. The installed syntax-spec-v3 source is pinned to
+4ae36610804b58e8f023574bfdcba1b5ae4f7bcd; a live branch query confirmed this is also
+the current upstream v3 tip. The development branch uses syntax-spec-dev and is
+not a drop-in update. Alternate definition-interface and SDK reference-scope
+probes did not fix the failure and were fully removed. No dependency source or
+SDK runtime/compiler implementation was changed in this batch.
+
+After restoring the original SDK sources and recompiling, the domain-binding and
+extension-binding suites passed 39 checks. The final release probe exits 1, as
+recorded above; the phase gate remains failed. The existing passing full suite and
+Go runs are historical results, not rerun for this development probe. Declaration
+metadata lookup at shifted phases remains covered independently. Documentation
+now distinguishes that passing behavior from this unresolved declaration/reference
+failure. Other planned implementation work can continue; the SDK goal is neither
+complete nor blocked on user input.
