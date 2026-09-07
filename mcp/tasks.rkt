@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/list "private/failure.rkt")
+(require "clock.rkt" racket/list "private/failure.rkt" (submod "workflow.rkt" private))
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
@@ -52,6 +52,8 @@
                               (unless (terminal? task) (update-instance! store instance (transform state task))))))
   (notify-task store updated))
 (define (resume-task! workflow store id principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)] #:authorize [authorize void] #:wait? [wait? #t])
+  (resume-task/core workflow store id principal adapters custodian authorize wait? (break-enabled)))
+(define (resume-task/core workflow store id principal adapters custodian authorize wait? breaks?)
   (define instance (owned store id principal))
   (define (claim thunk)
     (let loop ()
@@ -62,6 +64,7 @@
   ;; A task keeps its authorization identity, but cannot inherit the polling
   ;; request's cancellation signal, progress token, or output stream.
   (parameterize ([current-custodian custodian]
+                 [current-workflow-task-handoff #f]
                  [current-cancellation-event never-evt]
                  [current-output-port (current-error-port)]
                  [current-cancelled? cancelled?]
@@ -72,6 +75,7 @@
                                         (request-context-capabilities parent-context) #f cancelled? void))])
     (thread
      (lambda ()
+      (parameterize-break breaks?
        (claim (lambda ()
        (with-handlers ([non-break-failure? (lambda (e)
                                    (change! store id principal
@@ -87,23 +91,69 @@
                (hash-set state 'task
                          (if (equal? (hash-ref result 'resultType) "input_required")
                              (hash-set* task 'status "input_required" 'lastUpdatedAt (timestamp) 'inputRequests (hash-ref result 'inputRequests))
-                             (hash-set* (hash-remove task 'inputRequests) 'status "completed" 'lastUpdatedAt (timestamp) 'result result)))))))))))))
+                             (hash-set* (hash-remove task 'inputRequests) 'status "completed" 'lastUpdatedAt (timestamp) 'result result))))))))))))))
 (define (start-workflow-task workflow store arguments principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)]
-                             #:operation-name [operation-name #f])
-  (define expiry (+ (mcp-current-seconds) 86400))
-  (define instance
-    (store-transaction store
-      (lambda ()
-        (define flow (create-instance! store principal (workflow-descriptor-name workflow) arguments (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters) expiry
-                                       (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))))
-        (define instance (create-instance! store principal (string-append "task:" (workflow-descriptor-name workflow)) arguments
-                                           (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters) expiry (hasheq 'task (hasheq))))
-        (define time (timestamp))
-        (update-instance! store instance (hasheq 'operationName operation-name 'capabilities (if (current-request-context) (request-context-capabilities (current-request-context)) (hasheq))
-                                                 'workflow (stored-instance-handle flow)
-                                                 'task (hasheq 'taskId (stored-instance-handle instance) 'status "working" 'createdAt time 'lastUpdatedAt time 'ttlMs 86400000 'pollIntervalMs 100))))))
-  (resume-task! workflow store (stored-instance-handle instance) principal #:adapters adapters #:custodian custodian)
-  (hash-set (hash-ref (stored-instance-state instance) 'task) 'resultType "task"))
+                             #:operation-name [operation-name #f]
+                             #:state [handle #f] #:responses [responses (hasheq)])
+  (define (handoff flow)
+    (create-workflow-task workflow store arguments principal adapters custodian operation-name flow))
+  (if (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
+             (workflow-descriptor-stages workflow))
+      (parameterize ([current-workflow-task-handoff (cons workflow handoff)])
+        (run-workflow workflow store arguments #:principal principal #:state handle
+                      #:responses responses #:adapters adapters #:cancelled? (current-cancelled?)))
+      (handoff #f)))
+(define (create-workflow-task workflow store arguments principal adapters custodian operation-name prepared-flow)
+  ;; Once the handoff commits, schedule its runtime-owned worker before a request
+  ;; break can escape. A process crash is recovered by the runtime startup scan.
+  (define worker-breaks? (break-enabled))
+  (parameterize-break #f
+    (define expiry (if prepared-flow (stored-instance-expires prepared-flow) (+ (mcp-current-seconds) 86400)))
+    (when (<= expiry (mcp-current-seconds)) (mcp-error -32602 "Task preparation has expired"))
+    (define instance
+      (store-transaction store
+        (lambda ()
+          (define flow
+            (if prepared-flow
+                (load-instance store (stored-instance-handle prepared-flow))
+                (create-instance! store principal (workflow-descriptor-name workflow) arguments
+                                  (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters) expiry
+                                  (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq)))))
+          (define previous (hash-ref (stored-instance-state flow) 'task-handoff #f))
+          (cond
+            [previous
+             (define existing (owned store (hash-ref previous 'taskId) principal))
+             (unless (equal? operation-name (hash-ref (stored-instance-state existing) 'operationName #f))
+               (mcp-error -32602 "Task handoff belongs to another operation"))
+             existing]
+            [else
+             (when (and prepared-flow ((current-cancelled?)))
+               (error 'start-workflow-task "execution cancelled before task handoff"))
+             (define instance
+               (create-instance! store principal (string-append "task:" (workflow-descriptor-name workflow)) arguments
+                                 (workflow-descriptor-version workflow) (workflow-executable-fingerprint workflow adapters)
+                                 expiry (hasheq 'task (hasheq))))
+             (define time (timestamp))
+             (define updated
+               (update-instance! store instance
+                 (hasheq 'operationName operation-name
+                         'capabilities (if (current-request-context) (request-context-capabilities (current-request-context)) (hasheq))
+                         'workflow (stored-instance-handle flow)
+                         'task (hasheq 'taskId (stored-instance-handle instance) 'status "working"
+                                       'createdAt time 'lastUpdatedAt time
+                                       'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))))
+             (when prepared-flow
+               (define created (hash-set (hash-ref (stored-instance-state updated) 'task) 'resultType "task"))
+               (update-instance! store flow (hash-set (stored-instance-state flow) 'task-handoff created))
+               (record-event! store (stored-instance-handle flow)
+                              (hasheq 'kind "task-handoff" 'taskId (stored-instance-handle instance))))
+             updated]))))
+    (when (equal? (hash-ref (hash-ref (stored-instance-state instance) 'task) 'status) "working")
+      (resume-task/core workflow store (stored-instance-handle instance) principal
+                        adapters custodian void #f worker-breaks?))
+    (if prepared-flow
+        (hash-ref (stored-instance-state (load-instance store (stored-instance-handle prepared-flow))) 'task-handoff)
+        (hash-set (hash-ref (stored-instance-state instance) 'task) 'resultType "task"))))
 (define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)])
   ;; A view restriction must reject resumption before accepting/persisting input.
   (void (workflow-executable-fingerprint workflow adapters))

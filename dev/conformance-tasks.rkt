@@ -18,3 +18,10 @@
 (workflow (multi_input) #:version "1" #:execution task #:description "Request two independent confirmations."
   (await-input ([first Any confirm-form] [second Any confirm-form]))
   (text-result "Both responses received"))
+(workflow (test_tool_with_task) #:version "1" #:execution task
+  #:description "Gather a name over MRTR, then complete a greeting as a task."
+  (await-input [user_name Any]
+    (hasheq 'mode "form" 'message "Your name?"
+            'requestedSchema (object-schema (hasheq 'name String))))
+  (task-boundary greeting)
+  (text-result (hash-ref (hash-ref user_name 'content (hasheq)) 'name "No name supplied")))

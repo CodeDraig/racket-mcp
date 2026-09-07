@@ -1,7 +1,7 @@
 #lang racket/base
 (require "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
          (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
-(provide server tool resource prompt schema shape workflow checkpoint await-input perform completion scenario define-mcp-extension)
+(provide server tool resource prompt schema shape workflow checkpoint await-input perform task-boundary completion scenario define-mcp-extension)
 (begin-for-syntax
   (define (check-literal-uri! uri ids)
     (define text (syntax-parse uri #:literals (quote)
@@ -220,6 +220,7 @@
      #'(define-mcp-extension name #:declaration transformer)]))
 (define-syntax (await-input stx) (raise-syntax-error #f "only valid as a workflow stage" stx))
 (define-syntax (perform stx) (raise-syntax-error #f "only valid as a workflow stage" stx))
+(define-syntax (task-boundary stx) (raise-syntax-error #f "only valid as a workflow stage" stx))
 (define-syntax (workflow stx) (compile-workflow stx #f))
 (define-syntax (workflow-program stx) (compile-workflow stx #t))
 (define-for-syntax (compile-workflow stx program-only? #:summaries? [summaries? #f])
@@ -247,7 +248,10 @@
        (define (continuation)
          (if (null? tail) '() (compile-sequence tail bound (string-append prefix "after/") wrap join)))
        (define (destination after) (if (null? after) join (workflow-node-id (car after))))
-       (syntax-parse first #:literals (checkpoint await-input perform if match let begin)
+       (syntax-parse first #:literals (checkpoint await-input perform task-boundary if match let begin)
+         [(task-boundary id:id)
+          (cons (node (stage-key prefix #'id) 'task-boundary #'Any (proc #'json-null))
+                (compile-sequence tail bound prefix wrap join))]
          [(await-input ([id:id spec:expr request:expr] ...+))
           (define names (syntax->list #'(id ...)))
           (check-binders (append (map car bound) names) stx)

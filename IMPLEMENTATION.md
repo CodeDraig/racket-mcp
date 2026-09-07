@@ -3057,3 +3057,59 @@ racket-mcp passed, with no warning or undefined-tag matches in the native/packag
 logs. git diff --check passed. This final evidence paragraph postdates the package
 build and changes no executable content. Verification remains Linux/Racket 9.2;
 the full SDK implementation goal remains incomplete.
+
+## MRTR preparation before task creation (2026-09-07)
+
+Added the checked workflow stage (task-boundary stage-id). Task-enabled workflows
+with a boundary execute their prefix as durable MRTR; reaching a boundary on the
+selected branch atomically creates the task and records its handoff receipt on
+the existing workflow. Existing tasks without a boundary retain immediate start.
+Task-optional execution without client support stays synchronous. Branches that
+complete before a boundary preserve ordinary results, including declined/cancelled
+input. The new example is examples/prepared-task.rkt.
+
+The Tasks data entry point accepts continuation state/responses and uses the same
+runner. Task workers clear the synchronous handoff factory; nested local workflows
+cannot inherit a parent's factory. Retries check stored responses and retrieve the
+same task handle without waiting for a running workflow's worker claim. Creation
+and mapping share a SQLite transaction, carry forward preparation expiry, and are
+journaled. A committed handoff schedules its runtime-owned worker before a request
+break can escape; process crashes use existing startup recovery. No uncertain
+initial request is automatically replayed.
+
+Initial focused coverage passed 46 checks for pre-task capability refusal without
+state creation, MRTR/result wire separation, blocking-task retries, conflicting
+input, ownership, decline/cancel branches, optional execution, interaction-runner
+composition, data construction, syntax rejection and real SQLite process restarts.
+A subsequent nested-workflow regression checks factory isolation. The interaction
+fixture initially supplied raw task objects to the runner, bypassing its documented
+protocol-outcome callback; it now uses dispatch-message and fresh JSON-RPC IDs.
+Two delimiter errors in the initial code/fixture were fixed before passing runs.
+
+The pinned official tasks-mrtr-composition scenario passed 2/2 checks, including
+wire-schema validity, under test-artifacts/conformance-task-boundary-20260907-1652.
+It was explicitly selected with --force because Tasks is outside the core dated
+selector. This closes the previously missing basic composition scenario; it is
+not the complete Tasks or durability acceptance matrix. Full verification follows.
+
+Further focused checks passed 49 cases, including nested workflow isolation,
+restoring the worker's break setting after protected handoff scheduling, and a
+boundary with the same spelling as an argument retaining the argument's value.
+The first full run overlapped these final corrections and is retained as interim
+evidence only; the final full run recompiles and tests the finished source.
+
+Final sh scripts/check.sh passed compilation, 3,462 native checks, all 1,301 pinned
+schema cases, and Scribble. Seven official Go probes passed. The final freshly
+started server again passed both official composition checks under
+ test-artifacts/conformance-task-boundary-final-20260907-1701. The new form's first
+Scribble build warned about a missing exporting declaration; its label import and
+exporting declaration were corrected, and fresh manual/package checks passed
+without warnings or undefined tags. The retry timeout test now kills its test
+requester on failure instead of hanging, and its final 22 focused checks passed.
+The distribution is refreshed once more with that final test-only change before
+commit. No macOS, Windows, or other Racket-release verification is claimed; the
+remaining SDK release gates stay open.
+
+The final distribution refresh and isolated dependency/documentation setup passed
+with no warning or undefined-tag matches. git diff --check passed. This final
+record changes no executable content after packaging.

@@ -342,7 +342,9 @@
                [else outcome]))
        (define result (render-call (lambda () (if task?
                           (begin (unless (runtime-store rt) (mcp-error -32603 "Task storage is not configured"))
-                                 (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal) #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))
+                                 (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
+                                                      #:state (current-workflow-state) #:responses (current-workflow-responses)
+                                                      #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))
                           (invoke-handler)))
                                    (if (tool-descriptor-workflow d) (workflow-executable-fingerprint (tool-descriptor-workflow d) (current-workflow-adapters)) "render/1")))
        (unless (and (hash? result)

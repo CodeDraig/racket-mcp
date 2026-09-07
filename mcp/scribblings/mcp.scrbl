@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require (for-label racket/base (only-in mcp tool schema shape resource text-result structured-result error-result load-interface interface-descriptor?)
+@(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor?)
                      (only-in mcp/cli serve-interface-command)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
@@ -175,6 +175,7 @@ therefore does not establish complete URI-format or ECMA regular-expression
 compatibility; those remain separately documented validation limits.
 
 @section{Workflow execution}
+@declare-exporting[mcp #:use-sources (mcp/forms)]
 A checkpoint evaluates replay-safe computation while retaining its workflow worker
 claim, without holding the SQLite transaction. Its validated result and stage
 advance commit atomically afterward. Cancellation is checked again inside that
@@ -287,6 +288,41 @@ Use @racket[#:recover-tasks? #f] to defer startup and @racket[recover-runtime-ta
 to scan explicitly; the latter returns worker thread events. A missing executable
 is a startup error. Incompatible executable versions fail through the workflow
 compatibility check before execution.
+
+@defform[(task-boundary stage-id)]{
+Declares a stable stage identity at which a task-enabled workflow hands off to
+background execution. It is valid only in the workflow stage grammar; it does not
+bind a Racket value. Duplicate stage identities and uses hidden in ordinary host
+expressions are expansion errors. Like other workflow stages, the boundary is
+included in manifests and executable compatibility fingerprints.
+
+A task workflow containing a boundary runs its prefix synchronously as durable
+MRTR. Its input-required results contain no task handle. Reaching the first
+boundary on the selected branch atomically persists a task and its handoff receipt,
+then returns the task result without an MRTR state token. Checkpoints and accepted
+input carry into the task. A branch that completes before reaching a boundary
+returns its ordinary result; use this to preserve decline or cancellation outcomes.
+
+Repeating an accepted continuation returns the same recorded task handle, including
+while the task runs and after it finishes. Conflicting input, changed arguments,
+foreign principals, expiry and incompatible workflow code remain errors. The task
+inherits the preparation's expiry. Process restart recovers working tasks through
+the ordinary runtime scan. No initial invocation is automatically replayed: without
+a declared workflow key, another initial request creates another preparation.
+
+Without a boundary, task execution retains its immediate-start behavior. With
+@racket[#:execution task-optional] and no client Tasks capability, boundaries are
+passed synchronously and the entire workflow remains MRTR. Subsequent boundaries
+inside an already-started task do not create nested tasks. A nested local workflow
+does not inherit the parent's handoff factory.
+}
+
+@tt{examples/prepared-task.rkt} demonstrates a name request followed by background
+work. The ordinary data API uses a @tt{workflow-stage} of kind @tt{'task-boundary},
+with @racket[Any], a procedure returning @racket[json-null], and @racket[#f] adapter
+and policy fields. The boundary does not invoke that procedure or save a value.
+@tt{start-workflow-task} accepts @racket[#:state] and
+@racket[#:responses] for the preparation's MRTR retries.
 
 @racket[#:restore-principal] maps the stored principal key to a current application
 principal. Its default returns the key itself, suitable for string identities.

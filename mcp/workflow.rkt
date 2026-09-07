@@ -39,6 +39,8 @@
 (define current-workflow-state (make-parameter #f))
 (define current-workflow-responses (make-parameter (hasheq)))
 (define current-workflow-invocation-key (make-parameter #f))
+;; Installed only by the Tasks entry point; background task workers clear it.
+(define current-workflow-task-handoff (make-parameter #f))
 (define (recovery instance stage message)
   (raise (exn:fail:recovery message (current-continuation-marks) (stored-instance-handle instance) stage)))
 (define (make-workflow name version fingerprint stages #:key [key #f] #:changes [changes (lambda (_arguments _result) '())])
@@ -54,7 +56,7 @@
       (when (and (hash-has-key? effect-policies adapter) (not (eq? policy (hash-ref effect-policies adapter))))
         (error 'make-workflow "conflicting policies for the same effect adapter"))
       (hash-set! effect-policies adapter policy))
-    (unless (memq (workflow-stage-kind s) '(checkpoint input input-group effect complete branch jump)) (error 'make-workflow "invalid stage kind"))
+    (unless (memq (workflow-stage-kind s) '(checkpoint input input-group effect complete branch jump task-boundary)) (error 'make-workflow "invalid stage kind"))
     (define schema (workflow-stage-schema s))
     (when (and (value-codec? schema) (not (memq (workflow-stage-kind s) '(checkpoint effect))))
       (error 'make-workflow "value codecs belong on checkpoint or effect stages"))
@@ -115,10 +117,16 @@
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
+  (define requested-handoff (current-workflow-task-handoff))
   (define (run)
-    (run-workflow/core workflow store arguments #:principal principal #:state handle
-                       #:responses responses #:adapters adapters #:clock clock
-                       #:ttl ttl #:cancelled? cancelled?))
+    ;; The entry point names one workflow. Nested local workflows must not
+    ;; inherit its task factory or hand their state to the parent's operation.
+    (parameterize ([current-workflow-task-handoff
+                    (and (pair? requested-handoff) (eq? (car requested-handoff) workflow)
+                         (cdr requested-handoff))])
+      (run-workflow/core workflow store arguments #:principal principal #:state handle
+                         #:responses responses #:adapters adapters #:clock clock
+                         #:ttl ttl #:cancelled? cancelled?)))
   (if (captured-workflow? workflow)
       (call-with-executable-build (captured-workflow-build workflow) run)
       (run)))
@@ -205,7 +213,9 @@
                                 (let ([stage (list-ref (workflow-descriptor-stages workflow) position)])
                                   (memq id (stage-inputs stage))))
                      (mcp-error -32602 "Response does not match a pending input"))]))
-          (cond [(member (hash-ref state 'status) '("completed" "abandoned")) (list 'return (hash-ref state 'result))]
+          (cond [(and (current-workflow-task-handoff) (hash-has-key? state 'task-handoff))
+                 (list 'task-handoff instance)]
+                [(member (hash-ref state 'status) '("completed" "abandoned")) (list 'return (hash-ref state 'result))]
                 [(>= position (length (workflow-descriptor-stages workflow))) (error 'run-workflow "workflow has no completion stage")]
                 [else
                  (define stage (list-ref (workflow-descriptor-stages workflow) position))
@@ -216,6 +226,16 @@
                                 (not (hash-has-key? state pending-key)))
                            'prepare-input (workflow-stage-kind stage))
                    [(prepare-input) (list 'prepare-input stage env instance pending-key)]
+                   [(task-boundary)
+                    (if (current-workflow-task-handoff)
+                        (list 'task-handoff instance)
+                        (begin
+                          ;; Boundary identities name control-flow stages, not
+                          ;; persistent values; never overwrite an argument.
+                          (record-event! store (stored-instance-handle instance)
+                                         (hasheq 'kind "task-boundary" 'stage (symbol->string id)))
+                          (update-instance! store instance (hash-set state 'position (add1 position)))
+                          (list 'continue)))]
                    [(jump branch complete checkpoint)
                     (list (workflow-stage-kind stage) stage env instance)]
                    [(input-group)
@@ -267,6 +287,7 @@
                     (list 'prepare-effect stage env instance adapter key)])]))))
     (publish-workflow-changes!)
     (case (car action)
+      [(task-handoff) ((current-workflow-task-handoff) (cadr action))]
       [(return) (cadr action)] [(continue) (loop)]
       [(prepare-input)
        (match-define (list _ stage env snapshot pending-key) action)
@@ -370,8 +391,13 @@
   (let claim-loop ()
     (when (cancelled?) (error 'run-workflow "execution cancelled"))
     (when (<= (stored-instance-expires instance) (clock)) (error 'run-workflow "continuation expired"))
-    (unless (call-with-instance-worker store (stored-instance-handle instance)
-              (lambda () (set! result (execute))))
+    ;; A recorded handoff is a receipt, independent of the now-running task's
+    ;; workflow claim. Still execute the transactional response/conflict checks.
+    (unless (if (and (current-workflow-task-handoff)
+                     (hash-has-key? (stored-instance-state (load-instance store (stored-instance-handle instance))) 'task-handoff))
+                (begin (set! result (execute)) #t)
+                (call-with-instance-worker store (stored-instance-handle instance)
+                  (lambda () (set! result (execute)))))
       (sync (alarm-evt (+ (current-inexact-milliseconds) 25)))
       (claim-loop)))
   result)
@@ -415,4 +441,4 @@
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
 
-(module+ private (provide workflow-add-fingerprint-suffix))
+(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff))
