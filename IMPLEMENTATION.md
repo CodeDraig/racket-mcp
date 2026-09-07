@@ -1711,3 +1711,10 @@ new URI engine; after the upstream extractor correction, the focused upstream/UR
 suites passed 345 checks before the final dotted-variable regressions/full run.
 git diff --check passed. Native verification remains Linux/Racket 9.2; this is
 URI behavior coverage, not completion of the full SDK release gates.
+
+Staged-check qualification: the pre-staging tracked diff was clean, but the full
+staged diff reported upstream trailing whitespace and an extra terminal blank
+line in the newly vendored URI fixtures. Those bytes are retained to preserve the
+verified upstream hashes. git diff HEAD^ HEAD --check -- . ':!vendor' passed for
+the SDK/test/tooling changes. The full staged whitespace check was not a pass;
+no upstream fixture was rewritten to silence it.
