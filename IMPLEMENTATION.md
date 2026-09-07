@@ -13,7 +13,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 2. Schemas and declarations | Native schema evaluator; shapes; resources, prompts, completion; negative syntax tests | URI/pattern coverage, full durable embedding failure matrix |
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
-| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters, cache/outbox primitives, separate extension example | External freshness reconciliation, upstream MRTR/Tasks translation, complete integration coverage |
+| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream MRTR/Tasks translation, complete integration coverage |
 | 6. Developer experience | All named CLI commands have implementations; manifests, Scribble, examples | Complete manifests/diagrams/docs, scenario fault DSL, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
@@ -56,7 +56,7 @@ complete coverage of its surrounding milestone.
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
 | Upstream adapters | `upstream.rkt`; upstream tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; durable MRTR/Tasks translation remains missing |
-| Freshness | `freshness.rkt`; freshness tests | Private cache and SQLite outbox primitives; Resource dependencies, acknowledged tool changes, runtime invalidation/publication, and explicit outbox hooks added; workflow completion/effect publication added; Opt-in ordinary resource caching and authorization-context partitioning added; external reconciliation and cross-principal policy remain |
+| Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`; compiler tests, executable examples | Basic commands; scenarios run test submodules only; deterministic fault-injection scenario language missing |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
 
@@ -2719,3 +2719,47 @@ env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed before t
 evidence-only ledger addition. git diff --check passed. Verification remains
 Linux/Racket 9.2; the imported-helper compatibility probe and the other recorded
 integration, durability, scenario, conformance and platform gates remain open.
+
+## External committed-change reconciliation (2026-09-07)
+
+mcp/external-changes now provides named, versioned committed-feed sources and
+single-page reconciliation. Readers receive a saved JSON cursor and event limit
+outside the SDK storage transaction. A transaction records immutable event
+receipts, pending outbox entries and the new cursor together. Duplicate event IDs
+with identical principal/keys are ignored; conflicting reuse rolls back the whole
+page. Concurrent readers compare revisions, returning superseded for a stale page
+without automatically fetching again. Source configuration changes are rejected;
+read-only cursor inspection creates no state. Receipts and cursors are retained,
+with no automatic pruning. Accepted pages default to 1000 events and the existing
+1 MiB storage limit; this does not bound application reader allocations or I/O.
+
+runtime-reconcile-changes! drains committed entries through existing principal
+partitioning, cache invalidation and notification delivery. Feed principals use
+the SDK principal key, including issuer and subject for verified principals.
+Applications must provide an authoritative committed feed or reconciliation scan;
+this API cannot infer omitted database changes and never replays a mutation.
+Delivery is at least once, including interruption after publication before its
+acknowledgement. Shared-resource/cross-principal policy remains a separate gate.
+
+The focused suite passed 108 checks across memory and SQLite, malformed/oversized
+pages, source incompatibility, duplicate/conflicting events, concurrent readers,
+reader/publication failures, false cursors, and runtime principal isolation with
+cache invalidation before notification. Separate child processes exercise death
+during reading, after atomic recording and after delivery before acknowledgement;
+recovery preserves the cursor, deduplicates recording, and repeats delivery using
+the same outbox ID without changing the external feed. The initial runtime test
+used an incorrect positional manual-clock argument; it was corrected to the
+public #:seconds keyword before the passing run.
+
+The executable JSON-feed example passed an initial delivery, restart without a
+duplicate, and an appended event. sh scripts/check.sh passed compilation, 3,247
+native checks, all 1,301 pinned core schema cases and Scribble. All six official
+Go probes passed via sh scripts/check-interop.sh. python3 scripts/package.py and
+isolated raco setup --check-pkg-deps --pkgs racket-mcp passed; the final principal
+documentation clarification is checked separately before commit. Verification
+remains Linux/Racket 9.2. The imported-helper compatibility defect, upstream durable
+bridge, full failure matrices and other release gates remain open.
+
+Final documentation clarification passed a fresh Scribble render and a rebuilt
+isolated source distribution's dependency/documentation setup. git diff --check
+passed. This last evidence paragraph does not change executable package content.

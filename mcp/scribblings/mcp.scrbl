@@ -1473,3 +1473,65 @@ kind/name, declared workflow adapters, the adapter policy and optional allowlist
 Every record explicitly reports @tt{hostEffects} as @tt{"unknown"}. An empty list
 of declared adapters does not establish host-code purity. This summary uses
 descriptors and does not execute handlers.
+
+@section[#:tag "external-change-reconciliation"]{Reconciling external committed changes}
+
+@tt{mcp/external-changes} supplies @tt{make-external-change-source},
+@tt{external-change}, @tt{external-change-page}, @tt{reconcile-external-changes!},
+@tt{external-change-cursor}, and @tt{reconciliation-result}. These bindings are
+also available from @tt{mcp}. Source construction takes a stable name, an explicit
+version, a reader procedure and optional @tt{#:initial-cursor} (JSON null by
+default). Construction performs no feed reads or storage operations.
+
+The reader accepts the saved JSON cursor and requested event limit. It returns an
+@tt{external-change-page} containing a list of @tt{external-change} values and the
+next JSON cursor. Each event has a nonempty string ID, a nonempty principal key
+string, and a JSON list of dependency keys. For a verified principal, use
+@racket[principal-key] from @racketmodname[mcp/authorization] to retain both issuer
+and subject identity; a bare subject name does not identify that authorization
+context. The reader observes an authoritative
+committed-change feed or an application-owned reconciliation scan. The application
+must connect that feed to its commits; the SDK cannot infer changes omitted from
+the feed. A cursor must not skip committed events. Reader I/O and its deadlines
+are application responsibilities. The SDK never calls a mutation callback.
+
+Each @tt{reconcile-external-changes!} call reads one page outside the state-store
+transaction. It then atomically records new event identities, creates their
+pending change-outbox entries and advances the cursor. Empty dependency lists
+record the event without producing an outbox entry. Repeated identical events are
+deduplicated; reusing an ID with another principal or keys rejects the whole page.
+IDs are scoped to the logical source, including across principals. A change that
+affects multiple principals therefore needs distinct stable event IDs for those
+principal-specific reports.
+
+Concurrent readers compare the stored revision before committing. A stale page
+returns a @tt{reconciliation-result} with status @tt{'superseded}, zero recorded
+events and the current cursor. Other successful calls return status
+@tt{'recorded}, the number of new event identities and the resulting cursor.
+There is no automatic refetch loop. A reader exception, malformed page or storage
+failure leaves the prior cursor and outbox intact. The source configuration may
+already have been recorded before the failed read.
+
+@tt{#:max-events} defaults to 1000. @tt{#:max-bytes} bounds the accepted encoded
+page and defaults to the storage-supported 1 MiB; it can be lowered, but cannot
+exceed that storage limit. These limits validate reader output and do not limit
+the reader's own allocations or network buffering. Event receipts and source
+cursors are retained without automatic pruning, preserving deduplication across
+restarts. Source version or initial-cursor changes under an existing name are
+rejected rather than resetting progress. @tt{external-change-cursor} inspects the
+saved cursor, or returns the configured initial value without creating state.
+
+Use @tt{runtime-reconcile-changes!} to reconcile through a configured runtime and
+then drain its pending outbox through normal cache invalidation and notification
+policy. The low-level API only records changes. Delivery remains at least once:
+interruption after publication but before acknowledgement can deliver the same
+outbox identity again. Delivery callbacks must tolerate this. Reconciliation does
+not repeat the application mutation, and it does not promise exactly-once remote
+delivery. The runtime applies its logical clock and principal-specific policy;
+this API does not introduce a global wildcard invalidation principal.
+
+@tt{examples/external-changes.rkt} is an executable adapter for a small append-only
+JSON feed published by atomic replacement. Supply its source name, feed path and
+explicit SDK SQLite state path. It reads the feed and prints pending outbox
+deliveries; requiring the module does neither. A production database adapter can
+use the same API with its own durable change log and paginated reader.

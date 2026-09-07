@@ -1,5 +1,6 @@
 #lang racket/base
-(require "private/adapter-policy.rkt")
+(require "private/adapter-policy.rkt" "external-changes.rkt")
+(provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
 (provide runtime-clock runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
@@ -147,6 +148,11 @@
   (unless (runtime-store rt) (error 'freshness "outbox storage is not configured"))
   (drain-change-outbox! (runtime-store rt)
                        (lambda (_id principal keys) (runtime-report-change! rt principal keys))))
+(define/clock (runtime-reconcile-changes! rt source #:max-events [event-limit 1000] #:max-bytes [byte-limit 1048576])
+  (unless (runtime-store rt) (error 'runtime-reconcile-changes! "a configured state store is required"))
+  (define result (reconcile-external-changes! (runtime-store rt) source #:max-events event-limit #:max-bytes byte-limit))
+  (runtime-drain-changes! rt)
+  result)
 ;; Resolve persisted identity through application policy; credentials are never
 ;; serialized. Each worker reauthorizes after acquiring its instance lock.
 (define/clock (recover-runtime-tasks! rt #:restore-principal [restore-principal values])
