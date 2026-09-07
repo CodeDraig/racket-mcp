@@ -1,9 +1,9 @@
 #lang racket/base
-(require "private/handler-info.rkt")
+(require "private/handler-info.rkt" "private/task-observation.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
-(provide runtime-clock runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
+(provide runtime-clock runtime-report-change! runtime-drain-changes! runtime-observe-upstream-task! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
 (define protocol-version "2026-07-28")
 (struct resource-snapshot (result reads keys expires) #:transparent)
@@ -15,6 +15,13 @@
 (struct clocked-runtime runtime (clock))
 (define (runtime-clock rt)
   (if (clocked-runtime? rt) (clocked-runtime-clock rt) (current-mcp-clock)))
+(define (runtime-observe-upstream-task! rt id detail #:principal principal #:capabilities capabilities)
+  (unless (and (string? id) (hash? detail))
+    (raise-arguments-error 'runtime-observe-upstream-task! "expected a local task ID and upstream detail object" "id" id "detail" detail))
+  (define frozen (string->json (json->string detail)))
+  (parameterize ([current-upstream-task-observation
+                  (cons id (hash-set (hash-remove frozen '_meta) 'resultType "complete"))])
+    (dispatch rt "tasks/get" (hasheq 'taskId id '_meta (request-meta #:capabilities capabilities)) #:principal principal)))
 (define-syntax-rule (define/clock (name rt . arguments) body ...)
   (define (name rt . arguments)
     (parameterize ([current-mcp-clock (runtime-clock rt)]) body ...)))
@@ -492,6 +499,10 @@
        (unless (string? task-id) (mcp-error -32602 "taskId must be a string"))
        (define task-instance (load-instance (runtime-store rt) task-id))
        (define task-tool (and task-instance (resolve-task-operation (interface-descriptor-tools iface) task-instance)))
+       (when (and (current-upstream-task-observation)
+                  (equal? task-id (car (current-upstream-task-observation)))
+                  (not (and task-tool (task-handler? (tool-descriptor-handler task-tool)))))
+         (mcp-error -32602 "Task does not have an upstream observation handler"))
        (if (and task-tool (task-handler? (tool-descriptor-handler task-tool)))
            (begin
              ;; Validate ownership before authorization callbacks or upstream I/O.

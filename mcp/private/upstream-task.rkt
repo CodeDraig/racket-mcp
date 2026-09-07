@@ -206,6 +206,7 @@
 (define (upstream-task-request bridge store snapshot request source method id
                                #:principal principal #:credential-id credential
                                #:responses [responses (hasheq)] #:capabilities [capabilities (hasheq)]
+                               #:observed [supplied-observation #f] #:validate-detail [validate-detail void]
                                #:verify [verify void] #:cancelled? [cancelled? (lambda () #f)] #:retry? [retry? #f])
   (check-capabilities! capabilities)
   (unless (member method '("tasks/get" "tasks/update" "tasks/cancel")) (error 'upstream-task "unknown method"))
@@ -214,7 +215,12 @@
   (unless (hash? responses) (mcp-error -32602 "Input responses must be an object"))
   (set! responses (freeze bridge responses))
   (define (latest) (owned bridge store snapshot id principal credential source))
-  (void (latest))
+  (define initial (latest))
+  (define observation (and supplied-observation (freeze bridge supplied-observation)))
+  (when observation
+    (unless (and (equal? method "tasks/get") (task-schema-valid? "GetTaskResult" observation)
+                 (equal? (hash-ref observation 'taskId) (hash-ref (stored-instance-state initial) 'remoteId)))
+      (mcp-error -32603 "Malformed or unrelated upstream task observation")))
   (define answer #f)
   (define changed #f)
   (define (execute)
@@ -285,10 +291,11 @@
         [(return) (cadr action)]
         [(again) (loop)]
         [(get)
-         (verify)
-         (define outcome (freeze bridge (request "tasks/get" (hasheq 'taskId (cadr action)))))
+         (unless observation (verify))
+         (define outcome (or observation (freeze bridge (request "tasks/get" (hasheq 'taskId (cadr action))))))
          (when (and (not (hash-has-key? outcome 'resultType)) (hash-has-key? outcome 'error)) (mcp-error -32603 "Upstream task polling failed"))
          (define remote (if (hash-has-key? outcome 'resultType) outcome (hash-ref outcome 'result outcome)))
+         (validate-detail remote)
          (define observed
            (store-transaction store
              (lambda ()

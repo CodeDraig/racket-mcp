@@ -1,6 +1,7 @@
 #lang scribble/manual
 @(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
+                     (only-in mcp/runtime runtime-observe-upstream-task!)
                      (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request! recover-upstream-task! retry-upstream-task!)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
@@ -990,10 +991,40 @@ mutation. Native-workflow recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
 translated completed results. This currently reports changes observed through
-local polling and control requests; it does not establish a background upstream
+local polling, control requests, and explicit observations; it does not establish a background upstream
 subscription. Full upstream notification forwarding, broader fault-injection
 coverage and independent task-bridge interoperability remain release gates.
 
+@subsubsection{Accepting upstream task observations}
+
+@declare-exporting[mcp/runtime]
+@defproc[(runtime-observe-upstream-task! [runtime any/c] [task-id string?]
+                                      [detail hash?] [#:principal principal any/c]
+                                      [#:capabilities capabilities hash?]) hash?]{
+Accepts an authenticated upstream task status notification's parameters for an
+existing local bridged task. The application must supply the corresponding local
+task ID and obtain the detail from its trusted upstream connection. This is a
+local integration API; no MCP request parameter can install an observation.
+It performs the same ownership, authorization, credential identity, executable
+compatibility, expiry and capability checks as local task polling, without
+polling or mutating the upstream peer.
+
+The detail's remote task ID and Tasks schema must match the stored translation.
+Successful tool output is validated before persistence. Input identifiers and
+resource links are translated, committed changes notify local subscribers, and
+the returned detail uses the local task ID. Upstream subscription metadata is
+discarded; local notifications receive their own subscription metadata.
+Identical observations do not create another revision or notification.
+
+Recorded terminal outcomes remain immutable. An uncertain prior mutation still
+requires explicit recovery; an observation cannot silently repair or replay it.
+The caller owns subscription establishment and ordering of observations against
+its control requests. This API neither establishes a stream nor provides a
+protocol sequence number for resolving stale, out-of-order observations.
+}
+
+
+@subsubsection{Recovering uncertain upstream tasks}
 
 @declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task mcp/upstream)]
 @defproc[(recover-upstream-task! [bridge upstream-bridge?] [store any/c]

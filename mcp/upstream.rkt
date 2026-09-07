@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
          "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
-         "workflow.rkt" (only-in "storage.rkt" opaque-handle) (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
+         "workflow.rkt" (only-in "storage.rkt" opaque-handle) (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt" "private/task-observation.rkt")
 (provide capture-snapshot make-upstream-interface upstream-resource-change-keys check-upstream-compatibility! recover-upstream-task! retry-upstream-task! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
@@ -214,11 +214,14 @@
         (define principal (request-context-principal context))
         (define credential ((upstream-bridge-credential-id bridge) principal))
         (define notify (current-task-notify))
+        (define observation (current-upstream-task-observation))
         (define result
           (parameterize ([current-task-notify (lambda (who detail) (notify who (translate-task-detail detail)))])
             (upstream-task-request bridge (current-workflow-store) snapshot request source method id
               #:principal (principal-key principal) #:credential-id credential
               #:responses (hash-ref params 'inputResponses (hasheq)) #:capabilities (request-context-capabilities context)
+              #:observed (and (equal? method "tasks/get") observation (equal? id (car observation)) (cdr observation))
+              #:validate-detail (lambda (detail) (translate-task-detail detail) (void))
               #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context))))
         (translate-task-detail result))
       (make-tool (hash-ref wire 'name) '()

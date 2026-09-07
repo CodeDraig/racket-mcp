@@ -13,7 +13,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 2. Schemas and declarations | Native schema evaluator; shapes; resources, prompts, completion; negative syntax tests | URI/pattern coverage, full durable embedding failure matrix |
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
-| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream Tasks failure matrices and subscription forwarding, complete integration coverage |
+| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, scoped resource subscription forwarding, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Active upstream task subscription integration, Tasks failure matrices, complete integration coverage |
 | 6. Developer experience | All named CLI commands; manifests, Scribble, examples; local/wire sessions, asynchronous requests, cancellation, disconnect/reconnect and process kill/restart scenarios | Complete manifests/diagrams/docs, authored fault scheduling and acceptance matrix, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
@@ -51,12 +51,12 @@ complete coverage of its surrounding milestone.
 | MRTR state and input | Workflow/store and `interaction.rkt`; workflow and official MRTR fixtures | Opaque handles, ownership/arguments/expiry/code checks, sequential input; round-specific tokens, conflicting-response arbitration, and partial input batches covered |
 | SQLite durability and recovery | `storage.rkt`, `workflow.rkt`; workflow/restart tests | Real child-process crash/manual recovery tested; full every-boundary concurrent/crash matrix missing |
 | Effect policies | Transactional, idempotent, manual adapters; workflow/restart tests | Explicit intents and journaled recovery; instance claims exclude in-flight recovery; competing outcome repairs and retry waiting tested; exhaustive effect crash matrix remains |
-| Workflow executable compatibility | Version and source-form fingerprint stored | Imported helper changes are not included in build fingerprint; complete executable compatibility gate missing |
+| Workflow executable compatibility | Version and source-form fingerprint stored; explicit captured loader includes imported helpers | Default/direct loading still omits imported helper changes; automatic runtime provenance and complete executable compatibility gate missing |
 | Tasks | `tasks.rkt`; tasks tests | Persist-before-return, polling, input update, owner checks, terminal immutability; task workers detached from request cancellation/output |
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
-| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`; upstream and upstream-bridge tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and observed task notifications now translate; observed-outcome task replacement is implemented; explicit mutation retry is implemented; upstream subscription forwarding and full task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
+| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`, `upstream-subscription.rkt`; upstream, bridge and subscription tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and explicit task observations translate; observed-outcome task replacement and explicit mutation retry are implemented; scoped resource forwarding has official Go peers in both directions; active task subscriptions, loss propagation policy and full task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`, `scenario-session.rkt`, `scenario-process.rkt`; scenario and process tests, executable examples | Local/stdio/HTTP sessions, asynchronous handles, cancellation, disconnect/reconnect and process kill/restart implemented; complete authored fault scheduling and acceptance matrix remain |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
@@ -3923,3 +3923,35 @@ roles over stdio/HTTP. These are specific interaction probes, not a full conform
 claim. Only development fixtures, the probe runner and this ledger changed; full
 native/schema/package checks were not repeated. Evidence is Linux/Racket 9.2;
 remaining SDK implementation and release gates stay open.
+
+## Explicit upstream task observations (2026-09-07)
+
+Added runtime-observe-upstream-task! for applications receiving authenticated
+upstream task notifications. It takes an existing local task ID and remote detail,
+uses the ordinary task dispatch authorization and ownership path, and persists
+through the bridge's existing worker arbitration and task translation. The call
+does not contact the upstream peer. Remote task identity and schema are checked;
+completed tool output is now validated before persistence for both observations
+and ordinary polling. Local subscribers receive translated committed details.
+
+Upstream transport metadata is removed before duplicate detection. Identical
+observations do not advance revisions or emit duplicate notifications. Recorded
+terminal outcomes remain unchanged; an uncertain mutation still fails with a
+recovery-required diagnostic and cannot be repaired or replayed by notification.
+The API is local and trusted, not a new wire method. The manual documents caller
+responsibility for source authentication and ordering. Active task subscription
+establishment and a complete concurrent/stale observation matrix remain open.
+
+The observation, upstream Tasks, repair and interruption suites passed 168 checks
+after recompiling dependents of the runtime API. They cover owner/capability/
+credential/authorization rejection, remote identity, translated inputs and resource
+links, invalid output before persistence, duplicate and terminal observations,
+uncertain-command failure and zero upstream polling/mutation.
+
+Final sh scripts/check.sh passed compilation, 4,757 native checks, all 1,301
+pinned core schema cases and Scribble. All thirteen sh scripts/check-interop.sh
+Go probes passed. The first package documentation build exposed an export-section
+link warning; separate observation/recovery sections corrected it. Rebuilt
+distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp passed
+without warning or undefined-tag matches. git diff --check passed. Evidence is
+Linux/Racket 9.2; active task subscriptions and the full release gates remain open.
