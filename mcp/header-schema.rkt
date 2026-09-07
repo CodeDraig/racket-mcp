@@ -1,0 +1,31 @@
+#lang racket/base
+(require racket/string racket/list "json.rkt" "error.rkt")
+(provide header-bindings mirrored-headers (struct-out header-binding))
+(struct header-binding (name path type) #:transparent)
+(define (header-bindings schema)
+  (define result '()) (define names (make-hash))
+  (define (walk s path allowed? root?)
+    (when (hash? s)
+      (when (hash-has-key? s 'x-mcp-header)
+        (define name (hash-ref s 'x-mcp-header)) (define type (hash-ref s 'type #f))
+        (unless (and allowed? (string? name) (regexp-match? #px"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$" name)
+                     (member type '("integer" "string" "boolean"))) (error 'header-bindings "invalid x-mcp-header annotation"))
+        (when (hash-has-key? names (string-downcase name)) (error 'header-bindings "duplicate x-mcp-header name"))
+        (hash-set! names (string-downcase name) #t) (set! result (cons (header-binding (string-append "Mcp-Param-" name) path type) result)))
+      (for ([(key child) (in-hash (hash-ref s 'properties (hasheq)))]) (walk child (append path (list key)) (or root? allowed?) #f))
+      (for ([key '($defs patternProperties dependentSchemas)] #:when (hash? (hash-ref s key #f)))
+        (for ([child (in-hash-values (hash-ref s key))]) (walk child path #f #f)))
+      (for ([key '(allOf anyOf oneOf prefixItems)] #:when (list? (hash-ref s key #f))) (for ([child (in-list (hash-ref s key))]) (walk child path #f #f)))
+      (for ([key '(items contains not if then else additionalProperties unevaluatedProperties unevaluatedItems propertyNames)] #:when (hash-has-key? s key)) (walk (hash-ref s key) path #f #f))))
+  (walk schema '() #f #t) (reverse result))
+(define (mirrored-headers schema arguments)
+  (filter values
+    (for/list ([binding (in-list (header-bindings schema))])
+      (define value (for/fold ([value arguments]) ([key (in-list (header-binding-path binding))]) (if (hash? value) (hash-ref value key missing) missing)))
+      (cond [(or (missing? value) (eq? value json-null)) #f]
+            [else
+             (unless (case (string->symbol (header-binding-type binding))
+                       [(string) (string? value)] [(boolean) (boolean? value)]
+                       [(integer) (and (exact-integer? value) (<= (- 1 (expt 2 53)) value (sub1 (expt 2 53))))])
+               (mcp-error -32602 "Annotated parameter has an invalid value"))
+             (cons (header-binding-name binding) (if (string? value) value (json->string value)))]))))

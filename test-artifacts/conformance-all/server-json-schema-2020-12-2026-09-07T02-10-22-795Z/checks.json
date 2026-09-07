@@ -1,0 +1,48 @@
+[
+  {
+    "id": "json-schema-2020-12-tool-found",
+    "name": "JsonSchema2020_12ToolFound",
+    "description": "Server advertises tool 'json_schema_2020_12_tool'",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T02:10:22.797Z",
+    "errorMessage": "Tool 'json_schema_2020_12_tool' not found. Available tools: test_simple_text, test_image_content, test_audio_content, test_embedded_resource, test_multiple_content_types, test_error_handling, test_tool_with_progress, test_logging_tool, test_missing_capability, test_streaming_elicitation",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "details": {
+      "toolFound": false,
+      "availableTools": [
+        "test_simple_text",
+        "test_image_content",
+        "test_audio_content",
+        "test_embedded_resource",
+        "test_multiple_content_types",
+        "test_error_handling",
+        "test_tool_with_progress",
+        "test_logging_tool",
+        "test_missing_capability",
+        "test_streaming_elicitation"
+      ]
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T02:10:22.797Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 2,
+      "violations": []
+    }
+  }
+]

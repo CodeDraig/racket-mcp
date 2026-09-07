@@ -1,0 +1,7 @@
+compiled/
+.racket/
+.cache/
+*.sqlite*
+doc/
+dist/
+node_modules/

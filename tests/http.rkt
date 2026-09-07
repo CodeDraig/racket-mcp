@@ -1,0 +1,21 @@
+#lang racket/base
+(require rackunit racket/async-channel racket/runtime-path mcp mcp/http
+         (prefix-in example: "../examples/greeter.rkt"))
+(define-runtime-path example "../examples/greeter.rkt")
+(for ([s '("plain" "naïve 雪" "=?base64?Zm9v?=" "line\nbreak" " padded " "")])
+  (check-equal? (decode-header-value (encode-header-value s)) s))
+(define rt (make-runtime example:mcp-interface))
+(for ([sse? '(#f #t)])
+  (define confirmation (make-async-channel))
+  (define stop (serve-http rt #:port 0 #:sse? sse? #:confirmation confirmation))
+  (define port (sync/timeout 5 confirmation))
+  (when (exn? port) (raise port))
+  (check-true (exact-positive-integer? port))
+  (dynamic-wind void
+    (lambda ()
+      (define client (make-http-client (format "http://127.0.0.1:~a~a" port (if sse? "/mcp" ""))))
+      (define result (sync/timeout 5 (http-client-request client "tools/call" (hasheq 'name "greet" 'arguments (hasheq 'name "雪")))))
+      (when (exn? result) (raise result))
+      (check-not-false result)
+      (check-equal? (hash-ref (hash-ref result 'result) 'content) (list (text-content "Hello, 雪"))))
+    stop))

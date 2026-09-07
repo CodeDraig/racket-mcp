@@ -1,0 +1,4 @@
+read-json: invalid JSON token: ""
+  context...:
+   /srv/data/code/racket-mcp/mcp/json.rkt:89:0: string->json
+   /srv/data/code/racket-mcp/mcp/http.rkt:121:18

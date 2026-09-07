@@ -1,0 +1,12 @@
+#lang racket/base
+(require rackunit mcp mcp/upstream)
+(define calls 0)
+(define source (make-runtime (make-interface #:tools (list (make-tool "echo" '() (lambda (v) (set! calls (add1 calls)) (structured-result v)) #:input-schema (hasheq 'type "object" 'additionalProperties Integer) #:raw? #t)))))
+(define (remote method params) (hasheq 'result (dispatch source method (hash-set params '_meta (request-meta)))))
+(define snapshot (capture-snapshot remote))
+(check-equal? calls 0)
+(define adapter (make-runtime (make-upstream-interface snapshot remote)))
+(check-equal? (hash-ref (dispatch adapter "tools/call" (hasheq '_meta (request-meta) 'name "echo" 'arguments (hasheq 'extra 7))) 'structuredContent) (hasheq 'extra 7))
+(check-equal? calls 1)
+(define changed (hash-set snapshot 'tools/list (hasheq 'tools '())))
+(check-exn exn:fail? (lambda () (check-upstream-compatibility! changed remote)))

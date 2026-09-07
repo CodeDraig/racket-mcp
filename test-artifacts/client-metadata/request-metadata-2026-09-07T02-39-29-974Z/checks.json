@@ -1,0 +1,146 @@
+[
+  {
+    "id": "sep-2575-http-client-sends-version-header",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-http-client-sends-version-header was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-populates-meta",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-populates-meta was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-sends-client-info",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-sends-client-info was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-http-version-header-matches-meta",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-http-version-header-matches-meta was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-declares-roots-capability",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-declares-roots-capability was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-declares-sampling-capability",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-declares-sampling-capability was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-declares-elicitation-capability",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-declares-elicitation-capability was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  },
+  {
+    "id": "sep-2575-client-retry-supported-version",
+    "name": "NotObserved",
+    "description": "Declared check sep-2575-client-retry-supported-version was never emitted",
+    "status": "FAILURE",
+    "errorMessage": "Check was not observed: the client never sent a request to the scenario server (no handler registered for this scenario?)",
+    "timestamp": "2026-09-07T02:39:30.629Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/index#meta"
+      }
+    ],
+    "details": {
+      "observed": false,
+      "requestsObserved": 0
+    }
+  }
+]

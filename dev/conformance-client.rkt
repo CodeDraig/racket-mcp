@@ -1,0 +1,23 @@
+#lang racket/base
+(require racket/list mcp/http)
+(define args (current-command-line-arguments))
+(define client (make-http-client (vector-ref args (sub1 (vector-length args)))))
+(define (call method [params (hasheq)])
+  (define response (http-client-call client method params))
+  (hash-ref response 'result (hasheq)))
+(void (call "server/discover"))
+(define tools (hash-ref (call "tools/list") 'tools '()))
+(for ([tool (in-list tools)])
+  (define properties (hash-ref (hash-ref tool 'inputSchema (hasheq)) 'properties (hasheq)))
+  (define arguments
+    (for/hasheq ([(name schema) (in-hash properties)])
+      (values name (hash-ref schema 'default
+                            (lambda () (case (string->symbol (hash-ref schema 'type "string"))
+                                         [(integer number) 1] [(boolean) #t] [else "test"]))))))
+  (void (call "tools/call" (hasheq 'name (hash-ref tool 'name) 'arguments arguments))))
+(define resources (hash-ref (call "resources/list") 'resources '()))
+(for ([resource (in-list resources)]) (void (call "resources/read" (hasheq 'uri (hash-ref resource 'uri)))))
+(define prompts (hash-ref (call "prompts/list") 'prompts '()))
+(for ([prompt (in-list prompts)])
+  (void (call "prompts/get" (hasheq 'name (hash-ref prompt 'name)
+                                   'arguments (for/hasheq ([arg (in-list (hash-ref prompt 'arguments '()))]) (values (string->symbol (hash-ref arg 'name)) "test"))))))
