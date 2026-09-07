@@ -64,9 +64,9 @@ complete coverage of its surrounding milestone.
 ## Initial independent validation (historical)
 
 The counts and limitations in this section describe the initial implementation.
-Later dated entries below supersede them; the latest native run has 1,567 checks,
-1,301 pinned core schema cases, and five Go probes passing. Full release gates
-remain open, including the explicitly recorded conformance discrepancies.
+Later dated entries below supersede them. Consult the newest verification entry
+for current counts and platform coverage. Full release gates remain open, including
+the explicitly recorded conformance discrepancies.
 
 Pinned official inputs and per-file SHA-256 hashes are in `vendor/LOCK.json`.
 The conformance harness and Go SDK are development dependencies; runtime modules
@@ -3406,3 +3406,37 @@ A local skip-bootstrap invocation has passed compilation and is running tests.
 Remote execution and final local evidence follow; no macOS/Windows/9.3 success
 is claimed merely from adding the workflow. Independent Go and full conformance
 checks remain separate from this matrix.
+
+The local portable runner completed successfully on Linux x86_64/Racket 9.2:
+4,033 native checks, 1,301 pinned schema cases, compilation, Scribble and installed
+package dependency checks all passed. This invocation reused the existing isolated
+package home with --skip-bootstrap, so it does not establish fresh bootstrap.
+
+GitHub accepted the six-job workflow at commit 287ab3921635c5e49094b8def2b5c4fc126e0609,
+but run 34154580115 executed no steps. The check annotation states: "The job was
+not started because an Actions budget is preventing further use." This is a hosted
+runner/account blocker, not a native test failure. No billing settings were changed;
+macOS and Windows remain unverified.
+
+## Native Racket 9.3 verification (2026-09-07)
+
+Installed the official full x86_64 Linux CS distribution inside .cache/racket-9.3,
+without global installation. The installer
+https://download.racket-lang.org/releases/9.3/installers/racket-9.3-x86_64-linux-buster-cs.sh
+matched the official release-page SHA-256
+30dc59d9b5af083eacf793253d35782c5231e8bfb7a7331fe32ccd9a41fd792f.
+
+With that bin directory first in PATH, ran python3 scripts/ci.py --package-home
+.cache/ci/package-home-9.3, including fresh dependency bootstrap. Every step passed:
+language preparation/installation, SDK package registration, compilation, 4,033
+native checks, 1,301 pinned core schema cases (zero failed or unsupported), Scribble
+and raco setup --check-pkg-deps --pkgs racket-mcp. The seven check-interop.sh probes
+also passed with the same 9.3 executable and isolated package environment; only
+the script's environment setup was replaced to preserve that selected package home.
+
+Version-specific reports/logs are retained in test-artifacts/native-platform-2026-09-07.
+The tested executable source is commit 287ab3921635c5e49094b8def2b5c4fc126e0609;
+working-tree changes during verification were documentation/evidence only. Linux
+x86_64 is now verified on both 9.2 and 9.3. macOS and Windows still require native
+execution; the Actions budget blocker is unchanged. No broad conformance or full
+SDK completion claim follows from this platform result.

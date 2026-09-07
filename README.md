@@ -42,8 +42,6 @@ already has the original dependency installed, use `env -u PLTCOLLECTS raco pkg 
 commands with `scripts/racket-env.sh` sourced as above. The unpatched upstream
 0.1 package does not satisfy the SDK dependency requirement.
 
-The CLI is also available without package registration:
-
 Native CI uses `python scripts/ci.py` with an existing Racket installation. This
 portable runner prepares the pinned language dependency, keeps package writes in
 `.cache/ci/package-home`, and runs compilation, the native and pinned schema
@@ -57,6 +55,15 @@ versions are pinned in `.github/workflows/native.yml`. CI runs are evidence for
 their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
+
+Local Linux x86_64 verification passed on Racket 9.2 and 9.3, including native
+tests, pinned core schema cases, documentation and package checks. Racket 9.3
+also passed fresh dependency bootstrap and all seven Go interoperability probes.
+The first hosted matrix run was prevented from starting by an Actions budget;
+macOS and Windows remain unverified. See `test-artifacts/native-platform-2026-09-07`
+and the implementation ledger for the version-specific evidence.
+
+The CLI is also available without package registration:
 
 ```sh
 racket -l mcp/cli -- inspect examples/library.rkt

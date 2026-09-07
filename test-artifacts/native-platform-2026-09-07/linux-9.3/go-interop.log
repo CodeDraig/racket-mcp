@@ -1,0 +1,7 @@
+Official Go SDK: discovery, tool listing, and tool call passed (2026-07-28).
+Official Go SDK: three pages, five ordered tools passed (2026-07-28).
+Official Go SDK: ordered progress, context cancellation, server worker cleanup, and same-connection tool listing passed (2026-07-28).
+Racket client / official Go server: progress, cancellation, handler cleanup, and continued connection passed.
+Official Go SDK: multi-content resource read, tool embedding, and prompt message lowering passed (2026-07-28).
+Official Go SDK: HTTP JSON-to-SSE selection, single execution, cancellation, worker cleanup, and continued requests passed.
+Official Go SDK: discovery, tool listing, and tool call passed (2026-07-28).
