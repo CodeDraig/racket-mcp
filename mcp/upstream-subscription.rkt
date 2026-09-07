@@ -43,6 +43,16 @@
   (define peer (send "subscriptions/listen" (hasheq 'notifications (hasheq 'resourceSubscriptions requested))))
   (define notices (request-handle-notifications peer))
   (define owner (make-custodian))
+  (define stopped (make-semaphore 0))
+  (define stopped-evt (semaphore-peek-evt stopped))
+  (define cancellation
+    (exn:fail:request-cancelled "Upstream resource subscription cancelled locally"
+      (current-continuation-marks) (request-handle-id peer)))
+  (define (cancel!)
+    ;; Wake the forwarding worker before contacting the borrowed client. Local
+    ;; cancellation abandons queued changes; normal completion still drains them.
+    (semaphore-post stopped)
+    (request-cancel! peer))
   (define worker #f)
   (define subscription #f)
   (define lock (make-semaphore 1))
@@ -62,14 +72,17 @@
     params)
   (define events
     (choice-evt (wrap-evt notices (lambda (notice) (cons 'notice notice)))
-                (wrap-evt peer (lambda (outcome) (cons 'outcome outcome)))))
+                (wrap-evt peer (lambda (outcome) (cons 'outcome outcome)))
+                (wrap-evt stopped-evt (lambda (_) (cons 'stopped #f)))))
   (define (next-event wait)
     (define queued (sync/timeout 0 notices))
     (define event (if queued (cons 'notice queued) (sync/timeout wait events)))
     ;; Completion may become ready between the first queue check and sync.
-    (if (and event (eq? (car event) 'outcome))
+    (cond [(sync/timeout 0 stopped-evt) (cons 'stopped #f)]
+          [(and event (eq? (car event) 'outcome))
         (let ([last-notice (sync/timeout 0 notices)])
-          (if last-notice (cons 'notice last-notice) event)) event))
+          (if last-notice (cons 'notice last-notice) event))]
+          [else event]))
   (define (terminal outcome)
     (cond [(exn? outcome) outcome]
           [(and (hash? outcome) (hash-has-key? outcome 'error)) outcome]
@@ -101,7 +114,7 @@
       (define accepted-uris (remove-duplicates (map string->immutable-string (hash-ref accepted 'resourceSubscriptions '()))))
       (set! subscription
         (upstream-resource-subscription (make-semaphore 0) (box #f)
-          (lambda () (request-cancel! peer)) accepted-uris))
+          cancel! accepted-uris))
       (set! worker
         (parameterize ([current-custodian owner])
           (thread
@@ -110,11 +123,12 @@
                                (lambda (failure)
                                  (finish! (if (exn? failure) failure
                                               (exn:fail (format "Upstream forwarding raised: ~s" failure) (current-continuation-marks))))
-                                 (request-cancel! peer))])
+                                 (cancel!))])
                 (let loop ()
                   ;; Drain already queued notices before observing stream completion.
                   (define event (next-event #f))
                   (cond
+                    [(eq? (car event) 'stopped) (finish! cancellation)]
                     [(eq? (car event) 'outcome) (finish! (terminal (cdr event)))]
                     [else
                      (define notice (cdr event))
@@ -128,9 +142,8 @@
       (proc subscription))
     (lambda ()
       (parameterize-break #f
-        (with-handlers ([(lambda (_) #t) void]) (request-cancel! peer))
+        (with-handlers ([(lambda (_) #t) void]) (cancel!))
         (when worker (sync/timeout timeout worker))
         (custodian-shutdown-all owner)
         (when subscription
-          (finish! (exn:fail:request-cancelled "Upstream subscription scope closed"
-                     (current-continuation-marks) (request-handle-id peer))))))))
+          (finish! cancellation))))))

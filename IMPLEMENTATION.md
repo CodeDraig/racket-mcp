@@ -3853,3 +3853,28 @@ Final raco make and the upstream-subscription, upstream-freshness and subscripti
 suites passed 145 checks. git diff --check passed. Only tests and this ledger changed;
 full/schema/package/interoperability runs were not repeated. Evidence remains
 Linux/Racket 9.2, and the complete SDK objective remains open.
+
+
+## Upstream forwarding cancellation with queued changes (2026-09-07)
+
+A deterministic test paused the first forwarding pass inside dependency resolution,
+queued a second accepted update and explicitly stopped the stream. The existing
+runner drained the second update after cancellation: the probe observed two passes
+and an extra local notification (2/79 failures). Added a separate worker stop event,
+posted before cancelling the borrowed native request. Explicit stop and scope exit
+now abandon queued changes after an already executing pass finishes. Graceful
+upstream completion still drains queued changes; terminal outcomes remain stable.
+
+The corrected runner, freshness and scenario-request suites passed 222 checks.
+The regression requires exactly one forwarding pass and one local notification,
+plus a cancellation outcome. Full final-source verification follows. This fixes
+local cancellation, not all upstream/downstream loss propagation policies.
+
+
+Final sh scripts/check.sh passed compilation, 4,724 native checks, all 1,301
+pinned core schema cases and Scribble. The rebuilt distribution and isolated
+raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or undefined
+tag matches. git diff --check passed. This final evidence paragraph postdates
+packaging and changes no executable/manual content. Independent Go/conformance
+probes were not repeated for this worker cancellation fix. Verification remains
+Linux/Racket 9.2; the full SDK goal and remaining release gates remain open.

@@ -72,12 +72,14 @@
 (define ack (notice "notifications/subscriptions/acknowledged" (hasheq 'notifications (hasheq 'resourceSubscriptions '("remote:///doc")))))
 (define update (notice "notifications/resources/updated" (hasheq 'uri "remote:///doc")))
 (define complete (hasheq 'jsonrpc "2.0" 'id id 'result (params (hasheq 'resultType "complete"))))
-(define (exercise messages outcome proc #:timeout [timeout 1] #:uris [uris '("remote:///doc")])
+(define (exercise messages outcome proc #:timeout [timeout 1] #:uris [uris '("remote:///doc")]
+                  #:runtime [target local] #:queue-observer [observe-queue void])
   (define cancellations 0)
   (define ready (make-semaphore 0))
   (define result (box outcome))
   (define queue (make-async-channel))
   (for ([message (in-list messages)]) (async-channel-put queue message))
+  (observe-queue queue)
   (when outcome (semaphore-post ready))
   (define peer (request-handle id ready result
     (lambda ()
@@ -89,12 +91,48 @@
     (if (equal? method "subscriptions/listen") peer
         (request-handle 1 (make-semaphore 1)
           (box (hasheq 'result (hash-ref snapshot (string->symbol method)))) void (make-async-channel))))
-  (define returned (call-with-upstream-resource-subscription local source snapshot request uris proc
+  (define returned (call-with-upstream-resource-subscription target source snapshot request uris proc
                      #:principal "owner" #:timeout timeout))
   (check-true (> cancellations 0))
   returned)
 (dynamic-wind void
   (lambda ()
+    ;; Stop while one forwarding pass is in flight, with another notice queued.
+    (define entered (make-semaphore 0))
+    (define release (make-semaphore 0))
+    (define passes 0)
+    (define original (car (interface-descriptor-resources source)))
+    (define guarded
+      (struct-copy resource-descriptor original
+        [depends-on
+         (lambda (arguments)
+           (set! passes (add1 passes))
+           (when (= passes 1) (semaphore-post entered) (semaphore-wait release))
+           ((resource-descriptor-depends-on original) arguments))]))
+    (call-with-scenario-session (make-interface #:resources (list guarded))
+      (lambda (session)
+        (define listener (scenario-request session "subscriptions/listen"
+          (hasheq 'notifications (hasheq 'resourceSubscriptions '("remote:///doc")))))
+        (define local-notices (request-handle-notifications listener))
+        (check-equal? (hash-ref (sync/timeout 2 local-notices) 'method) "notifications/subscriptions/acknowledged")
+        (define peer-notices #f)
+        (define stopped
+          (exercise (list ack) #f
+            (lambda (subscription)
+              (async-channel-put peer-notices update)
+              (check-not-false (sync/timeout 2 entered))
+              (async-channel-put peer-notices update)
+              (stop-upstream-resource-subscription! subscription)
+              (semaphore-post release)
+              (sync/timeout 2 subscription))
+            #:runtime (scenario-session-runtime session)
+            #:queue-observer (lambda (queue) (set! peer-notices queue))))
+        (check-true (exn:fail:request-cancelled? stopped))
+        (check-equal? passes 1)
+        (check-equal? (hash-ref (sync/timeout 2 local-notices) 'method) "notifications/resources/updated")
+        (check-false (sync/timeout 0 local-notices))
+        (request-cancel! listener))
+      #:principal "owner")
     (define opened? #f)
     (define mismatched (hash-set snapshot 'server/discover
       (hash-set (hash-ref snapshot 'server/discover) 'supportedVersions '("different"))))

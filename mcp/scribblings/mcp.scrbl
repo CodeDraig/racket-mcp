@@ -839,6 +839,9 @@ for already queued notifications to be processed; a retained event keeps the sam
 terminal outcome. @tt{stop-upstream-resource-subscription!} cancels the upstream
 request. Returning or escaping from the consumer cancels that request and releases
 the forwarding worker while preserving the consumer's result or raised value.
+Explicit stop and scope exit abandon queued changes. A forwarding pass already
+executing may finish, but the worker observes its local stop signal before starting
+another pass. Normal upstream completion continues to drain queued changes.
 The borrowed upstream client and local listeners retain their own lifetimes.
 Nest this scope inside the lifetime of the local runtime and upstream client.
 
