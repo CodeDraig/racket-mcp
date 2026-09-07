@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
-                     (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request!)))
+                     (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request! recover-upstream-task!)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
 
@@ -794,7 +794,7 @@ while local lookup uses the transformed declaration. Without an explicitly
 configured bridge, MRTR and Tasks outcomes still fail explicitly.
 
 @subsubsection{Durable upstream MRTR}
-@defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge)]
+@defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
 @defproc[(upstream-bridge? [value any/c]) boolean?]{
 Returns whether the value is an upstream bridge configuration.
 }
@@ -922,15 +922,46 @@ intent before sending, then a receipt before advancing. If a mutation's outcome
 is lost or its worker is terminated, the next local operation records a failed
 task with an explicit recovery-required diagnostic. It never automatically sends
 the mutation again. An acknowledged cancellation is followed by polling the
-peer's actual status, preserving a completion/cancellation race. The local API
-for authorizing repair and creating a replacement upstream task handle remains
-unfinished; native-workflow recovery APIs do not revive an upstream task.
+peer's actual status, preserving a completion/cancellation race. The local @racket[recover-upstream-task!] API records an independently observed
+upstream task outcome and creates a replacement handle. Explicit authorization
+to repeat an uncertain upstream mutation remains unfinished; native-workflow
+recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
 translated completed results. This currently reports changes observed through
 local polling and control requests; it does not establish a background upstream
 subscription. Full upstream notification forwarding, broader fault-injection
 coverage and independent task-bridge interoperability remain release gates.
+
+
+@declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task)]
+@defproc[(recover-upstream-task! [bridge upstream-bridge?] [store any/c]
+                                [snapshot hash?] [task-id string?]
+                                [#:principal principal string?] [#:credential-id credential string?]
+                                [#:outcome outcome hash?] [#:authorize authorize procedure? void]) hash?]{
+Local operator API for replacing a task whose upstream mutation became uncertain.
+The application must authorize repair; the optional zero-argument authorization
+callback runs once per call, outside storage transactions. No wire recovery method
+is installed. Calls inside a caller-owned store transaction are rejected before
+authorization or state changes.
+
+Supply an independently observed @tt{tasks/get} result, directly or inside a
+protocol result envelope, for the same remote task ID. The operation validates
+the local owner, credential identity, pinned snapshot/version, task expiry, and
+observed result. It refuses to race an active task worker. If a terminated worker
+left an intent before a poll recorded failure, repair first records that failure.
+
+The old task stays failed. A new local task and its creation receipt commit with
+journal links on both records. Its expiry cannot extend the old handle's
+retention. Repeating an identical repair returns the same receipt, including
+after SQLite reopen; a different observation for the same repair is rejected.
+Pending input receives fresh local IDs. Get the new task through its originating
+interface to apply normal authorization, presentation and output contracts.
+
+This call performs no upstream requests and never retries a mutation. The supplied
+observation is the operator's responsibility; it is not an exactly-once guarantee.
+A normal upstream failure without an uncertain local mutation is not eligible.
+}
 
 @racket[define-mcp-extension] accepts @racket[#:declaration] or @racket[#:workflow]
 before a transformer expression. Omitting the kind means @racket[#:declaration].

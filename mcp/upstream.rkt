@@ -2,7 +2,7 @@
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
          "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
          "workflow.rkt" (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
-(provide capture-snapshot make-upstream-interface check-upstream-compatibility! (struct-out upstream-template-adapter))
+(provide capture-snapshot make-upstream-interface check-upstream-compatibility! recover-upstream-task! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)

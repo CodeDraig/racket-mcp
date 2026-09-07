@@ -49,6 +49,12 @@
                  (check-exn #rx"requires recovery" (lambda () (call "tasks/update" update)))
                  (let ([worker (thread (lambda () (call "tasks/update" update)))])
                    (check-not-false (sync/timeout 2 entered))
+                   (check-exn #rx"active"
+                     (lambda ()
+                       (recover-upstream-task!
+                         (make-upstream-bridge #:identity "peer" #:version "1" #:credential-id (lambda (_) "account"))
+                         store snapshot (hash-ref params 'taskId) #:principal "owner" #:credential-id "account"
+                         #:outcome (hash-set* base 'resultType "complete" 'status "completed" 'result (text-result "observed")))))
                    (kill-thread worker)
                    (check-not-false (sync/timeout 2 worker))))
              (set! detail (call "tasks/get" params))

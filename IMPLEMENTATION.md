@@ -13,7 +13,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 2. Schemas and declarations | Native schema evaluator; shapes; resources, prompts, completion; negative syntax tests | URI/pattern coverage, full durable embedding failure matrix |
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
-| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream Tasks recovery and notification forwarding, complete integration coverage |
+| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream Tasks explicit retry and subscription forwarding, complete integration coverage |
 | 6. Developer experience | All named CLI commands have implementations; manifests, Scribble, examples | Complete manifests/diagrams/docs, scenario fault DSL, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
@@ -56,7 +56,7 @@ complete coverage of its surrounding milestone.
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
-| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`; upstream and upstream-bridge tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and observed task notifications now translate; upstream task repair and subscription forwarding remain incomplete; completion MRTR is forbidden by the pinned protocol |
+| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`; upstream and upstream-bridge tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and observed task notifications now translate; observed-outcome task replacement is implemented; explicit mutation retry and subscription forwarding remain incomplete; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`; compiler tests, executable examples | Basic commands; scenarios run test submodules only; deterministic fault-injection scenario language missing |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
@@ -3309,3 +3309,41 @@ or undefined-tag matches. git diff --check passed. This final evidence paragraph
 postdates packaging and changes no executable/manual content. Evidence remains
 Linux/Racket 9.2; upstream task repair, active subscription forwarding and the
 remaining full SDK release gates are not complete.
+
+
+## Observed-outcome upstream task repair (2026-09-07)
+
+Added recover-upstream-task! through mcp/upstream. This local operator API accepts
+an independently observed detailed tasks/get result, either direct or enveloped,
+and replaces a task whose local upstream mutation became uncertain. It never
+sends a request. Authorization runs outside transactions; a caller-owned store
+transaction is rejected before authorization. Ownership, credential, snapshot,
+version, expiry, remote task identity, and active-worker checks precede repair.
+
+One transaction retains the failed old task, persists a new task/creation receipt,
+and journals the replacement on both records. Repeated identical observations
+return that receipt; conflicting observations fail. Replacement expiry does not
+extend retention. Fresh input mappings are generated for an observed pending
+state. A terminated worker's still-pending intent becomes a failed task before
+replacement, without reviving the original handle. Ordinary upstream terminal
+failures without uncertain local mutations are ineligible.
+
+Initial memory/SQLite repair tests passed 47 checks. The final focused run adds
+transaction/authorization order, enveloped observation equivalence, and rejection
+while a mutation worker is active; final verification follows. Tests create the
+uncertain task through real adapter dispatch and a lost mutation response, then
+verify terminal immutability, owner/credential/version rejection, conflicting
+repair, journal links, one replacement and SQLite reopen. Explicit retry of an
+unknown upstream mutation, background subscription forwarding and the remaining
+upstream/release failure matrices are still open.
+
+Final focused repair/interruption verification passed 71 checks. Full
+sh scripts/check.sh passed compilation, 3,853 native checks, all 1,301 pinned
+schema cases and Scribble. All seven official Go probes passed. The first package
+build reported a missing Scribble exporting-library declaration for the new API;
+adding declare-exporting fixed it. The rebuilt distribution and isolated
+raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or undefined
+tag matches. git diff --check passed. This evidence paragraph postdates packaging
+and changes no executable/manual content. Native verification remains Linux/Racket
+9.2; explicit upstream mutation retry and the remaining SDK release gates stay
+open.
