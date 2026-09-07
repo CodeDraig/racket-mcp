@@ -12,6 +12,10 @@ import (
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+	if len(os.Args) > 1 && (os.Args[1] == "serve-resources" || os.Args[1] == "serve-resources-http") {
+		serveResources(ctx, os.Args[1] == "serve-resources-http")
+		return
+	}
 	if len(os.Args) > 2 && (os.Args[2] == "resource-subscriptions" || os.Args[2] == "resource-subscriptions-http") {
 		checkResourceSubscriptions(ctx, os.Args[1], os.Args[2] == "resource-subscriptions-http")
 		return

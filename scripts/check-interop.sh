@@ -21,3 +21,5 @@ racket dev/cancellation-client.rkt "$PWD/.cache/mcp-interop"
 .cache/mcp-interop "$PWD/dev/subscription-server.rkt" subscriptions-http
 .cache/mcp-interop "$PWD/dev/upstream-resource-server.rkt" resource-subscriptions
 .cache/mcp-interop "$PWD/dev/upstream-resource-server.rkt" resource-subscriptions-http
+racket dev/resource-subscription-client.rkt "$PWD/.cache/mcp-interop"
+racket dev/resource-subscription-client.rkt "$PWD/.cache/mcp-interop" http

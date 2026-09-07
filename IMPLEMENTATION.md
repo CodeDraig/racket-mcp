@@ -3900,3 +3900,26 @@ gofmt and git diff --check passed. Only development probes, their runner and thi
 ledger changed. Full native/schema/package runs were not repeated; the SDK runtime
 is unchanged from the preceding verified revision. This is Linux/Racket 9.2 evidence;
 full independent conformance and other remaining release gates remain open.
+
+
+## Official Go upstream resource peer probes (2026-09-07)
+
+Added an official Go SDK resource server with stdio and stateless HTTP endpoints.
+The Racket probe captures its interface, installs a URI-remapped view, and uses the
+scoped upstream resource forwarder. Two rounds verify accepted remote URI filters,
+mapped local updates and local subscription IDs, changed resource reads, explicit
+cancellation with stable terminal outcomes, fresh upstream subscription IDs, and
+continued tools/list requests over the same borrowed client connection.
+
+The initial stdio server probe passed with the preceding eleven checks. Extended
+the peer to Streamable HTTP and ran the final sh scripts/check-interop.sh: all
+thirteen probes passed. raco make compiled the new Racket client fixture; the runner
+built the Go binary and compiled its existing Racket server fixtures. gofmt and
+git diff --check passed. Raw output is retained under
+test-artifacts/go-resource-peer-interop-2026-09-07/go-probes.log.
+
+The forwarding path now has independent Go peers in both client and upstream-server
+roles over stdio/HTTP. These are specific interaction probes, not a full conformance
+claim. Only development fixtures, the probe runner and this ledger changed; full
+native/schema/package checks were not repeated. Evidence is Linux/Racket 9.2;
+remaining SDK implementation and release gates stay open.
