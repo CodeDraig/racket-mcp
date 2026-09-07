@@ -906,12 +906,12 @@ this Linux workspace.
 For locally declared targets, expansion rejects targets other than prompts or
  resources, unknown argument names, and duplicate target/argument routes. The
  manifest records the target, argument, and declaration source without evaluating
- handler expressions. Resource bindings also export their static name and argument
- names through lexical transformer values. Imported and re-exported resources
- retain argument checks through renaming; aliases of one imported resource cannot
+ handler expressions. Resource and prompt bindings also export their static name and argument
+ names through lexical transformer values. Imported and re-exported declarations
+ retain argument checks through renaming; aliases of one imported declaration cannot
  define duplicate completion routes. Their manifest target records the original
- resource name without instantiating the provider or its handlers. Imported prompt
- or host-supplied target information that the compiler cannot establish is marked
+ name and kind without instantiating the provider or its handlers. Host-supplied
+ target information that the compiler cannot establish is marked
  dynamic. Interface construction checks target
  membership, argument existence, and duplicate routes for every completion,
  including descriptors supplied through the ordinary data API. Views remap retained

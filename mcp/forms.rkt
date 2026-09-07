@@ -1,6 +1,6 @@
 #lang racket/base
 (require racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
-         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
+         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform completion scenario define-mcp-extension)
 (begin-for-syntax
   (define (check-literal-uri! uri ids)
@@ -147,24 +147,29 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default) (attribute a.codec)))
      (define-values (program summaries)
        (compile-workflow #'(workflow-program (name [a.id a.spec] ...) #:version version body ...) #t #:summaries? #t))
+     (define hidden (car (generate-temporaries #'(name))))
      #`(begin
-         (define-operation-value name (make-prompt (symbol->string 'name) (list #,@args) #f #:description description
+         (define-operation-value #,hidden (make-prompt (symbol->string 'name) (list #,@args) #f #:description description
                                    #:workflow #,program))
+         (define-syntax name (prompt-binding (quote-syntax #,hidden) 'name '(a.id ...)))
          (register-declaration name #:declaration prompt name #,stx #:workflow-nodes (#,@summaries)))]
     [(_ (name:id a:prompt-arg ...) (~optional (~seq #:description description:expr) #:defaults ([description #'""])) body:expr ...+)
      (define ids (syntax->list #'(a.id ...))) (check-binders ids stx)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default) (attribute a.codec)))
-     #`(begin (define-operation-value name (make-prompt (symbol->string 'name) (list #,@args)
+     (define hidden (car (generate-temporaries #'(name))))
+     #`(begin (define-operation-value #,hidden (make-prompt (symbol->string 'name) (list #,@args)
                                 (lambda (bound) (apply (mcp-handler (a.id ...) body ...) (list #,@(for/list ([id ids]) #`(hash-ref bound '#,id)))))
-                                #:description description)) (register-declaration name #:declaration prompt name #,stx))]))
+                                #:description description)) (define-syntax name (prompt-binding (quote-syntax #,hidden) 'name '(a.id ...)))
+         (register-declaration name #:declaration prompt name #,stx))]))
 
 (define-syntax (checkpoint stx) (raise-syntax-error #f "only valid as a workflow stage" stx))
 (define-syntax (completion stx)
   (syntax-parse stx
     [(_ (target:id argument:id) handler:expr)
-     (define binding (lookup-resource-binding #'target))
-     (when (and (resource-binding? binding)
-                (not (memq (syntax-e #'argument) (resource-binding-arguments binding))))
+     (define binding (or (lookup-resource-binding #'target) (lookup-prompt-binding #'target)))
+     (when (and binding
+                (not (memq (syntax-e #'argument)
+                           (if (resource-binding? binding) (resource-binding-arguments binding) (prompt-binding-arguments binding)))))
        (raise-syntax-error 'completion "unknown target argument" stx #'argument))
      #`(begin
          (register-declaration #f #:declaration completion target #,stx)

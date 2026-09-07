@@ -1,5 +1,5 @@
 #lang racket/base
-(require syntax-spec-v3 (for-syntax racket/base syntax/parse "resource-binding.rkt"))
+(require syntax-spec-v3 (for-syntax racket/base syntax/parse "resource-binding.rkt" "prompt-binding.rkt"))
 (provide define-schema-value define-operation-value define-resource-value
          schema-reference operation-reference resource-reference effect-reference workflow-effects workflow-environment checked-schema-expression)
 ;; Public declarations retain ordinary Racket values through reference compilers.
@@ -26,7 +26,7 @@
   #:lhs [#'name]
   #:rhs [#'value])
  (host-interface/expression (schema-reference name:schema-name) #'name)
- (host-interface/expression (operation-reference name:operation-name) #'name)
+ (host-interface/expression (operation-reference/core name:operation-name) #'name)
  (host-interface/expression (resource-reference name:resource-name) #'name)
  (host-interface/expression (effect-reference name:effect-name) #'name)
  (host-interface/expression
@@ -37,6 +37,12 @@
   (workflow-environment ([name:workflow-value value:racket-expr] ...) body:racket-expr)
   #:binding (scope (bind name) ... body)
   #'(let ([name value] ...) body)))
+
+(define-syntax (operation-reference stx)
+  (syntax-parse stx
+    [(_ name:id)
+     (define prompt (lookup-prompt-binding #'name))
+     #`(operation-reference/core #,(if prompt (prompt-binding-target prompt) #'name))]))
 
 ;; Only inspect known declaration bindings. Ordinary Racket expressions and
 ;; dynamically constructed schema values retain their normal expansion path.

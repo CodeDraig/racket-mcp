@@ -82,8 +82,8 @@
          (prefix-in imported-manifest: (submod "." imported manifest)))
 (check-equal? (length (interface-descriptor-completions imported:mcp-interface)) 1)
 (define imported-entry (findf (lambda (d) (eq? (hash-ref d 'kind) 'completion)) imported-manifest:manifest))
-(check-false (hash-ref (hash-ref imported-entry 'target) 'known?))
-(check-true (hash-ref imported-entry 'dynamic-metadata))
+(check-equal? (hash-ref imported-entry 'target) (hasheq 'known? #t 'kind 'prompt 'name 'remote))
+(check-false (hash-ref imported-entry 'dynamic-metadata))
 (module absent-import mcp/lang
   (require (rename-in (submod ".." provider) [remote renamed]))
   (completion (renamed id) (lambda (_prefix _context) '())))

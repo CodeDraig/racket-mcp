@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list syntax/parse "../uri-template.rkt" "resource-binding.rkt"
+(require racket/list syntax/parse "../uri-template.rkt" "resource-binding.rkt" "prompt-binding.rkt"
          (for-template racket/base "../schema.rkt"))
 (provide (struct-out declaration-node) parse-declaration declarations->manifest)
 ;; This IR contains lexical identifiers and complete source syntax. Only the
@@ -59,15 +59,20 @@
              (and (memq (declaration-node-kind candidate) '(schema shape tool workflow resource prompt))
                   (identifier? (declaration-node-name candidate))
                   (free-identifier=? (declaration-node-name node) (declaration-node-name candidate)))) nodes))
-  (define (imported-resource node)
-    (lookup-resource-binding (declaration-node-name node)))
+  (define (imported-target node)
+    (define id (declaration-node-name node))
+    (define resource (lookup-resource-binding id))
+    (define prompt (and (not resource) (lookup-prompt-binding id)))
+    (cond [resource (hasheq 'kind 'resource 'name (resource-binding-name resource) 'arguments (resource-binding-arguments resource))]
+          [prompt (hasheq 'kind 'prompt 'name (prompt-binding-name prompt) 'arguments (prompt-binding-arguments prompt))]
+          [else #f]))
   (define completion-bindings '())
   (for ([node (in-list nodes)])
     (define kind (declaration-node-kind node))
     (when (eq? kind 'completion)
       (define target (completion-target node))
-      (define imported (and (not target) (imported-resource node)))
-      (when (and imported (not (memq (syntax-e (declaration-node-value node)) (resource-binding-arguments imported))))
+      (define imported (and (not target) (imported-target node)))
+      (when (and imported (not (memq (syntax-e (declaration-node-value node)) (hash-ref imported 'arguments))))
         (raise-syntax-error 'completion "unknown target argument" (declaration-node-source node) (declaration-node-value node)))
       (when (or target imported)
         (for ([previous (in-list completion-bindings)])
@@ -135,12 +140,12 @@
     (define with-schema
       (cond [(eq? kind 'completion)
              (define target (completion-target node))
-             (define imported (and (not target) (imported-resource node)))
+             (define imported (and (not target) (imported-target node)))
              (hash-set* result 'argument (syntax-e (declaration-node-value node))
                         'target (cond [target
                                       (hasheq 'known? #t 'kind (declaration-node-kind target)
                                               'name (syntax-e (declaration-node-name target)))]
-                                     [imported (hasheq 'known? #t 'kind 'resource 'name (resource-binding-name imported))]
+                                     [imported (hasheq 'known? #t 'kind (hash-ref imported 'kind) 'name (hash-ref imported 'name))]
                                      [else (hasheq 'known? #f 'expression (format "~s" (syntax->datum (declaration-node-name node))))]))]
             [(memq kind '(schema shape)) (hash-set result 'schema (describe (declaration-node-name node) #t))]
             [(memq kind '(tool workflow))

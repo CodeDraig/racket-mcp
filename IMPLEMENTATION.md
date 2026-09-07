@@ -1982,3 +1982,33 @@ Final validation: sh scripts/check.sh passed compilation, 2,608 native checks,
 all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
 with sh scripts/check-interop.sh. git diff --check passed. Native evidence remains
 Linux/Racket 9.2; the broader compiler and full SDK release gates remain open.
+
+## Imported prompt completion metadata (2026-09-07)
+
+Prompt declarations now export a lexical transformer wrapper carrying their
+original name and argument names. Ordinary host references resolve to the hidden
+syntax-spec operation value, and operation-reference explicitly unwraps prompts
+before invoking its checked core. Completion checks and manifests share the
+imported-target path for prompts and resources. Imported prompt arguments and
+duplicate aliases are checked without evaluating providers or handlers; manifests
+record the original prompt name and kind instead of marking the target unknown.
+
+The focused imported-prompt/domain-binding/completion run passed 66 checks. New
+fixtures cover plain and workflow prompts, renaming and re-export, duplicate
+aliases, misspelled arguments under both languages, forward declarations, host
+shadowing, throwing-provider manifests, operation references, dynamic-require,
+immutable binding errors, schema-kind rejection, and phase-shifted value use.
+
+A rename-transformer probe first lost metadata during export. Preserving that
+transformer via not-free-identifier=? instead broke syntax-spec compiled-name
+lookup. The final explicit wrapper avoids those aliasing semantics and passes the
+binding checks; neither failed probe is counted as passing evidence. The Racket
+reference documents the export/alias behavior at
+https://docs.racket-lang.org/reference/stxtrans.html.
+Whole-interface references, the complete extension API, and broader release gates
+remain open; these checks concern declared completion targets.
+
+Final validation: sh scripts/check.sh passed compilation, 2,627 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
+with sh scripts/check-interop.sh. git diff --check passed. Native verification
+remains Linux/Racket 9.2; complete interface-reference and release gates remain open.
