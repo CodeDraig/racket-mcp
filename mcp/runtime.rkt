@@ -1,6 +1,6 @@
 #lang racket/base
 (require "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
-(provide runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! make-runtime (struct-out runtime) dispatch dispatch-message
+(provide runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
 (define protocol-version "2026-07-28")
 (struct resource-snapshot (result reads keys expires) #:transparent)
@@ -502,3 +502,35 @@
     (check-client-message message)
     (if (missing? id) #f
         (hasheq 'jsonrpc "2.0" 'id id 'result (dispatch rt (hash-ref message 'method) (hash-ref message 'params (hasheq)) #:principal principal #:id id #:notify notify)))))
+
+;; An explicit local action after recovery, never an automatic wire retry.
+(define (retry-runtime-task! rt id #:principal principal #:capabilities supplied-caps)
+  (define caps (string->json (json->string supplied-caps)))
+  (define store (runtime-store rt))
+  (unless store (mcp-error -32601 "Tasks are not configured"))
+  (validate-request-meta (hasheq '_meta (request-meta #:capabilities caps)))
+  (unless (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks)
+    (mcp-error -32021 "Client Tasks capability is required"
+      (hasheq 'requiredCapabilities (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))))
+  (define identity (principal-key principal))
+  (get-task store id identity)
+  (define instance (load-instance store id))
+  (define tool (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
+  (unless tool (mcp-error -32001 "Task operation is absent from this interface"))
+  (when (and (ormap (lambda (stage) (memq (workflow-stage-kind stage) '(input input-group)))
+                    (workflow-descriptor-stages (tool-descriptor-workflow tool)))
+             (not (hash-has-key? caps 'elicitation)))
+    (mcp-error -32021 "Client elicitation capability is required"
+      (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
+  (define (authorize)
+    (unless (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (current-seconds)))
+                 ((runtime-authorize rt) principal "tasks/get" (hasheq 'taskId id))
+                 ((runtime-authorize rt) principal "tools/call"
+                   (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance))))
+      (mcp-error -32001 "Repaired task execution is not authorized"))
+    (current-request-context (request-context principal caps #f (current-cancelled?) void)))
+  (parameterize ([current-request-context #f]
+                 [current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
+                 [current-task-notify (task-notifier rt)])
+    (retry-recovered-task! (tool-descriptor-workflow tool) store id identity
+      #:adapters (operation-adapters rt tool) #:custodian (runtime-custodian rt) #:authorize authorize)))

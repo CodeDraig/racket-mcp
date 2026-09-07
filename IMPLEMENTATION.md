@@ -1755,3 +1755,46 @@ all 1,301 pinned JSON Schema core cases, and Scribble without warnings. All five
 Go probes in sh scripts/check-interop.sh passed. git diff --check passed. A direct
 probe also confirmed generated fixed matchers reject a trailing raw newline.
 Verification remains Linux/Racket 9.2; the full SDK objective remains incomplete.
+
+## Explicit replacement after task recovery (2026-09-07)
+
+Tasks failing with an outstanding uncertain manual effect now record private
+recovery metadata alongside the legal failed-task error. This includes an adapter
+exception on the first attempt with a persisted intent, not only an uncertainty
+exception encountered on a later run. The metadata binds eligibility to a workflow
+revision, effect stage, and subsequent journaled repair.
+
+retry-runtime-task! is an explicit local API accepting the failed task ID,
+principal, and current capabilities. After recover-workflow! records an outcome
+or authorizes effect retry, it creates a new task backed by the existing workflow.
+It checks ownership, expiry, executable/adapter compatibility, required capabilities,
+and runtime task/operation authorization before allocation; the worker reauthorizes.
+Capabilities are copied for this interaction and persisted for startup recovery.
+The lower-level retry-recovered-task! accepts explicit workflow/store/owner and
+adapter, custodian, and authorization integration. No new protocol method or
+automatic replay of an uncertain mutation was introduced.
+
+Replacement creation and bidirectional journal links share one transaction.
+Repeated/concurrent calls return the recorded replacement ID, even while its effect
+is blocked. The original failed task's result and revision remain unchanged.
+Checkpoints and effect keys are retained, and replacement expiry never exceeds the
+original task/workflow expiry. Abandoned and unrepaired executions are rejected.
+Only failures with the explicit recovery metadata are eligible; historical messages
+are not interpreted to guess eligibility.
+
+The task-recovery suite passed 32 checks: observed outcomes avoid another effect,
+retry repairs reuse the same key, foreign/capability/authorization failures allocate
+nothing, incompatible code is rejected, SQLite reopen preserves replacement mapping,
+eight concurrent callers get one handle/journal entry, and terminal task revisions
+remain unchanged. Test/read-syntax defects were corrected before the passing run.
+This is not a complete process-crash or every-boundary recovery matrix; those and
+the broader remaining SDK release gates remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,184 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. The first full run exposed
+a changed diagnostic for incompatible saved code; its existing recovery message
+was restored while replacement eligibility remains restricted to uncertain-effect
+metadata. The final run passed that regression. All five Go probes passed; git
+diff --check passed. Scribble was rebuilt after clarifying the low-level callback's
+raise-on-denial contract. Evidence remains Linux/Racket 9.2, not full independent
+Tasks conformance or every-boundary process-crash verification.

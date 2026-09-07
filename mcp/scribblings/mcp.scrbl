@@ -950,3 +950,35 @@ simple expansion syntax and UTF-8 validity. Its @tt{#:max-states} keyword defaul
 to 10,000; exceeding the limit raises an error instead of claiming disjointness.
 Custom matchers are never invoked during this analysis. Runtime dispatch retains
 its ambiguity check for custom procedures whose accepted URI sets are unknown.
+
+@section{Replacing a task after manual recovery}
+
+A failed task remains failed after its underlying workflow is repaired. For a task
+that failed with a recorded uncertain manual effect, inspect its workflow and use
+@tt{recover-workflow!} to record an observed outcome or authorize retry. Then call
+@tt{retry-runtime-task!} with the runtime, failed task ID, @tt{#:principal}, and
+@tt{#:capabilities}. This explicit local API creates a new task for the repaired
+workflow. It adds no protocol method and performs no automatic retry of an
+uncertain mutation. An abandoned workflow cannot be resumed this way.
+
+The runtime resolves the original mounted operation and adapters, checks task and
+operation authorization before allocation and again in the worker, and requires
+Tasks plus any declared input capability. Expired, foreign, or incompatible
+workflow state is rejected. The replacement uses the existing workflow checkpoints
+and effect keys and does not extend the original expiry. Current capabilities are
+persisted for subsequent worker recovery.
+
+Replacement creation and its journal links commit together. Repeating the API for
+the same failed task retrieves the same replacement handle, including while that
+replacement is working or after reopening storage. The old task result and revision
+are unchanged. If a replacement itself fails with another uncertain manual effect,
+repair that execution and explicitly request replacement of its new failed ID.
+
+The lower-level @tt{retry-recovered-task!} API in @tt{mcp/tasks} accepts a workflow,
+store, failed task ID, and owner key, with adapter, custodian, and authorization
+callbacks. The authorization callback raises an exception to deny execution.
+Applications using that API directly supply their own authorization;
+@tt{retry-runtime-task!} applies runtime policy. Only failures carrying the recorded
+recovery metadata are eligible; old development records are not inferred from an
+error message. Complete process-crash coverage of every allocation/recovery boundary
+remains a separate verification gate.
