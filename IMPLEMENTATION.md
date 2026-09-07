@@ -1905,3 +1905,26 @@ all 1,301 pinned core schema cases, and Scribble. All five Go probes passed with
 sh scripts/check-interop.sh. git diff --check passed. Verification remains
 Linux/Racket 9.2, with effect-input/recovery callback boundaries and the broader
 SDK release gates still open.
+
+## Recovery encoding without SQLite lock ownership (2026-09-07)
+
+Observed-outcome recovery now reads and checks the owned pending effect under its
+exclusive worker claim, encodes outside SQLite, and commits the repaired state,
+recovery journal, and change outbox together with the existing revision CAS.
+Calls inside an existing transaction on the same store are rejected so application
+nesting cannot silently retain SQLite during encoding. Retry and abandon retain
+the same ownership/stage checks and atomic journal/state updates.
+
+The recovery-codec-lock suite passed 50 checks. A blocked encoder exposes no
+current connection; concurrent reads finish, competing repairs fail promptly,
+and foreign/nested-transaction requests do not invoke the encoder. Encoding
+failure preserves state, journal, and outbox. A deliberately changed storage
+revision rejects stale repair and rolls back its journal/outbox, then releases the
+claim for a later repair. Existing codec, recovery-race, and task-recovery suites
+passed 59 checks. Effect-input callbacks and the broader crash/concurrency and
+release gates remain separate work.
+
+Final validation: sh scripts/check.sh passed compilation, 2,514 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
+with sh scripts/check-interop.sh. git diff --check passed. Native evidence remains
+Linux/Racket 9.2; effect-input preparation and full SDK release gates remain open.

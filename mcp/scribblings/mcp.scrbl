@@ -259,7 +259,7 @@ outside SQLite. Cancellation prevents a checkpoint from advancing; an external
 effect that already returned a committed outcome still records that outcome and
 its change keys after cancellation, without changing the task's cancelled result.
 Transactional effect encoders retain the mutation transaction so encoding failure
-rolls back both mutation and stage completion. Effect-input and recovery codecs
+rolls back both mutation and stage completion. Effect-input callbacks
 have separate boundaries; this is not a guarantee that all application callbacks
 run without a storage transaction.
 
@@ -268,6 +268,13 @@ input processing continues. Retries reuse this saved request data; they do not
 re-enter the constructor. Cancellation during construction prevents the request
 from being saved. Process loss before that save may rerun construction; after the
 save, the pending request is available even if its response was never delivered.
+
+Observed-outcome recovery codecs run without a SQLite transaction while retaining
+the exclusive instance claim. Ownership and the pending effect are checked before
+encoding. The repaired value, recovery journal, and change outbox commit together;
+encoding failure or a stale revision commits none of them. Recovery cannot be
+called inside an existing transaction on the same store, because it must own these
+transaction boundaries.
 
 @racket[#:execution task] selects Tasks instead of MRTR. Durable serving requires
 an explicit state-file configuration. @racket[make-runtime] scans unexpired working
