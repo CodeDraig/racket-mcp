@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/adapter-policy.rkt")
+(require "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
@@ -20,6 +20,18 @@
   (lambda (workflow)
     (append-map (lambda (stage) (handler-resource-references (workflow-stage-procedure stage)))
                 (workflow-descriptor-stages workflow))))
+(struct captured-workflow workflow-descriptor (build) #:transparent)
+(define (workflow-add-fingerprint-suffix workflow suffix)
+  (define updated
+    (struct-copy workflow-descriptor workflow
+      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
+  (if (captured-workflow? workflow)
+      (captured-workflow
+        (workflow-descriptor-name updated) (workflow-descriptor-version updated)
+        (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
+        (workflow-descriptor-key updated) (workflow-descriptor-changes updated)
+        (captured-workflow-build workflow))
+      updated))
 (struct exn:fail:recovery exn:fail (handle stage) #:transparent)
 (define current-workflow-change-publisher (make-parameter void))
 (define current-workflow-store (make-parameter #f))
@@ -72,7 +84,9 @@
     (if (null? codecs) fingerprint
         (string-append fingerprint ":codecs:" (json->string (for/list ([codec (in-list codecs)])
                                                              (hasheq 'name (value-codec-name codec) 'version (value-codec-version codec) 'schema (value-codec-schema codec)))))))
-  (workflow-descriptor name version executable-fingerprint stages key changes))
+  (if (current-executable-build)
+      (captured-workflow name version executable-fingerprint stages key changes (current-executable-build))
+      (workflow-descriptor name version executable-fingerprint stages key changes)))
 (define (record-workflow-changes! store principal keys #:handle handle #:stage stage)
   (unless (and (list? keys) (json-value? keys)) (error 'workflow "change keys must be a JSON list"))
   (unless (null? keys)
@@ -83,6 +97,11 @@
   (with-handlers ([non-break-failure? (lambda (e) (fprintf (current-error-port) "MCP change publication deferred: ~a\n" (failure-message e)))])
     ((current-workflow-change-publisher))))
 (define (workflow-executable-fingerprint workflow adapters)
+  (define fingerprint
+    (if (captured-workflow? workflow)
+        (string-append (workflow-descriptor-fingerprint workflow) ":build:"
+                       (executable-build-fingerprint (captured-workflow-build workflow)))
+        (workflow-descriptor-fingerprint workflow)))
   (define names (sort (remove-duplicates
     (for/list ([stage (in-list (workflow-descriptor-stages workflow))] #:when (eq? (workflow-stage-kind stage) 'effect))
       (workflow-stage-adapter stage))) symbol<?))
@@ -91,8 +110,8 @@
                #:do [(define adapter (hash-ref adapters name #f))]
                #:when (versioned-effect-adapter? adapter))
       (list (symbol->string name) (symbol->string (effect-adapter-policy adapter)) (versioned-effect-adapter-version adapter))))
-  (if (null? versions) (workflow-descriptor-fingerprint workflow)
-      (string-append (workflow-descriptor-fingerprint workflow) ":adapters:" (json->string versions))))
+  (if (null? versions) fingerprint
+      (string-append fingerprint ":adapters:" (json->string versions))))
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
@@ -385,3 +404,5 @@
             (update-instance! store instance next))))))
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
+
+(module+ private (provide workflow-add-fingerprint-suffix))

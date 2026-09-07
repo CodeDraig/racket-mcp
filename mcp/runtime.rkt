@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/adapter-policy.rkt" "external-changes.rkt")
+(require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
 (provide runtime-clock runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
@@ -433,9 +433,8 @@
        (define renderer-version (renderer-fingerprint (resource-descriptor-renderer d)))
        (define program
          (and (resource-descriptor-workflow d)
-              (struct-copy workflow-descriptor (resource-descriptor-workflow d)
-                           [fingerprint (string-append (workflow-descriptor-fingerprint (resource-descriptor-workflow d))
-                                                       ":renderer:" renderer-version)])))
+              (workflow-add-fingerprint-suffix (resource-descriptor-workflow d)
+                                               (string-append ":renderer:" renderer-version))))
        (define dependencies (change-keys! ((resource-descriptor-depends-on d) args)))
        (define parent (current-resource-snapshots))
        (define bypass? (or program (current-workflow-state) (current-workflow-invocation-key)
@@ -499,9 +498,8 @@
        (define arguments (bind-arguments (prompt-descriptor-arguments d) input))
        (define program
          (and (prompt-descriptor-workflow d)
-              (struct-copy workflow-descriptor (prompt-descriptor-workflow d)
-                           [fingerprint (string-append (workflow-descriptor-fingerprint (prompt-descriptor-workflow d))
-                                                       ":prompt-codecs:" (prompt-codec-fingerprint d))])))
+              (workflow-add-fingerprint-suffix (prompt-descriptor-workflow d)
+                                               (string-append ":prompt-codecs:" (prompt-codec-fingerprint d)))))
        (define messages (render-call (lambda () (if program
                             (run-domain-workflow program arguments)
                             ((prompt-descriptor-handler d) arguments)))

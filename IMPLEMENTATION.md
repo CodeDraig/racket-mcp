@@ -2804,3 +2804,55 @@ resume compatibility is not fixed by this private foundation alone. No protocol
 runtime changed, so the six prior Go probes were not repeated for this batch.
 Evidence remains Linux/Racket 9.2. The final ledger-only paragraph postdates the
 package build; executable content is unchanged by that paragraph.
+
+## Captured build identity retained by workflows (2026-09-07)
+
+The private loader now attaches a shared executable-build context to the target
+namespace before application declarations instantiate. Workflows constructed in
+that context retain it in a private descriptor subtype. Execution refuses an
+unsealed context. After loading, seal-module-code-capture! requires explicit
+identities for every unobserved dependency and hashes those identities with the
+observed compiled-module hashes and Racket/VM/architecture identity. There is no
+default trust label for uncaptured modules. Sealing is immutable and arbitrated
+so competing finalizers cannot replace the first identity.
+
+workflow-executable-fingerprint incorporates the sealed identity in addition to
+source, codecs and adapter versions. Resource renderer and prompt codec suffixes
+now use a private copying helper that retains captured build identity. Existing
+ordinary descriptor field arity and uncaptured dynamic data API behavior remain
+unchanged. Source-only execution outside this loader still has the previously
+recorded imported-helper limitation. This remains a private integration path;
+default serving, bootstrap provenance and later dynamic imports still require
+work before the overall executable compatibility gate can close.
+
+A new bounded separate-process SQLite regression captures an application using
+an imported helper. It rejects execution before sealing, resumes unchanged code,
+rejects a helper-only change before completion code runs, and permits a fresh
+invocation to use the changed helper. Test bootstrap identities are explicit and
+restricted to uncaptured code outside the application fixture directory; missing
+application capture fails the test instead of receiving a trust label. The test
+also reads a completion side-effect file to establish that rejected continuation
+did not run. This does not establish a production bootstrap identity policy.
+
+Focused validation passed 70 checks across capture, build sealing, actual process
+restarts and the existing workflow suite. Checks include missing dependency
+identities, malformed identity maps, immutable captured hashes, reseal rejection,
+competing finalizers, and preservation through renderer/codec fingerprint copies.
+The first run after struct/export changes encountered stale compiled dependents;
+raco make rebuilt them. The first authored workflow fixture incorrectly used
+multiple host expressions at a workflow sequencing boundary; moving the host begin
+inside the final result expression fixed the fixture before the passing run.
+Full native, Go and package results follow below.
+
+Final validation: sh scripts/check.sh passed compilation, 3,301 native checks,
+all 1,301 pinned core schema cases and Scribble. All six official Go probes passed.
+The isolated distribution passed raco setup --check-pkg-deps --pkgs racket-mcp.
+After the full run had executed its restart fixture, that fixture was strengthened
+with a separate still-pending workflow at the moment the helper changes. The
+updated focused restart suite passed 14 checks, verifying rejection both while
+awaiting input and after completion. Those three additional assertions are not
+included in the 3,301 full-run count. No executable SDK code changed after the
+full run began. The source distribution was refreshed with the strengthened test
+and this ledger; the preceding package setup covers unchanged SDK content.
+git diff --check passed. Native evidence remains Linux/Racket 9.2; default loader,
+bootstrap provenance, dynamic imports and the remaining release gates stay open.
