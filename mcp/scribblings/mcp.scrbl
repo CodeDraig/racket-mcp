@@ -862,3 +862,23 @@ probes. They check actual remote handler cleanup and continued use of the same
 connection. They do not establish the full transport race or conformance matrix.
 Native macOS, Windows, and additional Racket releases have not been verified in
 this Linux workspace.
+
+@section{Checked completion references}
+
+@racket[(completion (target argument) handler)] constructs and returns a completion
+ descriptor under ordinary @racket[(require mcp)]. In @tt{#lang mcp} it additionally
+ registers that descriptor with the interface. The handler expression evaluates
+ once during descriptor construction; the handler itself accepts a prefix and
+ context and runs only when completion is requested.
+
+For locally declared targets, expansion rejects targets other than prompts or
+ resources, unknown argument names, and duplicate target/argument routes. The
+ manifest records the target, argument, and declaration source without evaluating
+ handler expressions. Imported or host-supplied target information that the local
+ compiler cannot establish is marked dynamic. Interface construction checks target
+ membership, argument existence, and duplicate routes for every completion,
+ including descriptors supplied through the ordinary data API. Views remap retained
+ completion targets and remove completions belonging to excluded targets.
+
+These checks do not infer resource references hidden in arbitrary Racket handlers;
+ complete cross-module interface-reference analysis remains a separate requirement.

@@ -139,7 +139,11 @@
 (define-syntax (completion stx)
   (syntax-parse stx
     [(_ (target:id argument:id) handler:expr)
-     #'(register-declaration (completion-descriptor target 'argument handler))]))
+     #`(begin
+         (register-declaration #f #:declaration completion target #,stx)
+         (let ([descriptor (completion-descriptor target 'argument handler)])
+           (register-declaration descriptor)
+           descriptor))]))
 (define-syntax (scenario stx)
   (syntax-parse stx [(_ name:id body ...+) #'(module+ test (require rackunit) (test-case (symbol->string 'name) body ...))]))
 (define-syntax (define-mcp-extension stx)

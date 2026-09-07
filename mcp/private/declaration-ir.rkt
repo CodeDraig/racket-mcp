@@ -15,7 +15,8 @@
       (if (and (pair? rest) (keyword? (syntax-e (car rest))) (pair? (cdr rest)))
           (loop (cddr rest) (hash-set out (syntax-e (car rest)) (cadr rest))) out)))
   (declaration-node kind name source arguments clauses
-                    (case kind [(schema) (caddr parts)] [(shape) (cddr parts)] [else #f])))
+                    (case kind [(schema) (caddr parts)] [(shape) (cddr parts)]
+                      [(completion) (cadr signature)] [else #f])))
 (define unknown (gensym 'unknown))
 (define (literal stx)
   (define datum (syntax->datum stx))
@@ -53,12 +54,28 @@
         (hasheq 'known? #f 'expression (format "~s" (syntax->datum stx)))
         (hasheq 'known? #t 'value value)))
   (define seen (make-hash))
+  (define (completion-target node)
+    (findf (lambda (candidate)
+             (and (memq (declaration-node-kind candidate) '(schema shape tool workflow resource prompt))
+                  (identifier? (declaration-node-name candidate))
+                  (free-identifier=? (declaration-node-name node) (declaration-node-name candidate)))) nodes))
   (for ([node (in-list nodes)])
     (define kind (declaration-node-kind node))
+    (when (eq? kind 'completion)
+      (define target (completion-target node))
+      (when target
+        (unless (memq (declaration-node-kind target) '(resource prompt))
+          (raise-syntax-error 'completion "target must be a resource or prompt" (declaration-node-source node) (declaration-node-name node)))
+        (unless (for/or ([argument (in-list (declaration-node-arguments target))])
+                  (eq? (syntax-e (car (syntax->list argument))) (syntax-e (declaration-node-value node))))
+          (raise-syntax-error 'completion "unknown target argument" (declaration-node-source node) (declaration-node-value node)))))
     (define key (case kind
                   [(tool workflow) (cons 'tool (syntax-e (declaration-node-name node)))]
                   [(prompt) (cons 'prompt (syntax-e (declaration-node-name node)))]
                   [(server) '(server)]
+                  [(completion)
+                   (define target (completion-target node))
+                   (and target (list 'completion target (syntax-e (declaration-node-value node))))]
                   [(resource) (define uri (hash-ref (declaration-node-clauses node) '#:uri #f))
                               (and uri (let ([value (literal uri)]) (and (not (eq? value unknown)) (cons 'resource-uri value))))]
                   [else #f]))
@@ -86,7 +103,14 @@
       (hash-set* (source-fields (declaration-node-source node)) 'kind kind 'name (syntax->datum (declaration-node-name node))
                  'arguments arguments 'metadata metadata 'manifest-version 2))
     (define with-schema
-      (cond [(memq kind '(schema shape)) (hash-set result 'schema (describe (declaration-node-name node) #t))]
+      (cond [(eq? kind 'completion)
+             (define target (completion-target node))
+             (hash-set* result 'argument (syntax-e (declaration-node-value node))
+                        'target (if target
+                                    (hasheq 'known? #t 'kind (declaration-node-kind target)
+                                            'name (syntax-e (declaration-node-name target)))
+                                    (hasheq 'known? #f 'expression (format "~s" (syntax->datum (declaration-node-name node))))))]
+            [(memq kind '(schema shape)) (hash-set result 'schema (describe (declaration-node-name node) #t))]
             [(memq kind '(tool workflow))
              (hash-set result 'input-schema
                        (if (andmap (lambda (argument) (hash-ref (hash-ref argument 'schema) 'known?)) arguments)

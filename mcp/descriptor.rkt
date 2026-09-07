@@ -1,4 +1,5 @@
 #lang racket/base
+(require "completion.rkt")
 (require racket/list racket/match "schema.rkt" "json.rkt" "uri-template.rkt" "header-schema.rkt" "rendering.rkt" "codec.rkt" "error.rkt" "presentation.rkt" "effect.rkt" (only-in "authorization.rkt" check-scopes!))
 (provide (struct-out server-descriptor) (struct-out argument) (struct-out prompt-argument) (struct-out tool-descriptor)
          (struct-out resource-descriptor) (struct-out prompt-descriptor)
@@ -87,6 +88,26 @@
   (for ([xs (list tools resources prompts)] [name (list tool-descriptor-name resource-descriptor-uri prompt-descriptor-name)])
     (define seen (make-hash))
     (for ([x (in-list xs)]) (when (hash-has-key? seen (name x)) (error 'make-interface "duplicate published identity: ~a" (name x))) (hash-set! seen (name x) #t)))
+  (define completion-routes (make-hasheq))
+  (for ([completion (in-list completions)])
+    (unless (completion-descriptor? completion)
+      (raise-argument-error 'make-interface "completion-descriptor?" completion))
+    (define target (completion-descriptor-target completion))
+    (define argument-name* (completion-descriptor-argument completion))
+    (define arguments
+      (cond [(resource-descriptor? target)
+             (unless (memq target resources) (error 'make-interface "completion references an absent resource"))
+             (resource-descriptor-arguments target)]
+            [(prompt-descriptor? target)
+             (unless (memq target prompts) (error 'make-interface "completion references an absent prompt"))
+             (prompt-descriptor-arguments target)]
+            [else (error 'make-interface "completion target must be a resource or prompt")]))
+    (unless (memq argument-name* (map argument-name arguments))
+      (error 'make-interface "completion references an unknown argument: ~a" argument-name*))
+    (define previous (hash-ref completion-routes target '()))
+    (when (memq argument-name* previous)
+      (error 'make-interface "duplicate completion for argument: ~a" argument-name*))
+    (hash-set! completion-routes target (cons argument-name* previous)))
   (unless (hash? requirements) (raise-argument-error 'make-interface "hash?" requirements))
   (define declarations (append tools resources prompts))
   (define checked

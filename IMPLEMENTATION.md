@@ -1605,3 +1605,39 @@ again, including explicit compilation of the development cancellation client.
 Two consecutive source archive builds from identical inputs produced the same
 SHA-256. This establishes repeatability in this environment, not cross-platform
 archive or complete release verification.
+
+## Completion reference checking (2026-09-07)
+
+Completion declarations now enter the source-aware declaration IR. Expansion
+resolves locally declared targets by lexical identifier, rejects non-resource/
+non-prompt targets, unknown arguments, and duplicate routes, and emits source-
+attached completion entries in the manifest. Imported or host-supplied targets
+remain explicitly dynamic; their expressions and handlers are not evaluated by
+the compiler. Manifest diffs distinguish each target/argument route so removing
+one completion cannot be hidden by another completion on the same target.
+
+make-interface now checks completion target membership, argument existence, and
+route uniqueness. Completion descriptors check symbol arguments and binary handler
+arity. make-runtime applies the same interface checks to raw public descriptors
+before task recovery can run. Views retain their existing target remapping and
+remove completions belonging to excluded targets. Under ordinary require mcp,
+completion now constructs and returns its descriptor, evaluating the handler
+expression once; previously registration outside the language discarded that
+expression entirely.
+
+The focused regression covers dynamic constructors, imported/renamed mounted and
+absent targets, lexical shadowing, expansion-time errors, manifest inspection
+without parent instantiation, route diffs, and descriptor evaluation count. Initial
+regressions exposed registration nested too late inside a generated let; moving
+metadata registration to the declaration level fixed it. The first full suite
+also exposed two old manifest assertions that omitted the collection extension's
+completion; those expectations now include the new declaration entry.
+
+sh scripts/check.sh passed compilation, 1,595 native checks, all 1,301 pinned core
+schema cases, and Scribble. All five Go probes in sh scripts/check-interop.sh
+passed. A final compiler refinement excludes server metadata expressions from
+binding candidates; explicit recompilation and the compiler, completion-reference,
+declaration-manifest, and extension suites then passed 65 focused checks.
+This is completion-reference coverage, not complete cross-module analysis of
+references hidden in arbitrary Racket handlers. The broader compiler and release
+gates remain open. Native evidence remains Linux/Racket 9.2.

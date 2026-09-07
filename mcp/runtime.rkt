@@ -22,6 +22,15 @@
                       #:cursor-limit [cursor-limit 1024] #:cursor-bytes [cursor-bytes 16777216]
                       #:cursor-clock [cursor-clock current-seconds]
                       #:required-scopes [required-scopes (lambda (method params) '())])
+  ;; Public raw descriptors must pass the same interface checks before recovery
+  ;; can execute application work. Preserve the supplied descriptor's identity.
+  (void (make-interface #:server (interface-descriptor-server interface)
+                        #:tools (interface-descriptor-tools interface)
+                        #:resources (interface-descriptor-resources interface)
+                        #:prompts (interface-descriptor-prompts interface)
+                        #:completions (interface-descriptor-completions interface)
+                        #:requirements (interface-requirements interface)
+                        #:adapter-bindings (interface-adapter-bindings interface)))
   (define (scopes method params)
     (remove-duplicates
       (append (check-scopes! (required-scopes method params))
