@@ -98,7 +98,7 @@
                                         #:arguments (list #,@args) #:matcher matcher #:ttl-ms ttl
                                         #:depends-on (lambda (bound) (let (#,@(for/list ([id ids]) #`[#,id (hash-ref bound '#,id)])) dependencies))
                                         #:workflow #,program))
-         (define-syntax name (resource-binding (quote-syntax #,hidden) #,(length ids)))
+         (define-syntax name (resource-binding (quote-syntax #,hidden) #,(length ids) 'name '(a.id ...)))
          (register-declaration name #:declaration resource name #,stx #:workflow-nodes (#,@summaries)))]
     [(_ (name:id a:arg ...) #:uri uri:expr
         (~optional (~seq #:description description:expr) #:defaults ([description #'""]))
@@ -113,7 +113,7 @@
      (define hidden (car (generate-temporaries #'(name))))
      #`(begin (define-resource-value #,hidden (make-resource (symbol->string 'name) uri (mcp-handler (a.id ...) body ...) #:description description #:mime-type mime #:render renderer #:arguments (list #,@args) #:matcher matcher #:ttl-ms ttl
                                         #:depends-on (lambda (bound) (let (#,@(for/list ([id ids]) #`[#,id (hash-ref bound '#,id)])) dependencies))))
-              (define-syntax name (resource-binding (quote-syntax #,hidden) #,(length ids)))
+              (define-syntax name (resource-binding (quote-syntax #,hidden) #,(length ids) 'name '(a.id ...)))
               (register-declaration name #:declaration resource name #,stx))]))
 
 (define-syntax (shape stx)
@@ -162,6 +162,10 @@
 (define-syntax (completion stx)
   (syntax-parse stx
     [(_ (target:id argument:id) handler:expr)
+     (define binding (lookup-resource-binding #'target))
+     (when (and (resource-binding? binding)
+                (not (memq (syntax-e #'argument) (resource-binding-arguments binding))))
+       (raise-syntax-error 'completion "unknown target argument" stx #'argument))
      #`(begin
          (register-declaration #f #:declaration completion target #,stx)
          (let ([descriptor (completion-descriptor target 'argument handler)])

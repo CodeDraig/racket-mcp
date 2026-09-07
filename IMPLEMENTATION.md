@@ -1953,3 +1953,32 @@ all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
 with sh scripts/check-interop.sh. git diff --check passed. Verification remains
 Linux/Racket 9.2; broader compiler, integration, conformance, crash-matrix, and
 platform requirements remain open.
+
+## Imported resource completion metadata (2026-09-07)
+
+Private resource transformer bindings now carry the original declaration name and
+argument names alongside their existing lexical target and arity. Completion
+expansion checks imported/re-exported resource arguments under both #lang mcp and
+ordinary require mcp. The module finalizer recognizes aliases of an imported
+resource when rejecting duplicate routes and emits a known resource target using
+its original name. No global registration table or handler/metadata evaluation is
+used to discover these values. Runtime interface membership checks still apply.
+
+The new imported-resource-metadata fixtures cover ordinary and workflow resources,
+import and re-export renaming, misspelled arguments, duplicate aliases, reference
+arity, forward declarations, and host shadowing. A throwing provider and handler
+prove manifest inspection and expansion do not instantiate either. Together with
+existing completion/compiler/domain suites, the focused run passed 61 checks.
+The first run required recompilation after the private struct changed. A later
+forward-reference test exposed namespace lookup of quoted host syntax; unavailable
+static bindings now defer to the finalizer's local declaration checks rather than
+failing immediate resource lookup. Final focused tests passed after that fix.
+
+This closes imported resource completion metadata, not imported prompt metadata,
+references hidden in arbitrary host handlers, complete cross-module interface
+analysis, or the remaining public extension API and release gates.
+
+Final validation: sh scripts/check.sh passed compilation, 2,608 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
+with sh scripts/check-interop.sh. git diff --check passed. Native evidence remains
+Linux/Racket 9.2; the broader compiler and full SDK release gates remain open.
