@@ -9,7 +9,7 @@ if destination.exists():
 destination.mkdir(parents=True)
 for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev"):
     shutil.copytree(root / name, destination / name,
-                    ignore=shutil.ignore_patterns("compiled", "node_modules", ".git", "results"))
+                    ignore=shutil.ignore_patterns("compiled", "node_modules", ".git", "results", "__pycache__", "*.pyc"))
 for name in ("info.rkt", "README.md", "IMPLEMENTATION.md"):
     shutil.copy2(root / name, destination / name)
 print(destination)

@@ -24,12 +24,22 @@ The environment script isolates Racket packages and scratch files in this
 checkout. Install the pinned language dependency in that environment:
 
 ```sh
-raco pkg install --name syntax-spec-v3 --auto --batch --no-docs \
-  'https://github.com/michaelballantyne/syntax-spec.git#4ae36610804b58e8f023574bfdcba1b5ae4f7bcd'
+python3 scripts/prepare-syntax-spec.py
+env -u PLTCOLLECTS raco pkg install --name syntax-spec-v3 --auto --batch --no-docs \
+  --link "$PWD/.cache/patched-dependencies/syntax-spec-v3"
 python3 scripts/package.py
 env -u PLTCOLLECTS raco pkg install --name racket-mcp --no-setup \
   --link "$PWD/.cache/distribution/racket-mcp"
 ```
+
+The preparation command verifies the vendored upstream hashes and applies the
+SDK's module-binding phase fix to a separate local copy (version 0.1.0.1). It
+does not fetch sources or modify a globally installed package. If this checkout
+already has the original dependency installed, use `env -u PLTCOLLECTS raco pkg update --batch
+--no-setup --name syntax-spec-v3 --link
+"$PWD/.cache/patched-dependencies/syntax-spec-v3"` after preparation. Run these
+commands with `scripts/racket-env.sh` sourced as above. The unpatched upstream
+0.1 package does not satisfy the SDK dependency requirement.
 
 The CLI is also available without package registration:
 

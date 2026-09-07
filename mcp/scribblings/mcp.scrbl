@@ -1067,21 +1067,36 @@ Its generated reference still receives core arity checks and interface mapping.
 This API does not prove the presence of dynamically composed targets or infer
 references hidden in arbitrary Racket computation.
 
-@section{Open higher-phase declaration gate}
+@section{Declarations at shifted phases}
 
-On the verified Racket 9.2 environment, a declaration created and then referenced
-inside @racket[begin-for-syntax] can fail with an unbound generated identifier.
-This affects ordinary references as well as checked reference helpers. The
-@tt{dev/check-phase-references.rkt} release probe reproduces the same failure in a
-minimal syntax-spec language that imports no MCP code. It tests phase 0 and phase 1
-for both that language and MCP and exits nonzero on any failure, with a bounded
-child-process timeout.
+The SDK uses a locally patched syntax-spec-v3 dependency, based on upstream commit
+@tt{4ae36610804b58e8f023574bfdcba1b5ae4f7bcd}. The original dependency loses a module
+scope when compiling references to declarations created inside
+@racket[begin-for-syntax]. The patch preserves the declaration's lexical context
+for module-level generated temporaries. Internal bindings keep the original
+temporary generation behavior; preserving every internal scope causes ambiguous
+bindings in an upstream command-line DSL test.
 
-Importing a declaration created at phase 0 for transformer use, and inspecting
-binding metadata at shifted phases, have passing tests. They do not establish
-higher-phase declaration/reference support. This is an unresolved acceptance gate,
-not an exception to the requested language scope. Run the probe with the repository
-Racket environment to verify a future correction.
+The patch also constructs persistent identifier tables at the binding phase
+corresponding to the compiler module instance. Comparing all identifiers at phase
+zero can merge distinct same-spelled local arguments at higher phases, such as
+the @tt{id} arguments of unrelated resource and prompt declarations.
+
+@tt{scripts/prepare-syntax-spec.py} verifies the unchanged vendored snapshot and
+prepares the patched dependency at @tt{.cache/patched-dependencies/syntax-spec-v3}.
+The patch has local version @tt{0.1.0.1}, required by the SDK package. Preparation
+performs no network access or package installation. The generated
+@tt{MCP-PATCH.json} records the upstream commit and original/patched compiler and
+binding-table hashes. See the README for isolated installation and update commands.
+
+@tt{dev/check-phase-references.rkt} tests declarations and ordinary references at
+phases 0, 1 and 2 in both MCP and a minimal syntax-spec language that imports no
+MCP code. MCP cases include schemas, shapes, tools, resources, prompts, workflows,
+same-spelled arguments and host shadowing. Every case runs in a bounded child
+process; any failure exits nonzero.
+@tt{tests/phases.rkt} includes this probe in routine native verification. Existing
+tests also cover shifted imports and declaration metadata. This evidence does
+not establish every combination of phases, extensions and dynamic composition.
 
 @section{Interface resource-reference maps}
 

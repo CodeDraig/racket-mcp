@@ -2590,3 +2590,65 @@ preceded this final evidence-only ledger addition. The standalone disconnect
 probe also passed again against the final code. git diff --check passed.
 Verification remains Linux/Racket 9.2. The original compiler, integration,
 durability, scenario and platform release gates remain open.
+
+## Shifted-phase declarations and reproducible syntax-spec patch (2026-09-07)
+
+The isolated higher-phase probe still failed on the original pinned dependency.
+Experiments ran in a disposable project-local copy. Replacing the module-scope
+helper with local expansion or removing it failed. Preserving every declaration
+identifier's lexical context fixed the simple probe and passed 73 focused MCP
+compiler checks, but failed an upstream command-line DSL test with ambiguous
+bindings. Restricting that preservation to module-level generated temporaries
+passed phases 0, 1 and 2 and all 416 upstream tests.
+
+The probe was then strengthened with shapes, tools, resources, prompts, workflows,
+host shadowing and repeated argument names across declarations. That exposed a
+second upstream defect: persistent identifier tables created when the compiler
+module is instantiated default to phase-zero comparisons. Distinct same-spelled
+arguments at higher phases collided as already compiled binders. The second
+patch constructs those two tables at the compiler instance's binding phase,
+one below its module base phase. The stronger six-case probe passes with both
+patches. The first installed native run deliberately retained the stronger test
+and reported 1/3,093 failures before the table correction; it is not a passing run.
+
+scripts/fetch-inputs.py now pins the full syntax-spec-v3 source at the previously
+selected commit. All 224 original files remain unchanged under vendor, with
+SHA-256 hashes in vendor/LOCK.json. scripts/prepare-syntax-spec.py checks the
+commit and every source hash before preparing a separately patched dependency;
+it neither fetches nor installs packages. MCP-PATCH.json records provenance and
+both original/patched implementation hashes. An explicit local dependency version
+0.1.0.1 prevents the original 0.1 dependency from silently satisfying package
+requirements. The SDK remains one mcp package using the syntax-spec-v3 dependency.
+
+The README documents isolated installation/update. Package linking initially
+failed because the source lay under PLTCOLLECTS; clearing that variable for the
+package command corrected it while preserving the project-local PLTUSERHOME.
+Dependency checking also exposed compilation of vendored source as part of the
+SDK. vendor/info.rkt now excludes these independent pinned inputs from SDK
+compilation/testing; the prepared dependency is installed and tested separately.
+No global package installation was changed. A temporary-copy preparation probe
+verified idempotence and rejection of tampered input before output modification.
+
+tests/phases.rkt promotes the bounded independent-process phase probe into the
+ordinary native suite. The corrected installed package and six official Go
+interop probes passed; final native and upstream suite results are recorded below.
+This fixes the reproduced declaration/reference cases, not every remaining
+compiler, cross-module, fingerprint or SDK release requirement.
+
+Final validation: the two-patch dependency passed all 416 upstream tests. The
+installed dependency's modified files match that tested candidate, and all 224
+vendored source hashes match the lock. sh scripts/check.sh passed compilation,
+3,093 native checks, all 1,301 pinned core schema cases and Scribble. The additional
+tests/phase-exports.rkt regression then passed one check: phase-one schema,
+resource and tool declarations survive module exports and renamed imports before
+use by a different transformer. It was added after that full native run.
+sh scripts/check-interop.sh passed all six official Go probes. The clean
+distribution and isolated package dependency/documentation check passed with
+the final patched dependency. Verification remains Linux/Racket 9.2; complete
+phase/extension combinations and the other SDK release gates remain open.
+
+The package check also passed after adding the export regression. Final archive
+inspection found development Python bytecode from the preparation probe; the
+packager and Git ignore rules now exclude it. A rebuilt archive contains the
+phase regression, preparation command and pinned dependency inputs, with no
+Python bytecode. git diff --check passed.
