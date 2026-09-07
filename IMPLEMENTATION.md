@@ -3745,3 +3745,23 @@ tag matches. git diff --check passed. This final evidence paragraph postdates
 packaging and changes no executable/manual content. Go and external conformance
 probes were not repeated for these compiler-manifest/tooling changes. Verification
 is Linux/Racket 9.2; all remaining SDK release gates stay open.
+
+
+## Manifest/runtime capability parity (2026-09-07)
+
+Added a generated-language fixture comparing the emitted workflow client capability
+requirements with actual local JSON-RPC dispatch. Cases cover a non-selected input
+branch, grouped inputs, mandatory Tasks with elicitation, and task-optional MRTR
+fallback. Missing requirements must produce -32021 before any stage counter moves
+or any store instance is created. Removing either member of the combined Tasks/
+elicitation requirement is independently rejected. Supplying the declared capabilities
+runs the branch, yields both grouped requests, preserves task-optional MRTR fallback,
+or creates a durable task as appropriate. Task-row assertions use the actual task:
+operation names, including a positive task:forced control.
+
+Final raco make passed. The new parity suite plus declaration-manifest,
+task-boundary-language and input-groups tests passed 92 checks. git diff --check
+passed. Only tests and this ledger changed; full/schema/package/interoperability
+suites were not repeated, and their previous results remain revision-specific.
+This evidence is Linux/Racket 9.2 and does not close dynamic composition, hidden
+helper capability inference, or the other outstanding SDK release gates.

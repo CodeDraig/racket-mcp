@@ -1,0 +1,76 @@
+#lang racket/base
+(require rackunit racket/list racket/runtime-path mcp)
+
+(module fixture mcp/lang
+  (provide evaluated)
+  (define count 0)
+  (define (evaluated) count)
+  (define (touch) (set! count (add1 count)) 7)
+  (define (form)
+    (touch)
+    (hasheq 'mode "form" 'message "Proceed?" 'requestedSchema (object-schema (hasheq))))
+  (workflow (branch) #:version "1"
+    (if (begin (touch) #f)
+        (begin (await-input [answer Any] (form)) (text-result "input"))
+        (text-result "no input selected")))
+  (workflow (group) #:version "1"
+    (checkpoint [saved Integer] (touch))
+    (await-input ([one Any (form)] [two Any (form)]))
+    (text-result "done"))
+  (workflow (forced) #:version "1" #:execution task
+    (checkpoint [saved Integer] (touch))
+    (await-input [answer Any] (form))
+    (text-result "done"))
+  (workflow (optional) #:version "1" #:execution task-optional
+    (checkpoint [saved Integer] (touch))
+    (await-input [answer Any] (form))
+    (task-boundary launch)
+    (text-result "done")))
+
+(define-runtime-path source "manifest-capability-parity.rkt")
+(define manifest (dynamic-require `(submod ,source fixture manifest) 'manifest))
+(define interface (dynamic-require `(submod ,source fixture) 'mcp-interface))
+(define evaluated (dynamic-require `(submod ,source fixture) 'evaluated))
+(define elicitation (hasheq 'elicitation (hasheq)))
+(define tasks (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
+(define both (hash-set tasks 'elicitation (hasheq)))
+(define (requirements name)
+  (hash-ref (findf (lambda (entry) (eq? (hash-ref entry 'name) name)) manifest) 'client-capabilities))
+(for ([name '(branch group optional)])
+  (check-equal? (hash-ref (requirements name) 'required) elicitation))
+(check-equal? (hash-ref (requirements 'forced) 'required) both)
+(check-equal? (hash-ref (requirements 'optional) 'optional) tasks)
+
+(define store (open-memory-store))
+(define rt (make-runtime interface #:store store))
+(define (call name capabilities)
+  (dispatch-message rt
+    (hasheq 'jsonrpc "2.0" 'id 1 'method "tools/call"
+      'params (hasheq 'name (symbol->string name) '_meta (request-meta #:capabilities capabilities)))))
+(dynamic-wind void
+  (lambda ()
+    (for ([name '(branch group forced optional)])
+      (define response (call name (hasheq)))
+      (check-equal? (hash-ref (hash-ref response 'error) 'code) -32021)
+      (check-equal? (evaluated) 0)
+      (check-equal? (list-instances store) '()))
+    ;; Each capability in the combined requirement is independently enforced.
+    (for ([supplied (list tasks elicitation)])
+      (check-equal? (hash-ref (hash-ref (call 'forced supplied) 'error) 'code) -32021)
+      (check-equal? (evaluated) 0)
+      (check-equal? (list-instances store) '()))
+    ;; Preflight is conservative over a branch even when its input arm is skipped.
+    (check-equal? (hash-ref (hash-ref (call 'branch elicitation) 'result) 'content)
+                  (list (text-content "no input selected")))
+    (check-equal? (evaluated) 1)
+    (define grouped (hash-ref (call 'group elicitation) 'result))
+    (check-equal? (hash-ref grouped 'resultType) "input_required")
+    (check-equal? (sort (hash-keys (hash-ref grouped 'inputRequests)) symbol<?) '(one two))
+    (define fallback (hash-ref (call 'optional elicitation) 'result))
+    (check-equal? (hash-ref fallback 'resultType) "input_required")
+    (check-equal? (list-instances store #:operation "task:optional") '())
+    (define task (hash-ref (call 'forced both) 'result))
+    (check-equal? (hash-ref task 'resultType) "task")
+    (check-true (string? (hash-ref task 'taskId)))
+    (check-equal? (stored-instance-operation (load-instance store (hash-ref task 'taskId))) "task:forced"))
+  (lambda () (custodian-shutdown-all (runtime-custodian rt)) (close-store! store)))
