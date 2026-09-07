@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
-         "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
-(provide main serve-interface read-manifest manifest-diff)
+         "private/manifest-diagram.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
+(provide main serve-interface read-manifest manifest-diff manifest->mermaid)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
@@ -45,9 +45,7 @@
   (case (string->symbol command)
     [(serve) (serve-interface (dynamic-require (module-path path) 'mcp-interface) #:transport transport #:state state #:port port)]
     [(inspect) (pretty-write (read-manifest path))]
-    [(diagram) (displayln "flowchart LR")
-               (for ([d (in-list (read-manifest path))] [i (in-naturals)])
-                 (printf "  interface --> d~a[~s]\n" i (format "~a: ~a" (hash-ref d 'kind) (hash-ref d 'name))))]
+    [(diagram) (display (manifest->mermaid (read-manifest path)))]
     [(docs) (printf "# Interface: ~a\n\n" (file-name-from-path path))
             (for ([d (in-list (read-manifest path))])
               (printf "## ~a `~a`\n\nSource: ~a:~a. Metadata requires runtime inspection.\n\n" (hash-ref d 'kind) (hash-ref d 'name) (hash-ref d 'source) (hash-ref d 'line)))]

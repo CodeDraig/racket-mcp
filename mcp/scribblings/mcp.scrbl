@@ -1135,3 +1135,21 @@ The compiler emits the manifest after declaration right-hand sides expand, using
 Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
 resource providers. Compiling source still executes trusted transformers.
+
+@section{Interface and workflow diagrams}
+
+@tt{raco mcp diagram module.rkt} emits a Mermaid flowchart from the static manifest.
+@tt{manifest->mermaid}, exported by @tt{mcp/cli}, accepts an already read manifest
+and returns the same text. Neither operation runs application handlers.
+
+The diagram shows declarations, dotted resource-reference edges, workflow entry
+points, sequential stage transitions, numbered branch alternatives, explicit
+joins, and effect adapters labelled with their policy. Completion stages have no
+implicit outgoing transition. Imported resources outside the local manifest are
+labelled external or unresolved; matching names alone do not connect them to a
+local resource with a different source. Ambiguous matches remain explicit.
+
+All node identifiers are generated. Declaration and stage names are escaped as
+quoted labels using Mermaid decimal entities. The diagram does not execute
+callbacks, render HTML supplied by declarations, or infer additional edges from
+separately defined helpers or dynamic composition expressions.

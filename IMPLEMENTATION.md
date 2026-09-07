@@ -2198,3 +2198,34 @@ all 1,301 pinned core schema cases, and Scribble. The corrected
 sh scripts/check-interop.sh run passed all five official Go SDK probes.
 git diff --check passed. Verification remains Linux/Racket 9.2; the complete
 SDK release gates remain open.
+
+## Manifest-driven interface and workflow diagrams (2026-09-07)
+
+raco mcp diagram now uses manifest->mermaid (also exported from mcp/cli) to show
+resource dependencies, workflow entry/sequencing, numbered branches, explicit
+joins, terminal completion stages, and effect adapters/policies. Resource edges
+require matching name and source with one candidate; external/unresolved and
+ambiguous references are labelled rather than silently attached by spelling.
+Node IDs are generated; names are encoded as quoted Mermaid labels using decimal
+entities, following https://mermaid.js.org/syntax/flowchart. No application runs.
+
+The 25 focused checks independently specify branch/join/terminal edges, adapter
+policy, local/foreign/ambiguous resource targets, deterministic output, hostile
+label escaping, invalid workflow targets/duplicate IDs, and diagrams read from
+a manifest whose parent raises if instantiated. The local mmdc executable is
+unavailable; native tests verify text semantics, not rendered Mermaid output.
+Dynamic composition graphs and remaining complete tooling/release gates remain
+open.
+
+Independent parser validation: installed mermaid 11.17.2 and jsdom 30.0.1 into
+ignored .cache/mermaid-check with --ignore-scripts (no global or SDK dependency).
+On Node 26.8.1, mermaid.parse accepted five flowchart-v2 artifacts: approval,
+resource references, authored branch/join graph, hostile labels, and the rich
+throwing-parent manifest. npm emitted extraction ENOENT warnings but exited 0;
+actual imports and all five parser calls succeeded. This establishes parser
+acceptance, not browser layout or rendered appearance.
+
+Final validation: sh scripts/check.sh passed compilation, 2,735 native checks,
+all 1,301 pinned core schema cases, and Scribble. All five Go SDK probes passed
+with sh scripts/check-interop.sh. git diff --check passed. Native verification
+remains Linux/Racket 9.2; the overall SDK release is incomplete.
