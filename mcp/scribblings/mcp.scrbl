@@ -1356,8 +1356,8 @@ the same optional keywords. It returns the callback's values and closes the
 session's transport, runtime workers and store on exit. A retained session rejects
 later calls. The defaults are local dispatch, a manual clock at Unix zero,
 principal @tt{"scenario"}, empty adapters/capabilities, memory storage, an
-allowing authorization callback, a five-second real request timeout, and HTTP
-JSON responses. @tt{#:state} supplies an explicit SQLite path. Reusing that path
+allowing authorization callback, a five-second real request timeout, and a
+preference for quick HTTP JSON responses. @tt{#:state} supplies an explicit SQLite path. Reusing that path
 in another session permits continuation tests across runtime/store reopenings;
 it does not simulate killing a separate process.
 
@@ -1384,9 +1384,47 @@ adapter; it exercises runtime authorization rather than a hosted OAuth flow.
 the same principal/policy can be tested through all three paths. HTTP scenario
 keep-alives are at most one second and at most half the request timeout.
 
-Call timeouts and session teardown are tested with uncooperative handlers. HTTP
-JSON mode still cannot promptly observe a disconnected peer while a handler
-produces no output: @tt{dev/check-http-json-disconnect.rkt} remains a failing
-release probe. Teardown closes that worker, which does not prove disconnect-only
-cleanup. Asynchronous scenario steps, notification assertions, injected network
-loss, process restarts and the complete fault grammar remain unfinished.
+Call timeouts and session teardown are tested with uncooperative handlers.
+Longer HTTP requests now switch from the JSON preference to SSE, allowing stream
+closure to cancel work before session teardown. The regression probe at
+@tt{dev/check-http-json-disconnect.rkt} passes for this adaptive behavior.
+Asynchronous scenario steps, notification assertions, injected network loss,
+process restarts and the complete fault grammar remain unfinished.
+
+
+@section[#:tag "http-adaptive"]{Adaptive HTTP responses and worker lifetime}
+
+With @tt{#:sse? #f}, @tt{make-http-handler} and @tt{serve-http} prefer JSON for
+requests that finish within @tt{#:stream-after} seconds (default @tt{0.05}). If
+that window expires, or a request emits a notification, the response becomes a
+request-scoped SSE stream. The same worker and event queue continue execution;
+the handler is not restarted. Explicit @tt{#:sse? #t}, progress requests and
+subscriptions continue to select SSE immediately. @tt{#:stream-after} must be a
+finite nonnegative number; @tt{#:sse? #f} is not a promise to return only JSON.
+MCP clients must support both response types.
+
+An initial SSE comment flushes headers promptly. Later keep-alive comments expose
+stream closure during otherwise quiet computation. Detection latency depends on
+the configured keep-alive interval and network buffering. Once stream delivery
+fails, cleanup signals cooperative cancellation, waits up to 200 milliseconds,
+and shuts down the request custodian. A TCP input half-close is not treated as
+cancellation: the client may still be waiting to receive the response.
+
+@tt{serve-http} associates request workers with the web server's connection
+custodian, which differs from its longer-lived servlet custodian. A delivery
+scope also cleans up requests if response headers fail before the body writer
+runs. Runtime-owned task workers retain their independent ownership. Integrators
+using @tt{make-http-handler} directly must supply an appropriate enclosing
+custodian and response-delivery lifecycle; @tt{serve-http} installs that adapter.
+
+Quick JSON results use the same encoded bytes that passed the response-size
+limit. Both paths apply the configured size limit to each encoded JSON-RPC message.
+This change satisfies the previously recorded disconnect probe through adaptive
+SSE; it does not interpret socket input EOF as proof that a client cannot receive
+JSON, or introduce informational HTTP heartbeat responses.
+
+When @tt{serve-http} selects an ephemeral port with @tt{#:port 0}, its default
+Origin policy uses the configured host and the actual listener port obtained
+from the connection. It does not derive authority from the request's Host header.
+An explicit @tt{#:origins} list replaces this default, including for ephemeral
+listeners.

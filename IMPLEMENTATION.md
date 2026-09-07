@@ -2528,3 +2528,65 @@ distribution; isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
 --pkgs racket-mcp passed with documentation. git diff --check passed. The separate
 HTTP JSON disconnect release probe still exits 1, as explicitly recorded above.
 Linux/Racket 9.2 remains the verified platform; full SDK release gates stay open.
+
+## Adaptive HTTP responses and connection-owned workers (2026-09-07)
+
+The pinned transport prose defines cancellation through closure of the SSE
+response stream. Socket input EOF alone cannot safely implement cancellation: a
+client may half-close its sending side and still wait for a response. Instead,
+HTTP now prefers JSON for work completed within a configurable stream-after
+window (default 0.05 seconds), then promotes longer work to request-scoped SSE.
+Notifications also select SSE. One worker/event queue survives the selection;
+handlers are not replayed. Explicit SSE/progress/subscription behavior remains.
+Quick JSON uses the already encoded, size-checked bytes.
+
+A private HTTP request runtime owns queueing, worker lifetime and response writing.
+serve-http supplies the documented web-server connection custodian rather than
+letting request workers remain children of the shared servlet custodian. A delivery
+scope performs cooperative/bounded cleanup even if headers fail before the body
+callback runs; connection ownership also covers forced connection termination.
+An initial SSE comment flushes headers, and keep-alives expose closed peers while
+handlers produce no events. Detection latency still depends on keep-alive/network
+buffering. Direct make-http-handler integration needs an appropriate owner.
+
+The previously failing dev/check-http-json-disconnect.rkt now exits 0. It verifies
+adaptive stream cancellation before scenario teardown, not cancellation inferred
+from input EOF. The scenario-session suite no longer excludes JSON-preference
+mode from its pre-teardown worker cleanup assertion. Initial focused HTTP/SSE/
+authorization/session suites passed 108 checks. The adaptive/session run then
+passed 53 checks before strengthening the quick-JSON and half-close assertions.
+The final adaptive suite passed 21 checks covering actual response types/content,
+exactly one handler invocation, cooperative and forced cancellation, a TCP write
+half-close that still receives a response, and delivery failure before the body
+writer. Full SDK/platform/conformance gates remain separate.
+
+The first full server conformance rerun used an ephemeral listener and recorded
+141 SUCCESS, 5 FAILURE, 1 WARNING, 2 SKIPPED and 1 INFO checks in
+test-artifacts/conformance-server-adaptive-20260907-1344. The additional failure
+revealed that the default Origin allowlist used configured port zero instead of
+the selected listener port. serve-http now derives that port from the actual
+connection, retaining the configured host and any explicit Origin allowlist.
+Five added regressions cover the accepted actual Origin, rejected port zero and
+foreign Origin, and explicit allowlist inclusion/exclusion. The adaptive and HTTP
+authorization suites passed 65 checks after this fix.
+
+A fresh server process reran the same pinned harness, recording 142 SUCCESS,
+4 FAILURE, 1 WARNING, 2 SKIPPED and 1 INFO checks in
+test-artifacts/conformance-server-origin-20260907-1355. The four failures remain
+the documented deprecated sampling/roots fixtures, including their mixed-method
+and sampling-only capability cases. The Origin protection scenario now passes.
+Both raw runs are retained; this is not an unqualified conformance pass.
+
+The new sixth official Go SDK probe verifies quick HTTP JSON, adaptive SSE,
+single execution, cancellation without a progress token, worker cleanup, and
+continued requests. All six probes passed after the Origin fix. The clean source
+distribution and isolated package dependency/documentation setup also passed.
+
+Final validation: sh scripts/check.sh passed compilation, 3,092 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all six official Go probes. python3 scripts/package.py and isolated
+env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed; these
+preceded this final evidence-only ledger addition. The standalone disconnect
+probe also passed again against the final code. git diff --check passed.
+Verification remains Linux/Racket 9.2. The original compiler, integration,
+durability, scenario and platform release gates remain open.

@@ -16,6 +16,10 @@ func main() {
 		serveCancellation(ctx)
 		return
 	}
+	if len(os.Args) > 2 && os.Args[2] == "http-adaptive" {
+		checkHTTPAdaptive(ctx, os.Args[1])
+		return
+	}
 	progress := make(chan *mcp.ProgressNotificationParams, 16)
 	options := &mcp.ClientOptions{}
 	if len(os.Args) > 2 && os.Args[2] == "cancellation" {

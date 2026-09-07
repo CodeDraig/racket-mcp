@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
+(require "private/http-request.rkt" (only-in web-server/private/connection-manager connection-custodian connection-i-port) (only-in racket/tcp tcp-addresses) "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
          web-server/http web-server/web-server web-server/servlet-dispatch web-server/safety-limits
          "subscription.rkt" "authorization.rkt" "private/http-wire.rkt" "private/sse.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "json.rkt" "runtime.rkt" "descriptor.rkt" "stdio.rkt" "header-schema.rkt")
 (provide serve-http make-http-handler encode-header-value decode-header-value request-headers
@@ -32,45 +32,31 @@
 (define (json-response status body [headers '()])
   (response/full status #f (current-seconds) #"application/json" headers
                  (if body (list (string->bytes/utf-8 (json->string body))) '())))
-(define (write-request-stream rt message principal out keepalive limit)
-  (define owner (make-custodian))
-  (define cancelled (make-semaphore 0))
-  (define events (make-async-channel 64))
-  (define (enqueue kind message)
-    (define data (and message (string->bytes/utf-8 (json->string message))))
-    (when (and data (> (bytes-length data) limit)) (error 'http-server "SSE response byte limit exceeded"))
-    (async-channel-put events (cons kind data)))
-  (define worker
-    (parameterize ([current-custodian owner])
-      (thread
-       (lambda ()
-         (with-handlers ([(lambda (_) #t) (lambda (raised) (async-channel-put events (cons 'failure raised)))])
-           (parameterize ([current-output-port (current-error-port)]
-                          [current-cancellation-event (semaphore-peek-evt cancelled)]
-                          [current-cancelled? (lambda () (and (sync/timeout 0 (semaphore-peek-evt cancelled)) #t))])
-             (enqueue 'done (dispatch-message rt message #:principal principal #:notify (lambda (m) (when m (enqueue 'message m)))))))))))
-  (dynamic-wind void
-    (lambda ()
-      (let loop ()
-        (define event
-          (sync/timeout keepalive events
-            (wrap-evt (thread-dead-evt worker)
-              (lambda (_)
-                (or (sync/timeout 0 events)
-                    (cons 'failure (exn:fail "HTTP request worker exited without a response" (current-continuation-marks))))))))
-        (cond [(not event) (display ": keep-alive\n\n" out) (flush-output out) (loop)]
-              [(eq? (car event) 'failure) (raise (cdr event))]
-              [else
-               (when (cdr event)
-                 (display "event: message\ndata: " out) (write-bytes (cdr event) out)
-                 (display "\n\n" out) (flush-output out))
-               (unless (eq? (car event) 'done) (loop))])))
-    (lambda ()
-      (semaphore-post cancelled)
-      (sync/timeout 0.2 (thread-dead-evt worker))
-      (custodian-shutdown-all owner))))
+(define (response-status result)
+  (define code (hash-ref (hash-ref result 'error (hasheq)) 'code #f))
+  (cond [(equal? code -32001) 403] [(equal? code -32601) 404]
+        [(member code '(-32602 -32600 -32020 -32021 -32022)) 400] [else 200]))
+(define (request-response rt message principal stream? keepalive limit stream-after)
+  (define request (start-http-request rt message principal limit))
+  (with-handlers ([(lambda (_) #t) (lambda (failure) (stop-http-request! request) (raise failure))])
+    (define first (and (not stream?) (http-request-next request stream-after)))
+    (cond [(and first (eq? (http-event-kind first) 'failure)) (raise (http-event-value first))]
+          [(and first (eq? (http-event-kind first) 'done))
+           (stop-http-request! request)
+           (define result (http-event-value first))
+           (response/full (response-status result) #f (current-seconds)
+                          #"application/json" '() (list (http-event-bytes first)))]
+          [else
+           (response/output (lambda (out) (write-http-request request out keepalive first))
+             #:mime-type #"text/event-stream"
+             #:headers (list (header #"Cache-Control" #"no-cache") (header #"X-Accel-Buffering" #"no")))])))
+(define ephemeral-origin-policy (gensym 'ephemeral-origin))
+(define current-ephemeral-origin (make-parameter #f))
+(define (origin-url host port)
+  (format "http://~a:~a" (if (and (string? host) (string-contains? host ":")) (format "[~a]" host) host) port))
 (define (make-http-handler rt #:origins [origins '()] #:authenticate [authenticate #f] #:sse? [sse? #f] #:max-bytes [max-bytes 1048576]
                            #:keepalive-seconds [keepalive 15] #:max-response-bytes [response-limit 1048576]
+                           #:stream-after [stream-after 0.05]
                            #:resource-metadata [metadata #f] #:resource-metadata-url [metadata-url #f])
   (when (and metadata-url (not metadata)) (error 'make-http-handler "metadata URL requires resource metadata"))
   (when metadata
@@ -89,6 +75,8 @@
       (string->bytes/utf-8 (if metadata-url (bearer-challenge metadata-url #:scopes scopes #:error kind)
                               (if kind (string-append "Bearer error=\"" kind "\", scope=\"" (string-join scopes " ") "\"") "Bearer")))))
   (unless (and (real? keepalive) (< 0 keepalive +inf.0)) (raise-argument-error 'make-http-handler "positive finite real?" keepalive))
+  (unless (and (rational? stream-after) (>= stream-after 0))
+    (raise-argument-error 'make-http-handler "finite nonnegative stream-after seconds" stream-after))
   (unless (exact-positive-integer? response-limit) (raise-argument-error 'make-http-handler "exact-positive-integer?" response-limit))
   (lambda (req)
     (parameterize ([current-mcp-clock (runtime-clock rt)])
@@ -112,7 +100,7 @@
              (if (bytes=? (request-method req) #"GET")
                  (json-response 200 metadata (list (header #"Access-Control-Allow-Origin" #"*")))
                  (json-response 405 #f (list (header #"Allow" #"GET"))))]
-            [(and origin (not (member origin origins))) (json-response 403 #f)]
+            [(and origin (not (member origin (if (eq? origins ephemeral-origin-policy) (list (current-ephemeral-origin)) origins)))) (json-response 403 #f)]
             [(not (bytes=? (request-method req) #"POST")) (json-response 405 #f (list (header #"Allow" #"POST")))]
             [else
              (define principal (authenticate-request headers))
@@ -160,21 +148,32 @@
                     (unless (or (null? needed) (scopes-allow? principal needed))
                       (mcp-error -32001 "Insufficient scope" (hasheq 'requiredScopes needed)))
                     (cond [(not (hash-has-key? message 'id)) (dispatch-message rt message #:principal principal) (json-response 202 #f)]
-                          [(or sse? (equal? method "subscriptions/listen") (hash-has-key? (hash-ref params '_meta (hasheq)) 'progressToken))
-                           (response/output
-                            (lambda (out)
-                              (write-request-stream rt message principal out keepalive response-limit))
-                            #:mime-type #"text/event-stream" #:headers (list (header #"Cache-Control" #"no-cache") (header #"X-Accel-Buffering" #"no")))]
-                          [else (define result (dispatch-message rt message #:principal principal))
-                                (define code (hash-ref (hash-ref result 'error (hasheq)) 'code #f))
-                                (json-response (cond [(equal? code -32001) 403] [(equal? code -32601) 404] [(member code '(-32602 -32600 -32020 -32021 -32022)) 400] [else 200]) result)])])])))))
+                          [else
+                           (request-response rt message principal
+                             (or sse? (equal? method "subscriptions/listen")
+                                 (hash-has-key? (hash-ref params '_meta (hasheq)) 'progressToken))
+                             keepalive response-limit stream-after)])])])))))
 (define header-value/raw header-value)
 (define (serve-http rt #:port [port 8000] #:host [host "127.0.0.1"] #:origins [origins #f]
                     #:authenticate [authenticate #f] #:sse? [sse? #f] #:confirmation [confirmation #f]
                     #:keepalive-seconds [keepalive 15] #:max-response-bytes [response-limit 1048576]
+                    #:stream-after [stream-after 0.05]
                     #:resource-metadata [metadata #f] #:resource-metadata-url [metadata-url #f])
-  (serve #:dispatch (dispatch/servlet (make-http-handler rt #:origins (or origins (list (format "http://~a:~a" host port))) #:authenticate authenticate #:sse? sse? #:keepalive-seconds keepalive #:max-response-bytes response-limit
-                                                                            #:resource-metadata metadata #:resource-metadata-url metadata-url))
+  (define dispatcher
+    (dispatch/servlet
+      (make-http-handler rt #:origins (or origins (if (zero? port) ephemeral-origin-policy (list (origin-url host port))))
+        #:authenticate authenticate #:sse? sse? #:keepalive-seconds keepalive
+        #:max-response-bytes response-limit #:stream-after stream-after
+        #:resource-metadata metadata #:resource-metadata-url metadata-url)))
+  (serve #:dispatch (lambda (connection request)
+                      (define resolved-origin
+                        (and (not origins) (zero? port)
+                             (let-values ([(local-address local-port remote-address remote-port)
+                                           (tcp-addresses (connection-i-port connection) #t)])
+                               (origin-url host local-port))))
+                      (parameterize ([current-http-request-custodian (connection-custodian connection)]
+                                     [current-ephemeral-origin resolved-origin])
+                        (call-with-http-request-scope (lambda () (dispatcher connection request)))))
          #:port port #:listen-ip host #:confirmation-channel confirmation
          #:safety-limits (make-safety-limits #:max-request-body-length 1048576)))
 (struct http-client (url token next-id lock schemas max-response-bytes max-header-bytes timeout header-timeout progress-tokens) #:mutable #:transparent)

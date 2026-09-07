@@ -1,0 +1,59 @@
+[
+  {
+    "id": "sep-2322-result-type-included",
+    "name": "ResultTypeIncluded",
+    "description": "Server includes resultType field in InputRequiredResult response",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T13:55:31.690Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "user_name": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What is your name?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "fc776e188dd19eaefc8a266c10dafe30539e79e425b1034897bf9a15ddbcd4af",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T13:55:31.690Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 2,
+      "violations": []
+    }
+  }
+]

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "prompts-get-embedded-resource",
+    "name": "PromptsGetEmbeddedResource",
+    "description": "Get prompt with embedded resource",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T13:55:30.616Z",
+    "specReferences": [
+      {
+        "id": "MCP-Prompts-Embedded-Resources",
+        "url": "https://modelcontextprotocol.io/specification/2025-06-18/server/prompts#embedded-resources"
+      }
+    ],
+    "details": {
+      "messageCount": 1,
+      "messages": [
+        {
+          "content": {
+            "resource": {
+              "mimeType": "text/plain",
+              "text": "Embedded resource content for testing.",
+              "uri": "test://example-resource"
+            },
+            "type": "resource"
+          },
+          "role": "user"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T13:55:30.616Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 2,
+      "violations": []
+    }
+  }
+]

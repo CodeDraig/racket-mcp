@@ -96,8 +96,7 @@
       (define worker (sync/timeout 2 gates))
       (check-true (thread? worker))
       (set! timed-worker worker)
-      (unless (and (eq? transport 'http) (not (cadr configuration)))
-        (check-not-false (sync/timeout 2 worker))))
+      (check-not-false (sync/timeout 2 worker)))
     #:transport transport #:timeout 1/5 #:sse? (cadr configuration))
   (check-not-false (sync/timeout 2 timed-worker)))
 
