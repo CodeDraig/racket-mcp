@@ -2652,3 +2652,26 @@ inspection found development Python bytecode from the preparation probe; the
 packager and Git ignore rules now exclude it. A rebuilt archive contains the
 phase regression, preparation command and pinned dependency inputs, with no
 Python bytecode. git diff --check passed.
+
+## Imported-helper restart compatibility release probe (2026-09-07)
+
+dev/check-helper-compatibility.rkt now reproduces the imported-helper fingerprint
+gap through actual SQLite state and separate processes. The first process
+checkpoints using a helper returning "before" and suspends for input. The probe
+changes only the imported helper module, then starts a new process and resumes
+the saved execution with an accepted input response. The current implementation
+incorrectly completes with "after" instead of raising an incompatible-code
+recovery diagnostic. The probe exits 1 and is deliberately outside the passing
+native suite. Each child has a 30-second watchdog and the temporary sources and
+state are cleaned up. No application runtime code was changed in this batch.
+
+Local Racket documentation and disposable expansion probes established a
+constraint on the proposed automatic dependency fingerprint: the complete module
+import query is available during provide expansion, which follows right-hand-side
+expansion. Calling module->imports on the module during its own expansion reports
+an unknown module. Provide transformers cannot lift an expression or submodule
+into the enclosing module. These results rule out a simple late fingerprint
+definition without addressing descriptor initialization order. Reading files on
+each continuation would not identify the already loaded executable and was not
+implemented. The executable dependency fingerprint remains an open release gate;
+this probe establishes its required rejection behavior with durable state.
