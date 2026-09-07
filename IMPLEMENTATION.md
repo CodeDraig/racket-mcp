@@ -3517,3 +3517,35 @@ isolated raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or
 undefined-tag matches. git diff --check passed. This final evidence paragraph
 postdates packaging and changes no executable/manual content. Verification of
 these changes remains Linux/Racket 9.2; the full SDK objective is still open.
+
+## Subscription filter and delivery authorization (2026-09-07)
+
+Inspection found resourceSubscriptions were acknowledged without resources/read
+policy checks, unlike task subscriptions. Known filter fields also lacked type
+validation, allowing invalid values to reach later notification routing. The
+runtime now rejects malformed booleans/resource arrays before registration,
+checks accepted list filters against their list operation, checks each resource
+URI against resources/read (including mounted/view scopes), and deduplicates URIs.
+Denied targets receive -32001 without acknowledgement or listener registration.
+
+Every delivered event also rechecks current target authorization and verified
+principal expiry; task events recheck ownership. Thus direct application publication
+through the runtime hub cannot bypass policy revocation. Suppressed events are not
+replayed after permission restoration. Resource readers are never invoked by these
+checks. Standalone generic hubs remain application-policy agnostic.
+
+Focused policy, scenario subscription, task-notification and view-task-notification
+suites passed 238 checks. New cases cover all four scenario transport configurations,
+malformed fields even for absent capabilities, remapped resource scopes, callback
+denial, no acknowledgement on rejection, duplicate URI normalization, delivery,
+revocation/restoration, principal expiry and no resource-handler execution. Full
+verification follows; this closes concrete policy paths rather than the entire
+subscription/authorization conformance matrix.
+
+Final sh scripts/check.sh passed compilation, 4,322 native checks, all 1,301
+pinned core schema cases and Scribble. All nine official Go probes passed. The
+rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
+passed without warning or undefined-tag matches. git diff --check passed. This
+evidence paragraph postdates packaging and changes no executable/manual content.
+These changes are verified on Linux/Racket 9.2; full authorization conformance,
+scenario fault controls and the other SDK release gates remain open.

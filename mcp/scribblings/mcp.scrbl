@@ -1940,3 +1940,25 @@ The independent Go fixtures in @tt{dev/subscription-server.rkt} and
 acknowledgement filters, tagged changes, server-requested closure, continued calls
 and fresh connections over stdio and HTTP. They supplement the scenario tests
 that directly assert the subscription completion result.
+
+
+@subsection{Subscription filter authorization}
+
+Known list-change filter fields must be booleans; @tt{resourceSubscriptions}
+must be an array of strings. Invalid known fields produce @tt{-32602} before
+registration, including fields for an unavailable category. Unsupported categories
+remain omitted from the accepted filter, and duplicate resource URIs are collapsed.
+
+Before acknowledgement, each accepted list-change filter requires authorization
+for its corresponding list operation. Each accepted resource URI requires
+@tt{resources/read} authorization, including scopes preserved by URI remapping and
+views. Tasks retain their operation and ownership checks. A denied target rejects
+the subscription with @tt{-32001}; no acknowledgement or listener is installed.
+These checks resolve declaration policy without running resource readers.
+
+Before each subsequent event, the runtime rechecks the target operation's policy
+and principal expiry; task events also recheck ownership. Events denied by current
+policy are suppressed. Restoring permission permits later eligible events on the
+same listener; suppressed events are not replayed. This applies even when an
+application publishes directly through the runtime's subscription hub. The generic
+standalone hub has no application authorization policy of its own.
