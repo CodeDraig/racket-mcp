@@ -3878,3 +3878,25 @@ tag matches. git diff --check passed. This final evidence paragraph postdates
 packaging and changes no executable/manual content. Independent Go/conformance
 probes were not repeated for this worker cancellation fix. Verification remains
 Linux/Racket 9.2; the full SDK goal and remaining release gates remain open.
+
+
+## Official Go resource subscription forwarding probes (2026-09-07)
+
+Added a development server that runs a native Racket upstream over stdio, installs
+its pinned interface with a local resource URI remapping, and keeps the scoped
+resource forwarder active. Its public endpoint serves either stdio or HTTP. New
+official Go SDK probes use Subscribe/Unsubscribe, inspect accepted filters and
+subscription IDs, mutate through a forwarded tool, receive the mapped resource
+update, and read the updated content. A second subscription must receive a fresh
+ID and another correctly tagged update. This exercises the Go client through the
+Racket forwarding server; it does not establish a Go upstream-server path.
+
+The first Go build rejected an incorrect nil check on a value-typed acknowledgement
+filter. Corrected that probe error before execution. Final sh scripts/check-interop.sh
+passed all eleven probes, including both new forwarding cases and the previous
+nine checks. The script compiles the Racket development fixtures and Go probe binary.
+Raw output is retained in test-artifacts/upstream-resource-interop-2026-09-07/go-probes.log.
+gofmt and git diff --check passed. Only development probes, their runner and this
+ledger changed. Full native/schema/package runs were not repeated; the SDK runtime
+is unchanged from the preceding verified revision. This is Linux/Racket 9.2 evidence;
+full independent conformance and other remaining release gates remain open.
