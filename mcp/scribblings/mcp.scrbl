@@ -793,6 +793,25 @@ Completion forwarding retains the peer's original prompt name or template URI
 while local lookup uses the transformed declaration. Without an explicitly
 configured bridge, MRTR and Tasks outcomes still fail explicitly.
 
+@tt{upstream-resource-change-keys}, exported by @tt{mcp/upstream}, accepts the
+installed upstream interface and a URI in that interface's namespace. It resolves
+exactly one resource and returns its JSON dependency-key list. Unknown URIs and
+resources without upstream keys fail explicitly. Generated resources and templates
+declare these dependencies automatically. Views retain them, so resolving a remote
+URI against the original interface or its corresponding local URI against a view
+produces the same keys. Resolution does not read the resource or call the peer.
+
+An application receiving a resource change from that upstream can pass these keys
+to @tt{runtime-report-change!} with the local principal and runtime. Invalidation
+precedes local notifications, which use the mounted URI and the existing local
+authorization path. Private caches remain principal-partitioned. Each call to
+@tt{make-upstream-interface} allocates a separate freshness identity, even for
+identical snapshots and URI strings. Retain the installed interface for subsequent
+change reports; these keys belong to that installation and are not portable
+across reconstructed interfaces. Resource TTL remains zero unless explicitly
+configured otherwise. This dependency API does not itself open or reconnect an
+upstream subscription, and it does not infer changes in remote systems.
+
 @subsubsection{Durable upstream MRTR}
 @defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
 @defproc[(upstream-bridge? [value any/c]) boolean?]{

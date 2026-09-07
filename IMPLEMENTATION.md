@@ -3765,3 +3765,34 @@ passed. Only tests and this ledger changed; full/schema/package/interoperability
 suites were not repeated, and their previous results remain revision-specific.
 This evidence is Linux/Racket 9.2 and does not close dynamic composition, hidden
 helper capability inference, or the other outstanding SDK release gates.
+
+
+## Upstream resource freshness keys (2026-09-07)
+
+Generated upstream resources/templates now declare URI-specific dependency keys
+with an independently allocated source identity per installed upstream interface.
+The exported upstream-resource-change-keys helper resolves one resource URI and
+returns its JSON dependency list without invoking a reader or peer. URI remappings
+retain the dependency closure, and separate interfaces with identical discovery
+snapshots cannot invalidate each other. Unknown URIs and non-upstream resource
+keys fail explicitly. Keys are installation-local, not persistent source identities;
+callers retain the interface and resolve original URIs for later change reports.
+
+The existing runtime-report-change! path now provides a concrete integration point
+for these changes: invalidate before publication, map to mounted local URIs, retain
+subscription IDs, and partition by local principal. No positive TTL or automatic
+upstream listener is introduced. Focused local/stdio/HTTP freshness, upstream and
+resource-cache suites passed 117 checks, including a second-source negative control,
+unknown/non-upstream URI errors, zero reader execution during key derivation,
+explicit test caching, subscriber delivery, and another principal's retained cache.
+Full verification follows. Active upstream subscription forwarding remains open.
+
+
+Final sh scripts/check.sh passed compilation, 4,645 native checks, all 1,301
+pinned core schema cases and Scribble. The rebuilt distribution and isolated
+raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or undefined
+tag matches. git diff --check passed. This final evidence paragraph postdates
+packaging and changes no executable/manual content. Independent Go/conformance
+probes were not repeated; the new local/stdio/HTTP integration uses native clients.
+Verification is Linux/Racket 9.2. Active upstream subscription forwarding and
+other complete SDK release gates remain open.

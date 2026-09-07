@@ -1,8 +1,8 @@
 #lang racket/base
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
          "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
-         "workflow.rkt" (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
-(provide capture-snapshot make-upstream-interface check-upstream-compatibility! recover-upstream-task! retry-upstream-task! (struct-out upstream-template-adapter))
+         "workflow.rkt" (only-in "storage.rkt" opaque-handle) (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
+(provide capture-snapshot make-upstream-interface upstream-resource-change-keys check-upstream-compatibility! recover-upstream-task! retry-upstream-task! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)
@@ -43,9 +43,32 @@
   (retry-upstream-task/core! bridge store snapshot request id principal credential authorize
     (lambda () (check-upstream-compatibility! snapshot request))))
 (struct upstream-template-adapter (arguments matcher) #:transparent)
+(define (upstream-resource-change-keys interface uri)
+  (unless (interface-descriptor? interface)
+    (raise-argument-error 'upstream-resource-change-keys "interface-descriptor?" interface))
+  (unless (string? uri) (raise-argument-error 'upstream-resource-change-keys "string?" uri))
+  (define matches
+    (filter values
+      (for/list ([resource (in-list (interface-descriptor-resources interface))])
+        (define arguments ((resource-descriptor-matcher resource) uri))
+        (and arguments (cons resource arguments)))))
+  (unless (= (length matches) 1)
+    (error 'upstream-resource-change-keys "expected one resource matching URI ~s; found ~a" uri (length matches)))
+  (define resource (caar matches))
+  (define arguments (bind-arguments (resource-descriptor-arguments resource) (cdar matches)))
+  (define keys ((resource-descriptor-depends-on resource) arguments))
+  (unless (and (list? keys) (pair? keys) (json-value? keys)
+               (andmap (lambda (key) (and (list? key) (= (length key) 3)
+                                          (equal? (car key) "mcp/upstream-resource"))) keys))
+    (error 'upstream-resource-change-keys "resource does not declare upstream change keys"))
+  keys)
 (define (make-upstream-interface supplied-snapshot request #:templates [templates (hash)] #:bridge [bridge #f])
   (unless (or (not bridge) (upstream-bridge? bridge)) (raise-argument-error 'make-upstream-interface "upstream-bridge? or #f" bridge))
   (define snapshot (string->json (json->string supplied-snapshot)))
+  ;; Each installed upstream has a separate freshness domain, even when two
+  ;; servers publish identical snapshots and URI spellings. Views retain this
+  ;; closure; no upstream credential or handle appears in a dependency key.
+  (define freshness-source (opaque-handle))
   (define (durable-handler procedure) (if bridge (stateful-handler procedure) procedure))
   (define tasks? (and bridge (hash-has-key?
     (hash-ref (hash-ref (hash-ref snapshot 'server/discover) 'capabilities) 'extensions (hasheq))
@@ -91,7 +114,10 @@
           (for/list ([content (in-list (hash-ref result 'contents))])
             (resource-content (hash-set content 'uri (remap-uri (hash-ref content 'uri)))))))))
       #:description (hash-ref wire 'description "") #:mime-type (hash-ref wire 'mimeType #f)
-      #:arguments arguments #:matcher matcher))
+      #:arguments arguments #:matcher matcher
+      #:depends-on
+      (lambda (bound)
+        (list (list "mcp/upstream-resource" freshness-source (uri-template-expand uri bound))))))
   (define resources
     (append
      (for/list ([wire (in-list (hash-ref (hash-ref snapshot 'resources/list) 'resources))])
