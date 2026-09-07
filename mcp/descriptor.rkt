@@ -6,7 +6,8 @@
          (struct-out interface-descriptor) (struct-out resource-ref) (struct-out request-context)
          interface-requirements interface-adapter-bindings interface-adapter-restrictions interface-effect-summary interface-resource-references make-interface make-tool make-resource make-prompt bind-arguments encode-prompt-arguments prompt-codec-fingerprint
          text-content text-result structured-result error-result resource-link
-         current-request-context current-interface current-resource-resolver resource-uri link embed)
+         current-request-context current-interface current-resource-resolver resource-uri link embed
+         interface-requires-state?)
 (struct server-descriptor (name version instructions) #:transparent)
 (struct argument (name schema optional? default) #:transparent)
 (struct prompt-argument argument (codec) #:transparent)
@@ -21,6 +22,15 @@
 (struct prompt-descriptor (name description arguments handler workflow) #:transparent)
 (struct interface-descriptor (server tools resources prompts completions) #:transparent)
 (struct scoped-interface interface-descriptor (requirements adapters references restrictions) #:transparent)
+(define (interface-requires-state? interface)
+  (for/or ([declarations (in-list (list (interface-descriptor-tools interface)
+                                      (interface-descriptor-resources interface)
+                                      (interface-descriptor-prompts interface)))]
+           [workflow-of (in-list (list tool-descriptor-workflow resource-descriptor-workflow prompt-descriptor-workflow))]
+           [handler-of (in-list (list tool-descriptor-handler resource-descriptor-handler prompt-descriptor-handler))])
+    (for/or ([declaration (in-list declarations)])
+      (or (and (workflow-of declaration) #t)
+          (handler-requires-state? (handler-of declaration))))))
 (define (interface-requirements interface)
   (if (scoped-interface? interface) (scoped-interface-requirements interface) (hasheq)))
 (define (interface-adapter-bindings interface)

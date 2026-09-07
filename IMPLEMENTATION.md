@@ -3221,3 +3221,33 @@ or undefined-tag matches. git diff --check passed. This final evidence paragraph
 postdates packaging and changes no executable or manual content. Verification
 remains Linux/Racket 9.2; complete upstream Tasks, the full failure/conformance
 matrices, and the remaining SDK release gates stay open.
+
+
+## Bridge storage preflight through composition (2026-09-07)
+
+Upstream bridge handlers now carry inert state-store metadata. The public
+interface-requires-state? predicate reports either declared workflows or bridge
+handlers without calling application or credential procedures. serve-interface
+uses it before opening storage or starting transports, so a bridged server
+without --state fails during startup. Plain low-level runtimes can still use
+explicit ephemeral memory storage as documented.
+
+Handler metadata survives existing mount/view copies and raw descriptor rebuilds;
+excluding all stateful declarations removes the requirement. Resource-reference
+metadata delegates through the wrapper rather than being lost. This addresses
+the serving-preflight gap recorded in the preceding bridge entry; it does not
+infer arbitrary application I/O or complete dynamic manifest requirements.
+
+The focused storage-preflight, serving-lifetime, upstream and bridge run passed
+161 checks. Fourteen new checks cover each domain kind, mount/rename/URI changes,
+raw descriptor rebuilding, view removal, successful EOF serving with SQLite,
+ordinary upstream serving without storage, and zero peer/credential calls during
+construction and preflight. Full verification follows.
+
+Final verification passed sh scripts/check.sh: compilation, 3,709 native checks,
+all 1,301 pinned schema cases, and Scribble. All seven official Go probes passed.
+The rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
+passed without warning or undefined-tag matches. git diff --check passed. This
+evidence paragraph postdates packaging and changes no executable/manual content.
+Native evidence remains Linux/Racket 9.2; upstream Tasks translation and the full
+SDK implementation and release gates remain open.

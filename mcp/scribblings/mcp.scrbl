@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor?)
+@(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
                      (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request!)))
 @title{MCP for Racket: Development API}
@@ -807,6 +807,8 @@ Returns whether the value is an upstream bridge configuration.
 Constructs an inert bridge configuration. Pass it as @racket[#:bridge] to
 @tt{make-upstream-interface}, and supply a store to the local runtime. Use an
 explicit SQLite state path for durability; memory storage remains ephemeral.
+The serving command requires @tt{--state} before starting any transport when
+the published interface contains a bridge handler.
 Identity and version are nonempty strings describing the upstream service and
 adapter implementation. Change the version when callback behavior changes.
 
@@ -1752,6 +1754,16 @@ Recognizes an SDK interface descriptor, including descriptors returned by
 or invoke handlers.
 }
 
+@defproc[(interface-requires-state? [interface interface-descriptor?]) boolean?]{
+Reports whether the published tools, resources, or prompts contain a workflow or
+an upstream bridge requiring a state store. It inspects descriptor metadata
+without invoking handlers or credential callbacks. Mounting, renaming, and
+rebuilding descriptors preserve bridge requirements; removing all stateful
+declarations with a view removes the requirement. Ordinary application I/O is
+not inferred from Racket procedures. The serving command uses this predicate to
+require an explicit state-file path before acquiring runtime resources.
+}
+
 @section{Generated server commands}
 
 @defmodule[mcp/cli]
@@ -1763,7 +1775,7 @@ interface. Generated @tt{#lang mcp} main submodules call this function. It accep
 
 For example, @tt{racket examples/approval.rkt --state approval.sqlite} runs the
 durable example over stdio. The state path remains mandatory for durable
-workflows. Application definitions and imports are not instantiated a second
+workflows and upstream bridges. Application definitions and imports are not instantiated a second
 time by the command handler.
 
 Serving owns its SQLite connection and runtime/transport workers from startup

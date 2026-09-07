@@ -1,6 +1,6 @@
 #lang racket/base
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
-         "upstream-bridge.rkt" "workflow.rkt" "authorization.rkt")
+         "upstream-bridge.rkt" "workflow.rkt" "authorization.rkt" "private/handler-info.rkt")
 (provide capture-snapshot make-upstream-interface check-upstream-compatibility! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
@@ -39,6 +39,7 @@
 (define (make-upstream-interface supplied-snapshot request #:templates [templates (hash)] #:bridge [bridge #f])
   (unless (or (not bridge) (upstream-bridge? bridge)) (raise-argument-error 'make-upstream-interface "upstream-bridge? or #f" bridge))
   (define snapshot (string->json (json->string supplied-snapshot)))
+  (define (durable-handler procedure) (if bridge (stateful-handler procedure) procedure))
   (define verified (make-hash)) (define lock (make-semaphore 1))
   (define (invoke method params)
     (define context (current-request-context))
@@ -64,7 +65,7 @@
   (define (pending? result) (equal? (hash-ref result 'resultType #f) "input_required"))
   (define (build-resource wire uri arguments matcher)
     (make-resource (hash-ref wire 'name) uri
-      (lambda supplied-values
+      (durable-handler (lambda supplied-values
         (define remote-uri (uri-template-expand uri
           (for/hasheq ([argument (in-list arguments)] [value (in-list supplied-values)])
             (values (argument-name argument) value))))
@@ -72,7 +73,7 @@
         (if (pending? result) result
         (apply resource-contents
           (for/list ([content (in-list (hash-ref result 'contents))])
-            (resource-content (hash-set content 'uri (remap-uri (hash-ref content 'uri))))))))
+            (resource-content (hash-set content 'uri (remap-uri (hash-ref content 'uri)))))))))
       #:description (hash-ref wire 'description "") #:mime-type (hash-ref wire 'mimeType #f)
       #:arguments arguments #:matcher matcher))
   (define resources
@@ -123,13 +124,13 @@
         (for/list ([arg (in-list (hash-ref wire 'arguments '()))])
           (argument (string->symbol (hash-ref arg 'name)) String (not (hash-ref arg 'required #f)) #f)))
       (make-prompt name arguments
-        (lambda (bound)
+        (durable-handler (lambda (bound)
           (define result (invoke "prompts/get" (hasheq 'name name 'arguments
             (for/hasheq ([(key value) (in-hash bound)] #:unless (missing? value)) (values key value)))))
           (if (pending? result) result
           (hash-set result 'messages
             (for/list ([message (in-list (hash-ref result 'messages))])
-              (hash-set message 'content (remap-content (hash-ref message 'content)))))))
+              (hash-set message 'content (remap-content (hash-ref message 'content))))))))
         #:description (hash-ref wire 'description ""))))
   (define completions
     (if (hash-has-key? (hash-ref (hash-ref snapshot 'server/discover) 'capabilities) 'completions)
@@ -153,9 +154,9 @@
     (for/list ([wire (in-list (hash-ref (hash-ref snapshot 'tools/list) 'tools))])
       (define schema (hash-ref wire 'inputSchema)) (check-schema! schema)
       (make-tool (hash-ref wire 'name) '()
-                 (lambda (bound)
+                 (durable-handler (lambda (bound)
                    (define result (invoke "tools/call" (hasheq 'name (hash-ref wire 'name) 'arguments bound)))
-                   (if (pending? result) result (hash-set result 'content (map remap-content (hash-ref result 'content)))))
+                   (if (pending? result) result (hash-set result 'content (map remap-content (hash-ref result 'content))))))
                  #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))
                  #:input-schema schema #:raw? #t))))

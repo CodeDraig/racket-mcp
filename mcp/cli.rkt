@@ -6,10 +6,8 @@
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
   (unless (interface-descriptor-server interface) (error 'serve "an executable interface requires a server declaration"))
-  (when (and (or (ormap tool-descriptor-workflow (interface-descriptor-tools interface))
-                 (ormap prompt-descriptor-workflow (interface-descriptor-prompts interface))
-                 (ormap resource-descriptor-workflow (interface-descriptor-resources interface))) (not state))
-    (error 'serve "durable workflows require an explicit --state file"))
+  (when (and (interface-requires-state? interface) (not state))
+    (error 'serve "durable workflows and upstream bridges require an explicit --state file"))
   (define serving-breaks? (break-enabled))
   (parameterize-break #f
     ;; Acquisition is part of the serving lifetime too. Keep store transaction
