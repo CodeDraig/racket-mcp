@@ -1226,8 +1226,29 @@ Notification and post-commit outbox callback failures remain deferred delivery
 failures. Diagnostics do not invoke custom printers on non-exception payloads.
 Break exceptions retain their existing control-flow meaning.
 
-@tt{store-transaction} wraps non-exception raised values only while crossing
-Racket's database transaction helper, whose rollback handler accepts exceptions.
-After rollback it re-raises the original value. Nested store transactions share
-that boundary. This covers raised-value rollback; it is not a claim that every
-process termination or arbitrary continuation escape has been verified.
+@tt{store-transaction} preserves the original raised value after rollback.
+Nested calls in the same thread share that transaction; child threads do not
+inherit ownership merely by inheriting parameters.
+
+@section[#:tag "transaction-ownership"]{Transaction ownership and terminated workers}
+
+Stores opened by @tt{open-memory-store} and @tt{open-sqlite-store} supervise
+transactions under a store-owned custodian. The supervisor owns the database's
+managed transaction and the store semaphore. Application code runs in its original
+thread and parameterization, including transactional effect adapters.
+
+Normal callback completion commits before returning its values. Exceptions,
+arbitrary raised values, breaks, continuation escapes, and prompt aborts roll
+back. If a worker is killed or its request custodian shuts down, the supervisor
+observes its death and rolls back before releasing the store lock. Cleanup is
+asynchronous after forced termination; acquiring the next store transaction waits
+for it. Cancellation while waiting for the lock does not require the preceding
+transaction to finish. Applications cannot commit the managed transaction early.
+
+The supervisor lives as long as the store's custodian; callers must open shared
+stores outside individual request custodians. @tt{close-store!} disconnects the
+store and shuts down its supervisors. Directly constructed @tt{state-store}
+values use the calling custodian and do not provide the factory stores' independent
+supervisor lifetime. Store opening, simultaneous store shutdown, and process
+termination are separate lifecycle boundaries; the worker-termination tests do
+not establish every possible crash/commit race.

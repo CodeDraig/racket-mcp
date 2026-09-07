@@ -2360,3 +2360,41 @@ Final validation: sh scripts/check.sh passed compilation, 2,888 native checks,
 all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
 passed all five Go SDK probes. git diff --check passed. Verification remains
 Linux/Racket 9.2; remaining lifecycle and full SDK release gates stay open.
+
+## Store-owned transaction cleanup (2026-09-07)
+
+A forced-worker probe showed that kill-thread left both the SQLite transaction
+and store semaphore held: Racket does not run the killed thread's dynamic-wind
+post thunk. Factory-created stores now retain a supervisor custodian. Each
+transaction supervisor owns the managed db transaction and semaphore while the
+application callback remains in its original thread and parameterization. Worker
+death requests rollback; ordinary completion commits before returning values.
+Arbitrary raised values retain their identity without crossing db's exception-only
+handler. This supersedes the preceding raised-value wrapper implementation.
+
+Reentrant ownership now includes thread identity, so inherited child-thread
+parameters cannot bypass serialization. Queued cancellation observes the finished
+signal without waiting for the lock. Managed transaction ownership prevents an
+application callback from committing the SDK boundary early. Failed-transaction
+connection checks occur before releasing the lock, avoiding interference with a
+subsequent transaction. Raw state-store construction uses the caller custodian;
+independent supervision is provided by the store factories.
+
+The new termination suite covers memory/file stores, worker kill, request
+custodian shutdown, break, escape and prompt abort, unclosed nested transactions,
+subsequent bounded reuse, inherited child ownership, queued cancellation,
+prohibited early commit, multiple values, nested success, and file reopen.
+The 69 new checks and 64 arbitrary-raised-value checks passed together. Before
+the final lock-order adjustment, the full run passed 2,957 native checks,
+1,301 pinned schema cases, Scribble, and all five Go probes. Final-state results
+are recorded below. Full process/crash/commit and store-opening/shutdown races
+remain separate release gates.
+
+Final validation: sh scripts/check.sh passed compilation, 2,957 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five Go SDK probes. python3 scripts/package.py rebuilt the clean
+source distribution; isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
+--pkgs racket-mcp passed including documentation. The first package build caught
+an overlong generated section filename; an explicit short Scribble tag fixed it
+before the passing build. git diff --check passed. Linux/Racket 9.2 remains the
+verified platform; the complete SDK release remains unfinished.
