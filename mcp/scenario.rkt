@@ -1,6 +1,6 @@
 #lang racket/base
-(require "scenario-session.rkt" racket/path raco/testing)
-(provide run-scenarios (all-from-out "scenario-session.rkt"))
+(require "scenario-session.rkt" "scenario-process.rkt" racket/path raco/testing)
+(provide run-scenarios (all-from-out "scenario-session.rkt" "scenario-process.rkt"))
 
 ;; Run an authored test submodule in its own module registry and custodian.
 ;; RackUnit catches assertion failures, so successful module instantiation alone

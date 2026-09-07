@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
+(require "scenario-process.rkt" "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
          (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform task-boundary completion scenario define-mcp-extension)
 (begin-for-syntax
@@ -185,6 +185,22 @@
            descriptor))]))
 (define-syntax (scenario stx)
   (syntax-parse stx
+    [(_ (name:id process:id) #:command command:expr
+        (~optional (~seq #:transport transport:expr) #:defaults ([transport #''stdio]))
+        (~optional (~seq #:capabilities capabilities:expr) #:defaults ([capabilities #'(hasheq)]))
+        (~optional (~seq #:timeout timeout:expr) #:defaults ([timeout #'5]))
+        (~optional (~seq #:shutdown-timeout shutdown:expr) #:defaults ([shutdown #'2]))
+        (~optional (~seq #:stderr-limit limit:expr) #:defaults ([limit #'65536]))
+        (~optional (~seq #:directory directory:expr) #:defaults ([directory #'(current-directory)]))
+        (~optional (~seq #:environment environment:expr) #:defaults ([environment #'(current-environment-variables)]))
+        body:expr ...+)
+     #'(module+ test
+         (require rackunit)
+         (test-case (symbol->string 'name)
+           (call-with-scenario-process command
+             (lambda (process) body ...)
+             #:transport transport #:capabilities capabilities #:timeout timeout
+             #:shutdown-timeout shutdown #:stderr-limit limit #:directory directory #:environment environment)))]
     [(_ (name:id session:id) #:interface interface:expr
         (~optional (~seq #:transport transport:expr) #:defaults ([transport #''local]))
         (~optional (~seq #:clock clock:expr) #:defaults ([clock #'(make-manual-clock)]))

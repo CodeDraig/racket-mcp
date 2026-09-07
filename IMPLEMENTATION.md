@@ -3617,3 +3617,32 @@ or undefined-tag matches. git diff --check passed. This final evidence paragraph
 postdates packaging and changes no executable/manual content. These changes were
 verified on Linux/Racket 9.2; process-restart scenario controls and the remaining
 SDK release gates are still open.
+
+## Process-backed scenario harness (2026-09-07)
+
+Added mcp/scenario-process and a scenario #:command form. The native Racket harness
+launches an explicit command without a shell, snapshots its directory/environment,
+provides stdio or loopback HTTP requests, captures a bounded stderr byte tail and
+supports hard kill/restart. Child fixtures own their interface/adapters/clock/principal
+configuration; Racket closures are not serialized from the parent. Old requests
+are settled from client outcomes or observed process exit before client workers
+are disposed. Buffered replies get a bounded drain opportunity. Pending handles
+share a drain deadline. Restart does not replay requests or subscriptions.
+
+Focused process/scenario tests passed 93 checks before the final shared-deadline
+adjustment. Cases include SQLite MRTR continuation across actual hard restart,
+a checkpoint side effect observed once, stdio/HTTP subscription loss, restart of
+a running child, unchanged old handles, reply immediately before process exit,
+100KB stderr output with a 37-byte retained tail, arbitrary caller failure cleanup,
+closed scopes and invalid configuration. The executable #lang restart example
+passed through the CLI after correcting its explicit RackUnit import. Initial
+fixture parenthesis and constructor-shadowing mistakes were corrected before the
+passing run. Full final-source validation follows. Complete authored fault scheduling and the remaining SDK release gates remain open.
+
+Final sh scripts/check.sh passed compilation, 4,507 native checks, all 1,301
+pinned core schema cases and Scribble. The final-source executable process-restart
+scenario passed through the CLI. All nine official Go probes passed. The rebuilt
+distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp passed
+without warning or undefined-tag matches. git diff --check passed. This final
+evidence paragraph postdates packaging and changes no executable/manual content.
+These changes are verified on Linux/Racket 9.2; the full SDK objective remains open.

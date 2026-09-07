@@ -2004,3 +2004,59 @@ reader blocked on input, gives request workers bounded cleanup, and preserves th
 original raised value. Background workers do not retry writes to the failed
 output or emit uncaught secondary diagnostics. Scenario-injected pipe loss captures
 that expected serving failure; clients still observe actual EOF.
+
+
+@section[#:tag "scenario-process"]{Process-backed scenarios}
+
+@tt{mcp/scenario-process}, @tt{mcp/scenario} and @tt{mcp} export
+@tt{call-with-scenario-process}. Its first argument is a nonempty command list
+(executable followed by path/string arguments); its second is a procedure receiving
+an opaque process-scenario value. No shell is inserted. The child fixture owns
+its interface, adapters, principal, clock and storage configuration. Those Racket
+values are not serialized from the parent. An explicit SQLite path in the command
+lets a restarted fixture resume the same application state.
+
+The equivalent language form is:
+@verbatim{
+(scenario (restart child)
+  #:command (list (find-executable-path "racket") application "--state" state-file)
+  #:capabilities (hasheq 'elicitation (hasheq))
+  ...)
+}
+Configuration expressions run in the test submodule, once in declaration order.
+The optional clauses, in order, are @tt{#:transport}, @tt{#:capabilities},
+@tt{#:timeout}, @tt{#:shutdown-timeout}, @tt{#:stderr-limit}, @tt{#:directory}, and
+@tt{#:environment}. The function accepts the same keywords. Defaults are stdio,
+empty capabilities, a five-second request/startup timeout, two seconds per cleanup
+phase, a 65,536-byte stderr tail, the current directory and a copied environment.
+The executable, arguments, directory and environment are retained across restarts.
+
+@tt{scenario-process-request} returns the SDK's event-compatible request handle;
+@tt{scenario-process-call} waits and raises exception outcomes. Both accept method,
+optional params, @tt{#:capabilities} and @tt{#:timeout}. Subscription deadlines
+default to @tt{#f}; other requests use the configured timeout. A buffered native
+reply is drained before classifying process loss. If the client cannot supply a
+terminal outcome after process exit, @tt{exn:fail:scenario-process-loss} carries
+the observed PID and exit status. Cancellation uses the native request handle.
+
+@tt{scenario-process-kill!} hard-kills and reaps the child. Repeating it is harmless.
+@tt{scenario-process-restart!} kills a running generation and starts a fresh child;
+it does not replay requests. Old handles retain their terminal outcomes.
+@tt{scenario-process-running?}, @tt{scenario-process-pid}, and
+@tt{scenario-process-status} expose observed process state.
+@tt{scenario-process-stderr} returns the bounded raw-byte tail for the current or
+most recently stopped generation. Capture it before restarting if it must be kept.
+Scope exit first closes stdin, then uses a bounded wait and forced termination if
+necessary. Pending handles settle before client workers are destroyed. Requests
+share one drain deadline; stderr has its own bounded drain phase.
+
+For @tt{#:transport 'http}, the child must print a loopback HTTP URL with an explicit
+port as its first stdout line (under 8,192 bytes), then serve that endpoint. The
+harness bounds startup, drains subsequent stdout, and captures stderr separately.
+The transport does not automatically send discovery or replay an uncertain call.
+The command runs as a normal child process, with the supplied directory/environment.
+
+@tt{examples/process-restart-scenario.rkt} demonstrates an actual hard restart at
+an MRTR input boundary. The process controls complement in-process session controls;
+they do not automatically serialize deterministic adapters or inject process-local
+clock changes. Authored child fixtures supply those facilities explicitly.
