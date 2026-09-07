@@ -1,14 +1,22 @@
 #lang racket/base
-(require racket/list racket/async-channel "upstream.rkt" "runtime.rkt" "stdio.rkt" "json.rkt")
+(require racket/list racket/async-channel "upstream.rkt" "runtime.rkt" "stdio.rkt" "json.rkt"
+         (submod "runtime.rkt" upstream-task-subscriptions))
 (provide call-with-upstream-resource-subscription upstream-resource-subscription?
-         upstream-resource-subscription-accepted stop-upstream-resource-subscription!)
-(struct upstream-resource-subscription (ready outcome cancel accepted)
+         upstream-resource-subscription-accepted stop-upstream-resource-subscription!
+         call-with-upstream-task-subscription upstream-task-subscription?
+         upstream-task-subscription-accepted stop-upstream-task-subscription!)
+(struct upstream-subscription (ready outcome cancel accepted)
   #:property prop:evt
   (lambda (self)
-    (wrap-evt (semaphore-peek-evt (upstream-resource-subscription-ready self))
-              (lambda (_) (unbox (upstream-resource-subscription-outcome self))))))
+    (wrap-evt (semaphore-peek-evt (upstream-subscription-ready self))
+              (lambda (_) (unbox (upstream-subscription-outcome self))))))
+(struct upstream-resource-subscription upstream-subscription ())
+(struct upstream-task-subscription upstream-subscription ())
+(define upstream-resource-subscription-accepted upstream-subscription-accepted)
+(define upstream-task-subscription-accepted upstream-subscription-accepted)
 (define (stop-upstream-resource-subscription! subscription)
-  ((upstream-resource-subscription-cancel subscription)))
+  ((upstream-subscription-cancel subscription)))
+(define stop-upstream-task-subscription! stop-upstream-resource-subscription!)
 (define (call-with-upstream-resource-subscription rt source snapshot request uris proc
           #:principal principal #:timeout [timeout 5])
   (unless (runtime? rt) (raise-argument-error 'call-with-upstream-resource-subscription "runtime?" rt))
@@ -25,6 +33,40 @@
   ;; Resolve every requested URI before contacting the peer. These keys retain
   ;; the installed source identity through local views and principal partitions.
   (define keys (for/hash ([uri (in-list requested)]) (values uri (upstream-resource-change-keys source uri))))
+  (call-with-upstream-subscription pinned request requested proc timeout
+    'resourceSubscriptions "notifications/resources/updated" 'uri
+    (lambda (uri _) (runtime-report-change! rt principal (hash-ref keys uri)))
+    upstream-resource-subscription values))
+
+(define (call-with-upstream-task-subscription rt snapshot request ids proc
+          #:principal principal #:capabilities capabilities #:timeout [timeout 5])
+  (unless (runtime? rt) (raise-argument-error 'call-with-upstream-task-subscription "runtime?" rt))
+  (unless (and (list? ids) (pair? ids) (andmap string? ids))
+    (raise-argument-error 'call-with-upstream-task-subscription "nonempty list of local task ID strings" ids))
+  (unless (and (procedure? request) (procedure-arity-includes? request 2)
+               (procedure? proc) (procedure-arity-includes? proc 1))
+    (error 'call-with-upstream-task-subscription "expected request and consumer procedures"))
+  (unless (and (rational? timeout) (> timeout 0))
+    (raise-argument-error 'call-with-upstream-task-subscription "positive finite timeout" timeout))
+  (define pinned (string->json (json->string snapshot)))
+  (define caps (string->json (json->string capabilities)))
+  (define local-ids (remove-duplicates (map string->immutable-string ids)))
+  ;; Authorization and persisted snapshot/credential ownership precede all I/O.
+  (define mapping
+    (for/fold ([mapping (hash)]) ([id (in-list local-ids)])
+      (define remote (hash-ref (runtime-upstream-task-target rt id pinned principal caps) 'remoteId))
+      (hash-update mapping remote (lambda (prior) (append prior (list id))) '())))
+  (call-with-upstream-subscription pinned request (hash-keys mapping) proc timeout
+    'taskIds "notifications/tasks" 'taskId
+    (lambda (remote detail)
+      (for ([id (in-list (hash-ref mapping remote))])
+        (runtime-observe-upstream-task! rt id detail #:principal principal #:capabilities caps)))
+    upstream-task-subscription
+    (lambda (accepted) (filter (lambda (id)
+      (for/or ([remote (in-list accepted)]) (member id (hash-ref mapping remote)))) local-ids))))
+
+(define (call-with-upstream-subscription pinned request requested proc timeout
+          filter-key change-method change-key forward make-subscription accepted->local)
   (define (send method params)
     (define handle (request method params))
     (unless (request-handle? handle)
@@ -40,13 +82,13 @@
           (when (exn? value) (raise value))
           value)
         (lambda () (unless (sync/timeout 0 handle) (request-cancel! handle))))))
-  (define peer (send "subscriptions/listen" (hasheq 'notifications (hasheq 'resourceSubscriptions requested))))
+  (define peer (send "subscriptions/listen" (hasheq 'notifications (hasheq filter-key requested))))
   (define notices (request-handle-notifications peer))
   (define owner (make-custodian))
   (define stopped (make-semaphore 0))
   (define stopped-evt (semaphore-peek-evt stopped))
   (define cancellation
-    (exn:fail:request-cancelled "Upstream resource subscription cancelled locally"
+    (exn:fail:request-cancelled "Upstream subscription cancelled locally"
       (current-continuation-marks) (request-handle-id peer)))
   (define (cancel!)
     ;; Wake the forwarding worker before contacting the borrowed client. Local
@@ -59,9 +101,9 @@
   (define (finish! value)
     (call-with-semaphore lock
       (lambda ()
-        (unless (sync/timeout 0 (semaphore-peek-evt (upstream-resource-subscription-ready subscription)))
-          (set-box! (upstream-resource-subscription-outcome subscription) value)
-          (semaphore-post (upstream-resource-subscription-ready subscription))))))
+        (unless (sync/timeout 0 (semaphore-peek-evt (upstream-subscription-ready subscription)))
+          (set-box! (upstream-subscription-outcome subscription) value)
+          (semaphore-post (upstream-subscription-ready subscription))))))
   (define (tagged-params message)
     (unless (hash? message) (error 'upstream-subscription "expected a notification object"))
     (define params (hash-ref message 'params #f))
@@ -106,15 +148,15 @@
         (error 'upstream-subscription "expected acknowledgement before changes"))
       (define accepted (hash-ref params 'notifications #f))
       (unless (and (hash? accepted)
-                   (andmap (lambda (key) (eq? key 'resourceSubscriptions)) (hash-keys accepted))
-                   (list? (hash-ref accepted 'resourceSubscriptions '()))
+                   (andmap (lambda (key) (eq? key filter-key)) (hash-keys accepted))
+                   (list? (hash-ref accepted filter-key '()))
                    (andmap (lambda (uri) (and (string? uri) (member uri requested)))
-                           (hash-ref accepted 'resourceSubscriptions '())))
+                           (hash-ref accepted filter-key '())))
         (error 'upstream-subscription "acknowledgement contains an unrequested filter"))
-      (define accepted-uris (remove-duplicates (map string->immutable-string (hash-ref accepted 'resourceSubscriptions '()))))
+      (define accepted-ids (remove-duplicates (map string->immutable-string (hash-ref accepted filter-key '()))))
       (set! subscription
-        (upstream-resource-subscription (make-semaphore 0) (box #f)
-          cancel! accepted-uris))
+        (make-subscription (make-semaphore 0) (box #f)
+          cancel! (accepted->local accepted-ids)))
       (set! worker
         (parameterize ([current-custodian owner])
           (thread
@@ -133,11 +175,12 @@
                     [else
                      (define notice (cdr event))
                      (define values (tagged-params notice))
-                     (define uri (hash-ref values 'uri #f))
-                     (unless (and (equal? (hash-ref notice 'method #f) "notifications/resources/updated")
-                                  (member uri accepted-uris))
-                       (error 'upstream-subscription "received an unaccepted resource change"))
-                     (runtime-report-change! rt principal (hash-ref keys uri))
+                     (define id (hash-ref values change-key #f))
+                     (unless (and (equal? (hash-ref notice 'method #f) change-method)
+                                  (member id accepted-ids))
+                       (error 'upstream-subscription "received an unaccepted ~a change"
+                              (if (eq? filter-key 'taskIds) "task" "resource")))
+                     (forward id values)
                      (loop)])))))))
       (proc subscription))
     (lambda ()

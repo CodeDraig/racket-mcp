@@ -215,14 +215,24 @@
         (define credential ((upstream-bridge-credential-id bridge) principal))
         (define notify (current-task-notify))
         (define observation (current-upstream-task-observation))
+        (define target (and observation (equal? id (car observation))
+                            (task-subscription-target? (cdr observation)) (cdr observation)))
         (define result
-          (parameterize ([current-task-notify (lambda (who detail) (notify who (translate-task-detail detail)))])
+          (if target
+              (begin
+                (unless (equal? (fingerprint bridge snapshot)
+                                (fingerprint bridge (task-subscription-target-snapshot target)))
+                  (mcp-error -32602 "Subscription snapshot does not match the installed upstream interface"))
+                (hasheq 'remoteId
+                  (upstream-task-remote-id bridge (current-workflow-store)
+                    snapshot id (principal-key principal) credential source)))
+              (parameterize ([current-task-notify (lambda (who detail) (notify who (translate-task-detail detail)))])
             (upstream-task-request bridge (current-workflow-store) snapshot request source method id
               #:principal (principal-key principal) #:credential-id credential
               #:responses (hash-ref params 'inputResponses (hasheq)) #:capabilities (request-context-capabilities context)
               #:observed (and (equal? method "tasks/get") observation (equal? id (car observation)) (cdr observation))
               #:validate-detail (lambda (detail) (translate-task-detail detail) (void))
-              #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context))))
+              #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context)))))
         (translate-task-detail result))
       (make-tool (hash-ref wire 'name) '()
                  (if tasks? (task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch)

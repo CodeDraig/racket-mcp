@@ -15,6 +15,11 @@
 (struct clocked-runtime runtime (clock))
 (define (runtime-clock rt)
   (if (clocked-runtime? rt) (clocked-runtime-clock rt) (current-mcp-clock)))
+(module* upstream-task-subscriptions #f
+  (provide runtime-upstream-task-target))
+(define (runtime-upstream-task-target rt id snapshot principal capabilities)
+  (parameterize ([current-upstream-task-observation (cons id (task-subscription-target snapshot))])
+    (dispatch rt "tasks/get" (hasheq 'taskId id '_meta (request-meta #:capabilities capabilities)) #:principal principal)))
 (define (runtime-observe-upstream-task! rt id detail #:principal principal #:capabilities capabilities)
   (unless (and (string? id) (hash? detail))
     (raise-arguments-error 'runtime-observe-upstream-task! "expected a local task ID and upstream detail object" "id" id "detail" detail))

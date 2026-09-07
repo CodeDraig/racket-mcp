@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 . scripts/racket-env.sh
 export GOCACHE="$PWD/.cache/go-build"
 export GOMODCACHE="$PWD/.cache/go-mod"
-raco make examples/greeter.rkt examples/multi-content.rkt dev/pagination-server.rkt dev/cancellation-server.rkt dev/cancellation-client.rkt dev/http-adaptive-server.rkt dev/captured-greeter.rkt dev/subscription-server.rkt dev/upstream-resource-server.rkt
+raco make examples/greeter.rkt examples/multi-content.rkt dev/pagination-server.rkt dev/cancellation-server.rkt dev/cancellation-client.rkt dev/http-adaptive-server.rkt dev/captured-greeter.rkt dev/subscription-server.rkt dev/upstream-resource-server.rkt dev/resource-subscription-client.rkt
 go -C dev/interop build -o "$PWD/.cache/mcp-interop" .
 .cache/mcp-interop "$PWD/examples/greeter.rkt"
 .cache/mcp-interop "$PWD/dev/pagination-server.rkt" pagination

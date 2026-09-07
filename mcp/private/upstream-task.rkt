@@ -2,7 +2,7 @@
 (require racket/list racket/date racket/format file/sha1 "../storage.rkt" "../clock.rkt" "../json.rkt" "../error.rkt"
          "../tasks.rkt" (submod "../upstream-bridge.rkt" private)
          "failure.rkt" "task-schema.rkt" "elicitation-schema.rkt" "input-response.rkt")
-(provide adopt-upstream-task! upstream-task-request upstream-task-matches? recover-upstream-task! retry-upstream-task/core!)
+(provide adopt-upstream-task! upstream-task-request upstream-task-matches? upstream-task-remote-id recover-upstream-task! retry-upstream-task/core!)
 (define tasks-key 'io.modelcontextprotocol/tasks)
 (define (timestamp)
   (define d (seconds->date (mcp-current-seconds) #f))
@@ -32,6 +32,8 @@
   instance)
 (define (save! bridge store instance state)
   (update-instance! store instance (freeze bridge state)))
+(define (upstream-task-remote-id bridge store snapshot id principal credential source)
+  (hash-ref (stored-instance-state (owned bridge store snapshot id principal credential source)) 'remoteId))
 (define (adopt-upstream-task! bridge store snapshot parent source capabilities)
   ;; The MRTR bridge calls this inside the transaction returning its recorded
   ;; result. The local task and its immutable creation receipt commit together.

@@ -851,9 +851,43 @@ acknowledgement wait and worker cleanup. It is not the lifetime of an acknowledg
 subscription. Transport loss and native queue overflow remain observable failures.
 The application handles the terminal event, refreshes its state as appropriate,
 and explicitly starts a new scope to listen again. Reconnection does not replay
-subscriptions automatically. This runner handles resource updates; upstream list
-changes, task notifications and automatic downstream failure propagation require
-separate integration.
+subscriptions automatically. This runner handles resource updates. The task runner
+below shares its stream lifecycle. Upstream list changes and automatic downstream
+failure propagation require separate integration.
+
+@subsubsection{Scoped upstream task subscriptions}
+
+@tt{call-with-upstream-task-subscription} takes a local runtime, a pinned upstream
+snapshot, an asynchronous request callback, a nonempty list of local task IDs,
+and a consumer procedure. Supply @tt{#:principal} and @tt{#:capabilities} for the
+local task owner. @tt{#:timeout} has the same per-operation meaning as the resource
+runner above. The callback owns the authenticated upstream connection and its
+metadata; all requested tasks must belong to that peer and credential context.
+
+Before upstream I/O, each task is checked through runtime authorization, ownership,
+expiry, stored credentials and the installed interface's snapshot. The runner
+resolves persisted remote IDs, verifies the pinned peer, and requests a task-ID
+filter. Only a correctly tagged acknowledgement accepting a subset of those IDs
+allows the consumer to run. The consumer receives an
+@tt{upstream-task-subscription?} event; @tt{upstream-task-subscription-accepted}
+returns accepted local IDs in the caller's original order, without duplicates.
+Multiple local handles for one remote task receive the same accepted observation.
+
+Accepted @tt{notifications/tasks} messages pass through
+@racket[runtime-observe-upstream-task!]. Each delivery rechecks local policy and
+credentials, validates and persists the detail, and notifies local subscribers
+with local IDs, input mappings and mounted resource links. Notifications do not
+poll the peer. Invalid methods, tags, filters, details or revoked access terminate
+the forwarder with an exception outcome and cancel its upstream subscription.
+
+@tt{stop-upstream-task-subscription!}, scope exit, graceful completion, transport
+loss and queue overflow have the same behavior as the resource runner. Stopping
+the subscription does not cancel a task or close local listeners. Applications
+must handle its terminal event and explicitly refresh/re-listen after loss.
+Independent control requests and notification streams have no shared protocol
+sequence number: applications must coordinate them and reconcile uncertain or
+stale observations. This runner does not retry task mutations or silently repair
+a recovery-required task.
 
 @subsubsection{Durable upstream MRTR}
 @defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
@@ -991,9 +1025,10 @@ mutation. Native-workflow recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
 translated completed results. This currently reports changes observed through
-local polling, control requests, and explicit observations; it does not establish a background upstream
-subscription. Full upstream notification forwarding, broader fault-injection
-coverage and independent task-bridge interoperability remain release gates.
+local polling, control requests, and explicit observations. The scoped task runner
+can supply observations from a live upstream subscription. Broader concurrent and
+fault-injection coverage and independent task-bridge interoperability remain
+release gates.
 
 @subsubsection{Accepting upstream task observations}
 
