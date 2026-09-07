@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list syntax/parse
+(require racket/list syntax/parse "../uri-template.rkt"
          (for-template racket/base "../schema.rkt"))
 (provide (struct-out declaration-node) parse-declaration declarations->manifest)
 ;; This IR contains lexical identifiers and complete source syntax. Only the
@@ -83,6 +83,24 @@
       (when (hash-has-key? seen key)
         (raise-syntax-error 'mcp "duplicate statically known published identity" (declaration-node-source node) (declaration-node-name node)))
       (hash-set! seen key #t)))
+  (define resource-routes '())
+  (for ([node (in-list nodes)] #:when (eq? (declaration-node-kind node) 'resource))
+    (define clauses (declaration-node-clauses node))
+    (define uri-source (hash-ref clauses '#:uri #f))
+    (define uri (and uri-source (literal uri-source)))
+    (define matcher-source (hash-ref clauses '#:matcher #f))
+    (when (and (string? uri) (or (not matcher-source) (eq? (literal matcher-source) #f)))
+      (define matcher
+        (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error 'resource (exn-message e) uri-source))])
+          (uri-template-matcher uri)))
+      (for ([previous (in-list resource-routes)])
+        (define witness
+          (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error 'resource (exn-message e) uri-source))])
+            (uri-matchers-overlap matcher (cdr previous))))
+        (when (string? witness)
+          (raise-syntax-error 'resource
+            (format "overlapping resource URI routes ~a and ~a; both match ~s" uri (car previous) witness) uri-source)))
+      (set! resource-routes (cons (cons uri matcher) resource-routes))))
   (for/list ([node (in-list nodes)])
     (define kind (declaration-node-kind node))
     (define metadata

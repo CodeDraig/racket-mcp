@@ -1718,3 +1718,40 @@ line in the newly vendored URI fixtures. Those bytes are retained to preserve th
 verified upstream hashes. git diff HEAD^ HEAD --check -- . ':!vendor' passed for
 the SDK/test/tooling changes. The full staged whitespace check was not a pass;
 no upstream fixture was rewritten to silence it.
+
+## Generated resource-route overlap analysis (2026-09-07)
+
+Generated URI matchers now retain a private regular-language representation.
+uri-matchers-overlap computes their intersection using finite-state search over
+URI tokens and percent-encoded UTF-8 validity. It returns a concrete accepted URI
+for overlap, false for disjointness, or unknown for arbitrary custom procedures.
+It never invokes custom matchers. The search has a 10,000-state default limit,
+configurable through #:max-states; exhaustion raises rather than claiming safety.
+
+make-interface rejects overlapping generated routes, including fixed/template
+collisions and overlaps introduced by mounts or views. make-runtime inherits this
+check before recovery. The source-aware declaration pass performs the same check
+for locally known literal resources with generated matchers and attaches errors
+to the conflicting URI source. Computed/custom matchers remain subject to runtime
+ambiguity checks; arbitrary Racket procedures cannot be analyzed as regular
+languages from their mere presence.
+
+The new overlap suite checks witnesses against both procedural matchers, disjoint
+UTF-8 cases, Unicode boundaries, empty captures, construction/mount/view rejection,
+source errors, custom matcher non-execution, budget exhaustion, and bounded
+independent enumeration of small route languages. An initial expected-overlap
+fixture actually contained an incomplete literal UTF-8 sequence; its disjointness
+expectation was corrected. Reader errors in integration fixtures were corrected
+before passing tests. The new check also diagnosed an unintended collision in the
+upstream dotted-name fixture, now placed under a distinct prefix. The intentional
+upstream collision test now expects rejection during construction.
+
+The focused overlap/upstream run passed 231 checks. This closes overlap checking
+for generated simple matchers, not inference of arbitrary custom matcher behavior
+or the broader remaining compiler, durable interaction, and release gates.
+
+Final validation: sh scripts/check.sh passed compilation, 2,152 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble without warnings. All five
+Go probes in sh scripts/check-interop.sh passed. git diff --check passed. A direct
+probe also confirmed generated fixed matchers reject a trailing raw newline.
+Verification remains Linux/Racket 9.2; the full SDK objective remains incomplete.

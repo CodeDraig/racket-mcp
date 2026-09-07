@@ -923,8 +923,8 @@ modifiers. Repeated variables, adjacent variables, and separators that cannot
 unambiguously separate simple expansions require an explicit matcher. Captured
 values contain only unreserved characters or valid percent triplets and must
 decode as UTF-8. Returned values are strings; an application needing domain values
-or composite inverses supplies its own matcher. General overlap analysis between
-separate resource templates remains incomplete.
+or composite inverses supplies its own matcher. Overlap between generated matchers
+is checked as described below; custom matcher languages remain unknown.
 
 Resource declarations validate template syntax and variable bindings even with an
 explicit matcher. Literal declaration errors carry source locations; computed
@@ -933,3 +933,20 @@ preserve the template variable set. The independent URI Template corpus is pinne
 under @tt{vendor/uri-template-tests}, with provenance in @tt{vendor/LOCK.json};
 @tt{scripts/fetch-inputs.py uri-template-tests} explicitly refreshes that pinned
 input. Runtime and compilation perform no network fetch.
+
+@section{Resource route overlap checks}
+
+Interfaces reject overlapping generated URI matchers before serving or recovering
+work. This includes fixed resources overlapping templates, differently named
+variables describing the same route, and intersections created by mounts or URI
+remappings. The error includes a URI accepted by both routes. Locally known
+literal resource declarations receive the same check during expansion, with the
+error attached to the conflicting URI declaration.
+
+@tt{uri-matchers-overlap} in @tt{mcp/uri-template} returns a witness string for
+intersecting generated matchers, false for disjoint generated matchers, or
+@tt{'unknown} when either matcher is a custom procedure. The search models both
+simple expansion syntax and UTF-8 validity. Its @tt{#:max-states} keyword defaults
+to 10,000; exceeding the limit raises an error instead of claiming disjointness.
+Custom matchers are never invoked during this analysis. Runtime dispatch retains
+its ambiguity check for custom procedures whose accepted URI sets are unknown.

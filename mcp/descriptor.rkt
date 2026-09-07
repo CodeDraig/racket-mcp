@@ -116,6 +116,13 @@
   (for ([xs (list tools resources prompts)] [name (list tool-descriptor-name resource-descriptor-uri prompt-descriptor-name)])
     (define seen (make-hash))
     (for ([x (in-list xs)]) (when (hash-has-key? seen (name x)) (error 'make-interface "duplicate published identity: ~a" (name x))) (hash-set! seen (name x) #t)))
+  (for* ([index (in-range (length resources))]
+         [other (in-list (drop resources (add1 index)))])
+    (define resource (list-ref resources index))
+    (define witness (uri-matchers-overlap (resource-descriptor-matcher resource) (resource-descriptor-matcher other)))
+    (when (string? witness)
+      (error 'make-interface "overlapping resource URI routes ~a and ~a; both match ~s"
+             (resource-descriptor-uri resource) (resource-descriptor-uri other) witness)))
   (define completion-routes (make-hasheq))
   (for ([completion (in-list completions)])
     (unless (completion-descriptor? completion)
