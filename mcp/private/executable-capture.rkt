@@ -6,7 +6,7 @@
 ;; not a hash of files that might differ from already loaded code. Unobserved
 ;; dependencies remain explicit; callers must not treat a partial capture as a
 ;; complete executable build fingerprint.
-(struct module-code-capture (value observed unobserved build) #:transparent)
+(struct module-code-capture (value observed unobserved build namespace resolver) #:transparent)
 (define-namespace-anchor home)
 (define-runtime-module-path-index build-module "executable-build.rkt")
 (define (identity-name identity)
@@ -21,6 +21,15 @@
   (namespace-attach-module (namespace-anchor->namespace home)
                            (module-path-index-resolve build-module) namespace)
   (define observed (make-hash))
+  (define identities (make-hash))
+  (define imports (make-hash))
+  (define original-resolver (current-module-name-resolver))
+  (define (module-dependencies identity)
+    (if (module-declared? identity #f)
+        (for*/list ([phase-imports (in-list (module->imports identity))]
+                    [dependency (in-list (cdr phase-imports))])
+          (module-path-index-resolve dependency))
+        '()))
   (define original-eval (current-eval))
   (define (capture-eval expression)
     ;; Compile a source module exactly once and evaluate that same object. The
@@ -34,7 +43,12 @@
              (open-input-bytes (call-with-output-bytes (lambda (out) (write code out))))))))
     (if digest
         (begin0 (original-eval code)
-          (hash-set! observed (identity-name identity) (string->immutable-string digest)))
+          (let ([name (identity-name identity)])
+            (hash-set! observed name (string->immutable-string digest))
+            (hash-set! identities name identity)
+            ;; Preserve imports in their declaration namespace, including modules
+            ;; loaded dynamically while the application is instantiated.
+            (hash-set! imports name (module-dependencies identity))))
         (original-eval code)))
   (parameterize ([current-namespace namespace] [current-eval capture-eval] [current-executable-build build])
     (define value (dynamic-require path export))
@@ -46,14 +60,13 @@
       (unless (hash-ref visited name #f)
         (hash-set! visited name #t)
         (unless (hash-has-key? observed name) (hash-set! missing name #t))
-        (when (module-declared? identity #f)
-          (for* ([phase-imports (in-list (module->imports identity))]
-                 [dependency (in-list (cdr phase-imports))])
-            (visit (module-path-index-resolve dependency))))))
+        (for ([dependency (in-list (hash-ref imports name (lambda () (module-dependencies identity))))])
+          (visit dependency))))
     (visit root)
+    (for ([identity (in-hash-values identities)]) (visit identity))
     (module-code-capture value
       (for/hash ([(name digest) (in-hash observed)]) (values name digest))
-      (sort (hash-keys missing) string<?) build)))
+      (sort (hash-keys missing) string<?) build namespace original-resolver)))
 
 ;; Dependencies are explicit caller-supplied executable identities, not files
 ;; silently hashed after loading. No unobserved identity is trusted by default.
@@ -80,5 +93,24 @@
               (write (list (version) (system-type 'vm) (system-type 'arch)
                            (for/list ([name (in-list (sort (hash-keys all) string<?))])
                              (list name (hash-ref all name)))) out))))))))
-  (seal-executable-build! (module-code-capture-build capture) fingerprint)
+  (define namespace (module-code-capture-namespace capture))
+  (define resolver (module-code-capture-resolver capture))
+  (define guard
+    (case-lambda
+      [(identity origin)
+       (error 'workflow "module declarations cannot be attached during sealed execution: ~a"
+              (identity-name identity))]
+      [(path relative source load?)
+       (define identity (resolver path relative source #f))
+       (when load?
+         (unless (and (hash-has-key? all (identity-name identity))
+                      (module-declared? identity #f))
+           (error 'workflow "module was not loaded in the sealed executable: ~a"
+                  (identity-name identity))))
+       (if load? (resolver path relative source #t) identity)]))
+  (seal-executable-build! (module-code-capture-build capture) fingerprint
+    #:runner (lambda (thunk)
+               (parameterize ([current-namespace namespace]
+                              [current-module-name-resolver guard])
+                 (thunk))))
   fingerprint)

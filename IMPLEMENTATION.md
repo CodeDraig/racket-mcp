@@ -2856,3 +2856,45 @@ full run began. The source distribution was refreshed with the strengthened test
 and this ledger; the preceding package setup covers unchanged SDK content.
 git diff --check passed. Native evidence remains Linux/Racket 9.2; default loader,
 bootstrap provenance, dynamic imports and the remaining release gates stay open.
+
+## Sealed workflow module resolution (2026-09-07)
+
+Captured workflows now run in their captured namespace with a scoped module
+resolver. A normal dynamic-require must resolve to a declaration both included in
+the sealed identity set and already loaded in that namespace. Unknown late loads
+are rejected before their initializer runs. Unrelated modules preloaded outside
+the captured graph are not implicitly admitted. Declaration attachment notifications
+are rejected during execution. Caller namespace/resolver parameters are restored
+on both success and failure; request, clock and custodian parameters remain with
+the caller. The execution scope is installed atomically with the build identity.
+This is an ordinary module-resolution guard for trusted code, not a host sandbox:
+Racket code can deliberately replace parameters or manipulate namespaces.
+
+Capture now retains each observed module's imports in its declaration namespace,
+and traverses every observed module as well as the root. This fixes omission of
+an uncaptured dependency reached through a helper dynamically loaded during module
+instantiation. Such a dependency now needs an explicit identity before sealing.
+Prepared dynamic imports work without rereading files during workflow execution.
+
+The focused capture/build/workflow/restart suites passed 73 checks. A new dynamic
+import suite passed 19 checks: unknown load rejection before module initialization,
+unrelated preloaded-module rejection before its exported function runs, explicit
+transitive dependency provenance, successful prepared dynamic import, parameter
+restoration, and continued use of captured code after its file changes and a caller
+namespace loads the replacement. The first new fixture omitted the workflow's
+required #:version and had an unquoted module path in its preload expression;
+both fixture forms were corrected before the passing run. A separate resolver
+probe confirmed that resolved module paths still pass through the resolver.
+
+Production bootstrap provenance, default serving integration, full namespace/
+phase/adapter integration and the rest of the executable compatibility release
+gate remain open. No automatic bootstrap trust policy was introduced. Full native,
+Go and package verification follows below.
+
+Final validation: sh scripts/check.sh passed compilation, 3,323 native checks,
+all 1,301 pinned schema cases and Scribble. sh scripts/check-interop.sh passed
+all six official Go probes. The isolated source distribution passed raco setup
+--check-pkg-deps --pkgs racket-mcp. git diff --check passed. This final ledger-only
+paragraph postdates the package check and changes no executable content. Evidence
+remains Linux/Racket 9.2; public/default loading and the full SDK release gates
+remain open.

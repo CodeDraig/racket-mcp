@@ -115,6 +115,16 @@
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
+  (define (run)
+    (run-workflow/core workflow store arguments #:principal principal #:state handle
+                       #:responses responses #:adapters adapters #:clock clock
+                       #:ttl ttl #:cancelled? cancelled?))
+  (if (captured-workflow? workflow)
+      (call-with-executable-build (captured-workflow-build workflow) run)
+      (run)))
+(define (run-workflow/core workflow store arguments #:principal principal #:state [handle #f]
+                      #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
+                      #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
   (define executable-fingerprint (workflow-executable-fingerprint workflow adapters))
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'run-workflow "workflow execution must own its storage transaction boundaries"))
