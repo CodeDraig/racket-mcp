@@ -3684,3 +3684,33 @@ This final evidence paragraph postdates packaging and changes no executable or
 manual content. Runtime code did not change; independent Go/conformance probes
 were not repeated for these test additions. Verification is Linux/Racket 9.2;
 the complete SDK objective remains open.
+
+
+## Persisted-effect continuation crash boundary (2026-09-07)
+
+Extended the wire-level effect crash matrix to eighteen cases. The new boundary
+pauses in completion computation after the effect stage has advanced durably,
+then kills the real stdio/HTTP server. For each effect policy, the parent reads
+SQLite and independently requires stage position 3, the saved effect value 7 and
+no final workflow result. The application mutation must already be committed.
+
+On restart, these cases race two requests with fresh JSON-RPC IDs on the same
+continuation. Both must return the same successful result, with only one adapter
+attempt in the complete process history. Manual effects with recorded outcomes
+must resume without operator repair. A further restart and terminal retry retain
+the result and do not rerun the effect or earlier checkpoint. This supplements,
+rather than replaces, the before/after-mutation uncertain-effect cases.
+
+The initial eighteen-case matrix plus direct restart/workflow regressions passed
+41 checks. Final verification after adding concurrent continuation requests follows.
+Only fixtures, acceptance tests and this ledger changed. Full task/nested-rendering
+and every-boundary coverage remain open.
+
+
+Final raco make passed for both changed modules. The final focused run of
+scenario-effect-crashes.rkt, restart.rkt and workflow.rkt passed all 41 checks,
+including all eighteen process cases and the concurrent recorded-effect retries.
+git diff --check passed. This is Linux/Racket 9.2 evidence. The full suite, schema
+suite, package build and independent interoperability were not repeated for this
+fixture/test-only extension; their prior results remain tied to their recorded
+revision. The overall SDK goal remains open.

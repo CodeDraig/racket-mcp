@@ -25,7 +25,9 @@
                               'requestedSchema (object-schema (hasheq 'ok Boolean)))) #f #f)
         (workflow-stage 'written 'effect Integer (lambda (env) (hash-ref env 'saved)) 'write policy)
         (workflow-stage 'done 'complete Any
-          (lambda (env) (structured-result (hasheq 'value (hash-ref env 'written)))) #f #f))))
+          (lambda (env)
+            (pause-at "recorded")
+            (structured-result (hasheq 'value (hash-ref env 'written)))) #f #f))))
   (define operation
     (make-tool "mutate" '()
       (lambda (arguments)

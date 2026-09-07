@@ -15,8 +15,8 @@
   (dynamic-wind void (lambda () (query-value c "SELECT count(*) FROM mutations")) (lambda () (disconnect c))))
 (dynamic-wind void
   (lambda ()
-    (for* ([transport '(stdio http)] [policy '(transactional idempotent manual)] [boundary '("before" "after")])
-      (test-case (format "~a ~a crash ~a mutation" transport policy boundary)
+    (for* ([transport '(stdio http)] [policy '(transactional idempotent manual)] [boundary '("before" "after" "recorded")])
+      (test-case (format "~a ~a effect crash boundary: ~a" transport policy boundary)
         (define directory (build-path root (format "~a-~a-~a" transport policy boundary)))
         (make-directory directory)
         (call-with-scenario-process
@@ -33,12 +33,24 @@
             (scenario-process-kill! session)
             (define lost (sync/timeout 2 interrupted))
             (check-true (exn? lost))
-            (define committed? (and (not (eq? policy 'transactional)) (equal? boundary "after")))
+            (define recorded? (equal? boundary "recorded"))
+            (define committed? (or recorded? (and (not (eq? policy 'transactional)) (equal? boundary "after"))))
             (check-equal? (mutation-count directory policy) (if committed? 1 0))
+            (when recorded?
+              ;; Verify the durable stage boundary independently of the child's
+              ;; signal and the eventual wire response.
+              (define store (open-sqlite-store (build-path directory "state.sqlite")))
+              (dynamic-wind void
+                (lambda ()
+                  (define state (stored-instance-state (car (list-instances store #:operation "mutate"))))
+                  (check-equal? (hash-ref state 'position) 3)
+                  (check-equal? (hash-ref (hash-ref state 'values) 'written) 7)
+                  (check-false (hash-has-key? state 'result)))
+                (lambda () (close-store! store))))
             (display-to-file "continue" (build-path directory "release"))
             (scenario-process-restart! session)
-            (when (eq? policy 'manual)
-              ;; Both boundaries are uncertain to the SDK: neither may auto-retry.
+            (when (and (eq? policy 'manual) (not recorded?))
+              ;; Before/after mutation are uncertain; a recorded result is not.
               (define uncertain (scenario-process-call session "tools/call" resume))
               (check-true (hash-has-key? uncertain 'error))
               (check-equal? (length (file->lines (build-path directory "attempts"))) 1)
@@ -54,7 +66,19 @@
                         #:principal (stored-instance-principal instance))))
                 (lambda () (close-store! store)))
               (scenario-process-restart! session))
-            (define completed (scenario-process-call session "tools/call" resume))
+            (define completed
+              (if recorded?
+                  (let ([one (scenario-process-request session "tools/call" resume)]
+                        [two (scenario-process-request session "tools/call" resume)])
+                    ;; Fresh request IDs may race on the same durable continuation.
+                    (define first (sync/timeout 10 one))
+                    (define second (sync/timeout 10 two))
+                    (check-true (hash? first))
+                    (check-true (hash? second))
+                    (check-not-equal? (hash-ref first 'id) (hash-ref second 'id))
+                    (check-equal? (hash-ref first 'result) (hash-ref second 'result))
+                    first)
+                  (scenario-process-call session "tools/call" resume)))
             (check-true (hash-has-key? completed 'result) (format "resumed: ~s" completed))
             (check-equal? (hash-ref (hash-ref completed 'result) 'structuredContent) (hasheq 'value 7))
             ;; Terminal retries, including another process generation, cannot mutate again.
@@ -64,7 +88,7 @@
             (check-equal? (mutation-count directory policy) 1)
             (check-equal? (file->lines (build-path directory "checkpoints")) '("checkpoint"))
             (define attempts (file->lines (build-path directory "attempts")))
-            (check-equal? (length attempts) (if (and (eq? policy 'manual) committed?) 1 2))
+            (check-equal? (length attempts) (if (or recorded? (and (eq? policy 'manual) committed?)) 1 2))
             ;; Transactional recovery rolls back the mutation; only recorded
             ;; external intents promise the same adapter key across retries.
             (unless (eq? policy 'transactional)
