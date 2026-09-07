@@ -1962,3 +1962,14 @@ policy are suppressed. Restoring permission permits later eligible events on the
 same listener; suppressed events are not replayed. This applies even when an
 application publishes directly through the runtime's subscription hub. The generic
 standalone hub has no application authorization policy of its own.
+
+
+Subscription scope preflight includes the union of scopes for the listen operation
+and its supported targets: configured list-operation scopes, resource-read scopes
+(including declaration/view requirements), and each stored task's operation scopes.
+HTTP checks this union before starting SSE. A token lacking those scopes receives
+HTTP 403 with an @tt{insufficient_scope} challenge, the required scope list and
+protected-resource metadata URL, without a subscription acknowledgement. Local
+and stdio dispatch use the same scope calculation. Authorization callbacks and
+task ownership are still checked separately; knowing the required scopes does not
+grant access to another principal's task.

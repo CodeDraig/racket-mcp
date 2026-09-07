@@ -3549,3 +3549,34 @@ passed without warning or undefined-tag matches. git diff --check passed. This
 evidence paragraph postdates packaging and changes no executable/manual content.
 These changes are verified on Linux/Racket 9.2; full authorization conformance,
 scenario fault controls and the other SDK release gates remain open.
+
+## Subscription HTTP scope challenges (2026-09-07)
+
+HTTP scope preflight previously considered subscriptions/listen alone, so target
+scope denial occurred only after the response could become SSE. Refactored the
+shared runtime scope calculation to include supported list operations, requested
+resource reads and stored task operations. Global configured scope requirements
+and declaration/view scopes are combined without duplicates. Known filter shape
+validation is shared between scope preflight and registration. Resource readers
+and workflow handlers are not executed to compute scopes.
+
+HTTP now rejects an insufficiently scoped subscription before SSE with status 403,
+an insufficient_scope challenge, the union of required scopes and protected-resource
+metadata URL. Local/stdio use the same scope calculation; later authorization and
+task ownership checks remain independent. Unsupported categories contribute no
+scope requirements. Updated the existing policy fixture to accept the native HTTP
+authorization exception carrying the same -32001 protocol denial.
+
+Focused HTTP subscription-scope, subscription-policy, HTTP authorization and
+view-task-notification tests passed 182 checks. Cases cover remapped resource scopes,
+configured list scopes, stored task scopes, their combined challenge, no acknowledgement
+on denial, full-scope acknowledgement/completion and zero reader execution. Full
+verification follows; complete OAuth provider/client conformance and other SDK
+release gates remain open.
+
+Final sh scripts/check.sh passed compilation, 4,352 native checks, all 1,301
+pinned core schema cases and Scribble. All nine official Go probes passed. The
+rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
+passed without warning or undefined-tag matches. git diff --check passed. This
+evidence paragraph postdates packaging and changes no executable/manual content.
+These changes are verified on Linux/Racket 9.2; full SDK release gates remain open.

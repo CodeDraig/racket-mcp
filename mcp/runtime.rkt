@@ -44,10 +44,16 @@
                         #:adapter-bindings (interface-adapter-bindings interface)
                         #:adapter-restrictions (interface-adapter-restrictions interface)
                         #:references (interface-resource-references interface)))
+  (define (operation-scopes method params)
+    (append (check-scopes! (required-scopes method params))
+            (declaration-scopes interface store method params)))
   (define (scopes method params)
     (remove-duplicates
-      (append (check-scopes! (required-scopes method params))
-              (declaration-scopes interface store method params))))
+      (append (operation-scopes method params)
+        (if (equal? method "subscriptions/listen")
+            (append-map (lambda (target) (operation-scopes (car target) (cdr target)))
+                        (subscription-policy-targets interface store params))
+            '()))))
   (define (scope-authorize principal method params)
     (define needed (scopes method params))
     (and (or (null? needed) (scopes-allow? principal needed)) (authorize principal method params)))
@@ -70,6 +76,38 @@
   (when (> (length matches) 1)
     (mcp-error -32001 "Task operation is ambiguous; explicit recovery is required"))
   (and (pair? matches) (car matches)))
+;; Shared by scope preflight and runtime registration; no readers or workers run.
+(define (checked-subscription-filter params)
+  (define requested (hash-ref params 'notifications #f))
+  (unless (hash? requested) (mcp-error -32602 "notifications filter must be an object"))
+  (for ([key '(toolsListChanged promptsListChanged resourcesListChanged)])
+    (when (and (hash-has-key? requested key) (not (boolean? (hash-ref requested key))))
+      (mcp-error -32602 "List-change subscription filters must be booleans")))
+  (for ([key '(resourceSubscriptions taskIds)])
+    (when (hash-has-key? requested key)
+      (define values (hash-ref requested key))
+      (unless (and (list? values) (andmap string? values))
+        (mcp-error -32602 (format "~a must be an array of strings" key)))))
+  requested)
+(define (subscription-policy-targets interface store params)
+  (define requested (checked-subscription-filter params))
+  (define meta (hash-ref params '_meta (hasheq)))
+  (append
+    (for/list ([key '(toolsListChanged promptsListChanged resourcesListChanged)]
+               [method '("tools/list" "prompts/list" "resources/list")]
+               [declarations (list (interface-descriptor-tools interface)
+                                   (interface-descriptor-prompts interface)
+                                   (interface-descriptor-resources interface))]
+               #:when (and (pair? declarations) (hash-ref requested key #f)))
+      (cons method (hasheq '_meta meta)))
+    (if (pair? (interface-descriptor-resources interface))
+        (for/list ([uri (in-list (remove-duplicates (hash-ref requested 'resourceSubscriptions '())))])
+          (cons "resources/read" (hasheq 'uri uri '_meta meta)))
+        '())
+    (if store
+        (for/list ([id (in-list (remove-duplicates (hash-ref requested 'taskIds '())))])
+          (cons "tasks/get" (hasheq 'taskId id '_meta meta)))
+        '())))
 (define (operation-targets interface store method params)
   (define tools (interface-descriptor-tools interface))
   (define resources (interface-descriptor-resources interface))
@@ -392,17 +430,7 @@
                [else (mcp-error -32603 "Invalid completion values")]))
        (hasheq 'resultType "complete" 'completion result)]
       [(subscriptions/listen)
-       (define requested (hash-ref params 'notifications #f))
-       (unless (hash? requested) (mcp-error -32602 "notifications filter must be an object"))
-       ;; Validate known fields even when their facility is absent. Otherwise a
-       ;; malformed filter can be acknowledged and fail later during publication.
-       (for ([key '(toolsListChanged promptsListChanged resourcesListChanged)])
-         (when (and (hash-has-key? requested key) (not (boolean? (hash-ref requested key))))
-           (mcp-error -32602 "List-change subscription filters must be booleans")))
-       (when (hash-has-key? requested 'resourceSubscriptions)
-         (define uris (hash-ref requested 'resourceSubscriptions))
-         (unless (and (list? uris) (andmap string? uris))
-           (mcp-error -32602 "resourceSubscriptions must be an array of strings")))
+       (define requested (checked-subscription-filter params))
        (define accepted
          (for/fold ([accepted (hasheq)]) ([key '(toolsListChanged promptsListChanged resourcesListChanged resourceSubscriptions)]
                                          [available (list (pair? (interface-descriptor-tools iface)) (pair? (interface-descriptor-prompts iface)) (pair? (interface-descriptor-resources iface)) (pair? (interface-descriptor-resources iface)))])

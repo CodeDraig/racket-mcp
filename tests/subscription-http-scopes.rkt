@@ -1,0 +1,66 @@
+#lang racket/base
+(require rackunit racket/async-channel racket/string
+         mcp mcp/http mcp/stdio mcp/authorization mcp/subscription)
+(define reader-calls 0)
+(resource (secret [id String]) #:uri "private:///{id}"
+  (set! reader-calls (add1 reader-calls)) "secret")
+(workflow (tasked) #:version "1" #:execution task (text-result "done"))
+(define iface
+  (view (make-interface #:resources (list secret) #:tools (list tasked)
+                        #:requirements (hasheq secret '("resource") tasked '("task")))
+        #:uris (hash "private:///{id}" "mapped:///{id}")))
+(define issuer "https://issuer.example")
+(define audience "https://api.example/mcp")
+(define all-scopes '("listen" "listing" "resource" "task"))
+(define (principal scopes) (verified-principal "alice" issuer audience scopes (+ (current-seconds) 60)))
+(define store (open-memory-store))
+(define rt (make-runtime iface #:store store
+  #:required-scopes (lambda (method _params)
+                      (cond [(equal? method "subscriptions/listen") '("listen")]
+                            [(equal? method "tools/list") '("listing")]
+                            [else '()]))))
+(define capabilities (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
+(define task (dispatch rt "tools/call" (hasheq 'name "tasked" '_meta (request-meta #:capabilities capabilities))
+                       #:principal (principal all-scopes)))
+(define task-id (hash-ref task 'taskId))
+(define combined (hasheq 'notifications (hasheq 'toolsListChanged #t 'resourceSubscriptions '("mapped:///one") 'taskIds (list task-id))))
+(define needed ((runtime-required-scopes rt) "subscriptions/listen" combined))
+(check-equal? needed all-scopes)
+(define confirmation (make-async-channel))
+(define stop
+  (serve-http rt #:port 0 #:confirmation confirmation #:sse? #t
+    #:resource-metadata (protected-resource-metadata audience (list issuer) #:scopes all-scopes)
+    #:authenticate (make-bearer-authenticator
+      (lambda (token) (principal (if (equal? token "full") all-scopes '("listen"))))
+      #:issuer issuer #:audience audience)))
+(define port (sync confirmation))
+(when (exn? port) (raise port))
+(define endpoint (format "http://127.0.0.1:~a/mcp" port))
+(dynamic-wind void
+  (lambda ()
+    (define limited (make-http-client endpoint #:token "limited" #:timeout 3))
+    (for ([filter (in-list (list (hasheq 'resourceSubscriptions '("mapped:///one"))
+                                 (hasheq 'toolsListChanged #t)
+                                 (hasheq 'taskIds (list task-id))
+                                 (hash-ref combined 'notifications)))]
+          [scopes (in-list (list '("listen" "resource") '("listen" "listing") '("listen" "task") all-scopes))])
+      (define h (http-client-request limited "subscriptions/listen" (hasheq 'notifications filter) #:capabilities capabilities #:timeout 2))
+      (define denied (sync/timeout 3 h))
+      (check-true (exn:fail:http:authorization? denied))
+      (check-equal? (exn:fail:http:authorization-status denied) 403)
+      (define challenge (car (exn:fail:http:authorization-challenges denied)))
+      (check-equal? (hash-ref (authentication-challenge-parameters challenge) "error") "insufficient_scope")
+      (check-equal? (string-split (hash-ref (authentication-challenge-parameters challenge) "scope")) scopes)
+      (check-equal? (hash-ref (authentication-challenge-parameters challenge) "resource_metadata")
+                    (protected-resource-metadata-url audience))
+      (check-false (sync/timeout 0 (request-handle-notifications h))))
+    (check-equal? reader-calls 0)
+    (define full (make-http-client endpoint #:token "full" #:timeout 3))
+    (define h (http-client-request full "subscriptions/listen" combined #:capabilities capabilities))
+    (define ack (sync/timeout 3 (request-handle-notifications h)))
+    (check-equal? (hash-ref ack 'method) "notifications/subscriptions/acknowledged")
+    (check-equal? (hash-ref (hash-ref ack 'params) 'notifications) (hash-ref combined 'notifications))
+    (close-subscriptions! (runtime-subscriptions rt))
+    (check-equal? (hash-ref (hash-ref (sync/timeout 3 h) 'result) 'resultType) "complete")
+    (check-equal? reader-calls 0))
+  (lambda () (stop) (custodian-shutdown-all (runtime-custodian rt)) (close-store! store)))

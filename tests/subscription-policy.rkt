@@ -1,5 +1,5 @@
 #lang racket/base
-(require rackunit racket/async-channel mcp mcp/scenario mcp/stdio mcp/subscription mcp/authorization)
+(require rackunit racket/async-channel mcp mcp/scenario mcp/stdio mcp/subscription mcp/authorization mcp/http)
 (define reads 0)
 (resource (secret [id String]) #:uri "private:///{id}"
   (set! reads (add1 reads)) "secret")
@@ -18,7 +18,11 @@
                     (or permitted (not (member method '("resources/read" "tools/list")))))))
   (define (reject session filter code)
     (define h (scenario-request session "subscriptions/listen" (hasheq 'notifications filter)))
-    (define response (sync/timeout 2 h))
+    (define outcome (sync/timeout 2 h))
+    (define response
+      (if (exn:fail:http:authorization? outcome)
+          (string->json (bytes->string/utf-8 (exn:fail:http:authorization-body outcome)))
+          outcome))
     (check-equal? (hash-ref (hash-ref response 'error) 'code) code)
     (check-false (sync/timeout 0 (request-handle-notifications h))))
   (run (who '())
