@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt")
+(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt")
 (provide (struct-out module-code-capture) capture-module-export seal-module-code-capture!)
 
 ;; A capture is evidence about declarations actually evaluated under this loader,
@@ -9,8 +9,7 @@
 (struct module-code-capture (value observed unobserved build namespace resolver predefined) #:transparent)
 (define-namespace-anchor home)
 (define-runtime-module-path-index build-module "executable-build.rkt")
-(define (identity-name identity)
-  (string->immutable-string (format "~s" (resolved-module-path-name identity))))
+(define identity-name module-identity-key)
 (define (module-source? expression)
   (and (syntax? expression)
        (pair? (syntax-e expression))

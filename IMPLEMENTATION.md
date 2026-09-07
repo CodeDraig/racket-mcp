@@ -2959,3 +2959,37 @@ code is unchanged since the native and Go runs. Verification remains Linux/Racke
 The final isolated dependency/documentation setup passed with no warning or
 undefined-tag matches in its log. git diff --check passed. This evidence-only
 paragraph postdates the package build and changes no executable content.
+
+## Distinct symbolic module identity enforcement (2026-09-07)
+
+A concrete resolver probe demonstrated that an unrelated module with a fresh
+symbol named #%kernel could run through the sealed resolver. The fresh symbol
+and predefined module are distinct resolved identities, but their printed names
+are identical. The old string-key map therefore admitted the unrelated declaration.
+The probe executed its exported function and printed "uncaptured code" before
+this correction.
+
+Capture, bootstrap checks and sealed execution now share module-identity-key.
+It preserves the existing encoding of file paths and interned symbolic names but
+rejects fresh/unreadable symbolic names, including submodule names, whose printed
+form does not establish portable identity. It does not silently merge them with
+predefined modules or each other. Automatic/public registration of portable
+identities for reflective modules with such names is not implemented; the manual
+states this limitation. Ordinary file modules and reader/interned names retain
+their existing identity representation.
+
+Thirteen new checks establish distinct identities with identical printed names,
+predefined-name handling, immutable keys, unreadable/fresh rejection, submodule
+handling, and an actual sealed resolver attempt against a predeclared unrelated
+module. A marker file confirms that its function did not run. Direct capture of
+the unrelated symbolic declaration also fails. The combined identity, public
+loader, CLI restart and prepared-import suites passed 74 checks. Full native,
+Go and package verification follows below; the overall SDK goal remains open.
+
+Final validation passed sh scripts/check.sh (compilation, 3,382 native checks,
+all 1,301 pinned schema cases and Scribble), all seven official Go probes, and
+isolated raco setup --check-pkg-deps --pkgs racket-mcp. No warning/undefined-tag
+matches were found in the native/package logs. git diff --check passed. This last
+evidence paragraph postdates the package build and changes no executable content.
+Native evidence remains Linux/Racket 9.2; automatic provenance/default loading and
+the full SDK release remain incomplete.

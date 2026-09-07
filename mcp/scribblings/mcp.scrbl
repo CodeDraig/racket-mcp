@@ -1570,6 +1570,10 @@ execution must refer to modules already loaded and included in the sealed build.
 Prepare those imports during application loading. Changing a captured helper or
 the runtime build ID rejects incompatible saved execution. Replacing a source
 file after loading does not replace the code retained by that loaded workflow.
+Fresh and unreadable symbols are rejected as module names in captured loading:
+their printed names can alias distinct identities, including predefined modules.
+Use file modules or stable interned module/submodule names. A public registration
+API for portable identities of these reflective modules is not implemented yet.
 This is not a sandbox for trusted Racket code that deliberately changes its own
 resolver or namespace.
 }

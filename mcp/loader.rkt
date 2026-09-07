@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/path (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt")
+(require racket/path (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt" "private/module-identity.rkt")
 (provide load-interface)
 (define-namespace-anchor sdk-home)
 (define sdk-language
@@ -8,7 +8,7 @@
 (define sdk-reader
   (module-path-index-resolve
    (module-path-index-join "lang/reader.rkt" (variable-reference->module-path-index (#%variable-reference)))))
-(define (module-name identity) (format "~s" (resolved-module-path-name identity)))
+(define module-name module-identity-key)
 (define (bootstrap-identities)
   (define seen (make-hash))
   (define (visit identity)
