@@ -220,16 +220,10 @@
                     (define effects (hash-ref state 'effects))
                     (define prior (hash-ref effects id #f))
                     (define key (if prior (hash-ref prior 'key) (opaque-handle)))
-                    (define input ((workflow-stage-procedure stage) (decoded-env env)))
-                    (cond [(eq? (effect-adapter-policy adapter) 'transactional)
-                           (define result ((effect-adapter-invoke adapter) input key (current-store-connection)))
-                           (advance! instance stage result) '(continue)]
-                          [(and prior (eq? (effect-adapter-policy adapter) 'manual) (not (equal? (hash-ref prior 'status) "retry-authorized")))
-                           (recovery instance id "external effect outcome is uncertain; inspect and record an outcome or authorize retry")]
-                          [else
-                           (update-instance! store instance (hash-set state 'effects (hash-set effects id (hasheq 'key key 'status "intent" 'position position 'schema (if (value-codec? (workflow-stage-schema stage)) (codec-storage-schema (workflow-stage-schema stage)) (workflow-stage-schema stage)) 'codec (if (value-codec? (workflow-stage-schema stage)) (hasheq 'name (value-codec-name (workflow-stage-schema stage)) 'version (value-codec-version (workflow-stage-schema stage))) #f)))))
-                           (record-event! store (stored-instance-handle instance) (hasheq 'kind "effect-intent" 'stage (symbol->string id) 'key key))
-                           (list 'effect stage adapter input key)])])]))))
+                    (when (and prior (eq? (effect-adapter-policy adapter) 'manual)
+                               (not (equal? (hash-ref prior 'status) "retry-authorized")))
+                      (recovery instance id "external effect outcome is uncertain; inspect and record an outcome or authorize retry"))
+                    (list 'prepare-effect stage env instance adapter key)])]))))
     (publish-workflow-changes!)
     (case (car action)
       [(return) (cadr action)] [(continue) (loop)]
@@ -295,15 +289,38 @@
            (when (cancelled?) (error 'run-workflow "execution cancelled"))
            (advance-prepared! snapshot stage encoded keys)))
        (loop)]
-      [(effect)
-       (match-define (list _ stage adapter input key) action)
-       (define result ((effect-adapter-invoke adapter) input key #f))
-       (define-values (encoded keys) (prepare-value stage result))
-       (store-transaction store
-         (lambda ()
-           (define current (load-instance store (stored-instance-handle instance)))
-           (when (= (hash-ref (stored-instance-state current) 'position) (hash-ref (stored-instance-state instance) 'position))
-             (advance-prepared! current stage encoded keys))))
+      [(prepare-effect)
+       (match-define (list _ stage env snapshot adapter key) action)
+       (define input ((workflow-stage-procedure stage) (decoded-env env)))
+       (define id (workflow-stage-id stage))
+       (define state (stored-instance-state snapshot))
+       (define position (hash-ref state 'position))
+       (cond
+         [(eq? (effect-adapter-policy adapter) 'transactional)
+          (store-transaction store
+            (lambda ()
+              (when (cancelled?) (error 'run-workflow "execution cancelled"))
+              (define result ((effect-adapter-invoke adapter) input key (current-store-connection)))
+              (advance! snapshot stage result)))]
+         [else
+          (store-transaction store
+            (lambda ()
+              (when (cancelled?) (error 'run-workflow "execution cancelled"))
+              (define schema (workflow-stage-schema stage))
+              (define intent
+                (hasheq 'key key 'status "intent" 'position position
+                        'schema (if (value-codec? schema) (codec-storage-schema schema) schema)
+                        'codec (if (value-codec? schema)
+                                   (hasheq 'name (value-codec-name schema) 'version (value-codec-version schema)) #f)))
+              (update-instance! store snapshot (hash-set state 'effects (hash-set (hash-ref state 'effects) id intent)))
+              (record-event! store (stored-instance-handle snapshot) (hasheq 'kind "effect-intent" 'stage (symbol->string id) 'key key))))
+          (define result ((effect-adapter-invoke adapter) input key #f))
+          (define-values (encoded keys) (prepare-value stage result))
+          (store-transaction store
+            (lambda ()
+              (define current (load-instance store (stored-instance-handle snapshot)))
+              (when (= (hash-ref (stored-instance-state current) 'position) position)
+                (advance-prepared! current stage encoded keys))))])
        (publish-workflow-changes!)
        (loop)])))
   ;; The database transaction protects each transition; this separate claim

@@ -1928,3 +1928,28 @@ Final validation: sh scripts/check.sh passed compilation, 2,514 native checks,
 all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
 with sh scripts/check-interop.sh. git diff --check passed. Native evidence remains
 Linux/Racket 9.2; effect-input preparation and full SDK release gates remain open.
+
+## Effect-input preparation without SQLite lock ownership (2026-09-07)
+
+Effect input computation and environment decoding now execute outside SQLite
+under the instance worker claim for transactional, manual, and idempotent policies.
+Cancellation is checked before transactional adapter invocation or external intent
+creation. Transactional mutation and encoding remain in one transaction; external
+intent/journal persist before invocation, and acknowledged outcomes retain their
+existing atomic result/outbox behavior. Uncertain manual intents reject retries
+before input preparation or environment decoding runs again.
+
+The effect-input-lock suite passed 80 checks across all three policies, with and
+without cancellation. Blocked preparation allows polling and cancellation; cancelled
+preparation produces no adapter call, intent, value, completion, or change outbox.
+Normal execution retains the appropriate adapter connection. A manual-uncertainty
+regression verifies retry does not re-evaluate input or change stored state.
+Existing workflow, recovery-race, codec-lock, and freshness suites passed 144 checks.
+This completes the identified stage-callback transaction separations, not every
+crash/cancellation schedule or the broader SDK release requirements.
+
+Final validation: sh scripts/check.sh passed compilation, 2,594 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
+with sh scripts/check-interop.sh. git diff --check passed. Verification remains
+Linux/Racket 9.2; broader compiler, integration, conformance, crash-matrix, and
+platform requirements remain open.

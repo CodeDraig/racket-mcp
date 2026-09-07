@@ -259,9 +259,12 @@ outside SQLite. Cancellation prevents a checkpoint from advancing; an external
 effect that already returned a committed outcome still records that outcome and
 its change keys after cancellation, without changing the task's cancelled result.
 Transactional effect encoders retain the mutation transaction so encoding failure
-rolls back both mutation and stage completion. Effect-input callbacks
-have separate boundaries; this is not a guarantee that all application callbacks
-run without a storage transaction.
+rolls back both mutation and stage completion. Effect-input preparation and its
+environment decoding run outside SQLite for all three policies. Cancellation is
+checked before adapter invocation or recording an external intent. An uncertain
+manual effect rejects retry before input preparation runs again. Applications
+must keep mutations inside the declared adapter; input preparation can run again
+after process loss before its effect begins.
 
 Single and grouped input requests are persisted after construction and before
 input processing continues. Retries reuse this saved request data; they do not
