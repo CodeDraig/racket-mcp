@@ -3991,3 +3991,28 @@ linklet after the subscription representation changed. git diff --check passed.
 The Go probes verify the resource/shared-runner regression path, not independent
 Tasks interoperability. Verification is Linux/Racket 9.2; the full SDK release
 gates remain open.
+
+## Upstream task accepted-filter and failure coverage (2026-09-07)
+
+Added deterministic task stream fixtures with two distinct local handles for one
+remote task and a third handle for another task. Partial acceptance maps only the
+accepted remote ID to the original ordered local handles. Duplicate observations
+advance each accepted local revision once and emit two local notifications total;
+the unaccepted task remains unchanged. Both omitted and empty task filters are
+legal empty acknowledgements, and neither authorizes any task update.
+
+Setup rejection cases cover foreign accepted IDs, wrong subscription tags, wrong
+filter kinds, malformed filter values, updates before acknowledgement and completion
+without acknowledgement. They assert no consumer invocation, state revision or
+local notification. Post-acknowledgement failures cover requested-but-unaccepted
+IDs, unknown IDs, wrong tags/methods, malformed task detail and invalid successful
+tool output, again asserting no writes or notifications. Expired local handles
+fail before upstream discovery or subscription I/O.
+
+raco make compiled the new fixture, and its suite plus the existing task-stream,
+resource-stream and task-observation suites passed 259 checks. git diff --check
+passed. Only tests and this ledger changed; full native/schema, Go and package
+checks were not repeated. The preceding 4,835 native/1,301 schema/13 Go results
+remain the broader runtime evidence. Verification is Linux/Racket 9.2; concurrent
+task-control ordering, independent Tasks interoperability and the full release
+gates remain open.
