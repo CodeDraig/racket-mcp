@@ -3386,3 +3386,23 @@ evidence paragraph postdates packaging and changes no executable/manual content.
 Native evidence remains Linux/Racket 9.2; complete task failure coverage, upstream
 subscription forwarding, non-tool Tasks, conformance and other SDK release gates
 remain open.
+
+
+## Portable native verification matrix (2026-09-07)
+
+The repository had GitHub Actions enabled but no workflow or previous runs.
+Added a six-job native matrix for x64 Ubuntu 24.04, macOS 15 Intel, and Windows
+2022 with Racket 9.2 and 9.3. The official Racket download page reports 9.3 as
+the August 2026 stable release. The setup, checkout and artifact actions use
+resolved commit pins. Git preserves vendored line endings and jobs retain their
+verification logs. Permissions are read-only; superseded runs are cancelled.
+
+scripts/ci.py supplies platform-native collection paths and isolates package
+writes in the checkout. It bootstraps the prepared syntax-spec dependency,
+builds the distribution, compiles the source, runs the complete native and pinned
+schema suites, builds Scribble and checks installed package dependencies. Its
+report records platform/architecture, each command, exit status and duration.
+A local skip-bootstrap invocation has passed compilation and is running tests.
+Remote execution and final local evidence follow; no macOS/Windows/9.3 success
+is claimed merely from adding the workflow. Independent Go and full conformance
+checks remain separate from this matrix.

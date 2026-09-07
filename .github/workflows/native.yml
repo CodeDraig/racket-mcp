@@ -1,0 +1,52 @@
+name: Native Racket verification
+
+on:
+  push:
+    branches: [main]
+    paths: ['mcp/**', 'tests/**', 'examples/**', 'dev/**', 'scripts/**', 'vendor/**', 'info.rkt', '.github/workflows/native.yml']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Racket ${{ matrix.racket }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, windows-2022]
+        racket: ['9.2', '9.3']
+    env:
+      # Preserve vendored bytes and their recorded hashes on every runner.
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: Bogdanp/setup-racket@2466913449df77df2bad149d1f2fc4e1ea4795dd # v1.15
+        with:
+          version: ${{ matrix.racket }}
+          architecture: x64
+          distribution: full
+          variant: CS
+      - name: Native package, tests and documentation
+        run: python scripts/ci.py
+      - name: Save verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-${{ matrix.os }}-racket-${{ matrix.racket }}
+          path: .cache/ci/results
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

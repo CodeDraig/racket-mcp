@@ -44,6 +44,20 @@ commands with `scripts/racket-env.sh` sourced as above. The unpatched upstream
 
 The CLI is also available without package registration:
 
+Native CI uses `python scripts/ci.py` with an existing Racket installation. This
+portable runner prepares the pinned language dependency, keeps package writes in
+`.cache/ci/package-home`, and runs compilation, the native and pinned schema
+suites, documentation, and package dependency checks. It saves command logs and
+`report.json` in `.cache/ci/results`. For an already bootstrapped local checkout,
+use `python3 scripts/ci.py --skip-bootstrap --package-home .racket`.
+
+The GitHub Actions matrix targets x64 Linux, macOS, and Windows with Racket 9.2
+and 9.3 (the current stable release when configured). Action revisions and Racket
+versions are pinned in `.github/workflows/native.yml`. CI runs are evidence for
+their reported platform/version and revision only; workflow presence is not a
+passing release claim. Go interoperability and the full MCP conformance harness
+remain separate checks.
+
 ```sh
 racket -l mcp/cli -- inspect examples/library.rkt
 racket -l mcp/cli -- --transport http --port 8000 serve examples/greeter.rkt
