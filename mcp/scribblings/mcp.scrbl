@@ -1,6 +1,7 @@
 #lang scribble/manual
 @(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor?)
-                     (only-in mcp/cli serve-interface-command)))
+                     (only-in mcp/cli serve-interface-command)
+                     (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request!)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
 
@@ -789,8 +790,101 @@ Mounted views remap known resource links and embedded-resource URIs, including
 multi-content reads and prompt messages. Removed known resources fail resolution.
 Unrecognized external URIs and arbitrary structured application JSON remain data.
 Completion forwarding retains the peer's original prompt name or template URI
-while local lookup uses the transformed declaration. Upstream MRTR and Tasks
-outcomes still fail explicitly: persistent handle translation is unfinished.
+while local lookup uses the transformed declaration. Without an explicitly
+configured bridge, MRTR and Tasks outcomes still fail explicitly.
+
+@subsubsection{Durable upstream MRTR}
+@defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge)]
+@defproc[(upstream-bridge? [value any/c]) boolean?]{
+Returns whether the value is an upstream bridge configuration.
+}
+@defproc[(make-upstream-bridge [#:identity identity string?]
+                              [#:version version string?]
+                              [#:credential-id credential-id procedure?]
+                              [#:ttl ttl exact-positive-integer? 86400]
+                              [#:max-rounds rounds exact-positive-integer? 100]
+                              [#:max-bytes bytes exact-positive-integer? 1048576]) upstream-bridge?]{
+Constructs an inert bridge configuration. Pass it as @racket[#:bridge] to
+@tt{make-upstream-interface}, and supply a store to the local runtime. Use an
+explicit SQLite state path for durability; memory storage remains ephemeral.
+Identity and version are nonempty strings describing the upstream service and
+adapter implementation. Change the version when callback behavior changes.
+
+The credential callback receives the local principal on each invocation and
+returns a nonempty stable string identifying the upstream account/credential
+context. Use an account or issuer/subject identifier, never a bearer token. The
+request callback still owns the separate upstream credentials, connection, and
+request metadata. It should advertise only input capabilities it can bridge to
+the local client. The SDK does not copy local bearer credentials upstream.
+}
+
+The bridge supports tools, resource reads, and prompts. It binds local opaque
+continuation tokens to the principal, credential identity, original request,
+pinned snapshot, adapter version and expiry. Input IDs are translated independently
+on each round; remote request-state tokens are retained in storage and are not
+used as local wire handles. Partial responses accumulate locally before the next
+upstream request. Decline and cancellation answers are forwarded unchanged.
+Input-only and state-only MRTR rounds are supported.
+
+Each upstream call has a committed intent before network execution. Its response
+is persisted before translation. Concurrent retries share one instance claim;
+recorded results are reused without repeating the upstream call. If a call may
+have executed but its result was not saved, an
+@tt{exn:fail:upstream-recovery} exposes its local @tt{handle} and original local
+@tt{cause} to operator code. Normal wire dispatch does not expose that cause.
+No uncertain call is automatically retried.
+
+Elicitation request structure is validated using a mechanically extracted subset
+of the pinned MCP schema and the native validator. This is structural validation;
+it does not add full optional format assertions. The offline command
+@tt{python3 scripts/extract-elicitation-schema.py} refreshes the extraction after
+an explicit pin change; @tt{--check} verifies it during the regular test command.
+
+Upstream Tasks outcomes are retained for inspection and rejected without exposing
+the remote task handle as a local handle or replaying the request. Upstream
+notification forwarding is not implemented yet. The pinned MCP revision permits
+MRTR only for tools, resource reads, and prompts; completion MRTR is forbidden
+and rejected. Complete-result completion forwarding remains available.
+
+@defproc[(bridge-upstream-request [bridge upstream-bridge?] [store any/c]
+                                  [snapshot hash?] [request procedure?] [method string?] [params hash?]
+                                  [#:principal principal string?] [#:credential-id credential string?]
+                                  [#:state state any/c #f] [#:responses responses hash? (hasheq)]
+                                  [#:capabilities capabilities hash? (hasheq)] [#:key key any/c #f]
+                                  [#:verify verify procedure? void]
+                                  [#:cancelled? cancelled? procedure? (lambda () #f)]) hash?]{
+Low-level entry point used by the interface adapter. Returns a normalized
+@tt{result} or @tt{error} outcome. The request callback accepts a method and parameter
+object. The original parameters must omit @tt{requestState} and @tt{inputResponses};
+pass local continuation fields through the corresponding keywords. An optional
+invocation key deduplicates initial calls; without one, each initial call is new.
+
+The zero-argument verify callback runs outside a transaction before each actual
+outbound call, but does not run when serving a recorded result. The interface
+factory installs its pinned-snapshot compatibility check here; direct callers
+must supply their own check. The principal is the local canonical owner key and
+the credential string identifies the separately configured upstream context.
+Byte limits cover original arguments, responses, and accumulated stored state.
+}
+
+@defproc[(recover-upstream-request! [bridge upstream-bridge?] [store any/c]
+                                   [snapshot hash?] [handle string?]
+                                   [#:principal principal string?] [#:credential-id credential string?]
+                                   [#:action action symbol?] [#:outcome outcome any/c #f]
+                                   [#:capabilities capabilities hash? (hasheq)]) hash?]{
+Local operator API for an uncertain or received-but-untranslated interaction.
+Authorize this action in the application before calling it; no recovery wire
+method is installed. Recovery verifies the owner, credential, snapshot, version,
+and expiry and refuses to race an active request.
+
+@tt{'outcome} records an independently observed protocol response/result and
+returns its local translation. @tt{'retry} journals permission to send the exact
+saved outbound request again and returns an input-required outcome containing a
+local continuation token; the recovery call itself does not send it. @tt{'abandon}
+records a terminal error. Terminal interactions cannot be changed by this API.
+No action is an exactly-once guarantee. Local @tt{list-instances} and
+@tt{instance-events} provide inspection of saved state and the recovery journal.
+}
 
 @racket[define-mcp-extension] accepts @racket[#:declaration] or @racket[#:workflow]
 before a transformer expression. Omitting the kind means @racket[#:declaration].

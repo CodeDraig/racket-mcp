@@ -13,7 +13,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 2. Schemas and declarations | Native schema evaluator; shapes; resources, prompts, completion; negative syntax tests | URI/pattern coverage, full durable embedding failure matrix |
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
-| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream MRTR/Tasks translation, complete integration coverage |
+| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream Tasks translation, notification forwarding, complete integration coverage |
 | 6. Developer experience | All named CLI commands have implementations; manifests, Scribble, examples | Complete manifests/diagrams/docs, scenario fault DSL, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
@@ -56,7 +56,7 @@ complete coverage of its surrounding milestone.
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
-| Upstream adapters | `upstream.rkt`; upstream tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; durable MRTR/Tasks translation remains missing |
+| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`; upstream and upstream-bridge tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tasks and notification translation remain missing; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`; compiler tests, executable examples | Basic commands; scenarios run test submodules only; deterministic fault-injection scenario language missing |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
@@ -3161,3 +3161,63 @@ passed without warning or undefined-tag matches. git diff --check passed. The
 current ledger row and this final evidence paragraph postdate packaging and change
 no executable content. Native verification remains Linux/Racket 9.2; the full SDK
 release remains incomplete.
+
+
+## Durable upstream MRTR bridge (2026-09-07)
+
+Added an opt-in bridge configuration and low-level request/recovery APIs in
+mcp/upstream-bridge.rkt, re-exported by mcp/upstream. The interface factory uses
+these APIs for tools, resource reads, and prompts when supplied a bridge and a
+runtime store. Descriptor construction performs no network calls or storage
+acquisition. Complete results retain the existing mounted URI/content remapping.
+
+Stored interactions bind the local principal, upstream credential identity,
+original parameters, pinned snapshot, explicit adapter version, and expiry.
+Opaque local continuation tokens and per-round input IDs replace remote handles.
+Partial answers accumulate before another upstream call; decline/cancel answers,
+input-only rounds, state-only rounds, and stale-round retries preserve their
+recorded outcomes. Instance claims serialize concurrent keyed requests.
+
+An outbound intent commits before the callback runs. A received outcome is saved
+before translation. An interrupted or throwing callback leaves an uncertain
+intent and does not automatically repeat the call. Local recovery records an
+observed outcome, authorizes an explicit retry, or abandons execution, with owner,
+credential, executable-version, expiry, and active-worker checks. This is not an
+exactly-once guarantee. Initial calls without an invocation key remain fresh.
+
+Elicitation structures use 12 definitions extracted transitively from the pinned
+MCP JSON schema. The offline extraction verifies the vendor lock's source hash;
+scripts/check.sh checks that the generated schema matches. Native validation
+checks form schema construction as well as the pinned request structure. Full
+MCP format/prose restrictions remain a separate gate.
+
+The five new focused suites previously passed 149 checks: memory/SQLite domain
+forwarding, transformed references, partial and conflicting answers, round
+translation, concurrent invocation, explicit uncertain-outcome recovery, owner/
+credential/version binding, malformed/oversized outcomes, and expiry. A three-
+process stdio fixture resumes a separately owned native upstream workflow and
+then retrieves the local cached result, observing two upstream operation calls
+and one pre-input checkpoint evaluation. Final full verification is recorded
+below after the final method/continuation-parameter guards and documentation.
+
+Remaining limits: upstream Tasks and upstream notification translation are not
+implemented. The pinned MRTR Supported Requests table permits only tools/call,
+resources/read, and prompts/get, and forbids MRTR on other methods; completion
+MRTR is therefore rejected by design, not an unfinished feature. Unsupported remote task outcomes are retained
+for inspection and rejected without replay or exposing remote handles as local
+handles. Bridge callbacks explicitly version their implementation and own the
+upstream connection/credentials; this is not automatic executable attestation.
+The runtime requires a configured store on invocation; serving preflight does not
+yet derive a bridge storage requirement from an interface descriptor. Tests do
+not yet cover process termination at every outbound/response boundary or an
+independent SDK exercising the bridge end to end.
+
+Final verification passed sh scripts/check.sh: compilation, 3,695 native checks,
+all 1,301 pinned JSON Schema cases, and Scribble. All seven official Go probes
+passed. The initial package build identified an undefined upstream-bridge?
+documentation tag; adding its predicate entry fixed it. The rebuilt distribution
+and isolated raco setup --check-pkg-deps --pkgs racket-mcp passed with no warning
+or undefined-tag matches. git diff --check passed. This final evidence paragraph
+postdates packaging and changes no executable or manual content. Verification
+remains Linux/Racket 9.2; complete upstream Tasks, the full failure/conformance
+matrices, and the remaining SDK release gates stay open.

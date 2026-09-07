@@ -1,6 +1,8 @@
 #lang racket/base
-(require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt")
+(require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
+         "upstream-bridge.rkt" "workflow.rkt" "authorization.rkt")
 (provide capture-snapshot make-upstream-interface check-upstream-compatibility! (struct-out upstream-template-adapter))
+(provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)
   (when (hash-has-key? outcome 'error) (mcp-error -32603 "Upstream request failed" (hash-ref outcome 'error)))
@@ -34,14 +36,32 @@
     (unless (equal? (hash-ref (hash-ref snapshot method) field) (hash-ref (hash-ref fresh method) field))
       (error 'upstream "pinned interface changed; refresh and review the snapshot"))) #t)
 (struct upstream-template-adapter (arguments matcher) #:transparent)
-(define (make-upstream-interface supplied-snapshot request #:templates [templates (hash)])
+(define (make-upstream-interface supplied-snapshot request #:templates [templates (hash)] #:bridge [bridge #f])
+  (unless (or (not bridge) (upstream-bridge? bridge)) (raise-argument-error 'make-upstream-interface "upstream-bridge? or #f" bridge))
   (define snapshot (string->json (json->string supplied-snapshot)))
-  (define verified? #f) (define lock (make-semaphore 1))
+  (define verified (make-hash)) (define lock (make-semaphore 1))
   (define (invoke method params)
-    (call-with-semaphore lock (lambda () (unless verified? (check-upstream-compatibility! snapshot request) (set! verified? #t))))
-    (define result (result! (request method params)))
-    (unless (equal? (hash-ref result 'resultType "complete") "complete")
-      (mcp-error -32603 "Upstream MRTR/Tasks requires a durable handle-translation adapter, which is not yet implemented")) (hash-set result 'resultType "complete"))
+    (define context (current-request-context))
+    (define credential (and bridge ((upstream-bridge-credential-id bridge) (request-context-principal context))))
+    (define (verify)
+      (call-with-semaphore lock
+        (lambda () (unless (hash-ref verified credential #f)
+                     (check-upstream-compatibility! snapshot request) (hash-set! verified credential #t)))))
+    (define durable? (and bridge (member method '("tools/call" "resources/read" "prompts/get"))))
+    (define result
+      (result!
+       (if durable?
+           (bridge-upstream-request bridge (current-workflow-store) snapshot request method params
+                                    #:principal (principal-key (request-context-principal context)) #:credential-id credential
+                                    #:state (current-workflow-state) #:responses (current-workflow-responses)
+                                    #:capabilities (request-context-capabilities context) #:key (current-workflow-invocation-key)
+                                    #:cancelled? (request-context-cancelled? context) #:verify verify)
+           (begin (verify) (request method params)))))
+    (unless (or (equal? (hash-ref result 'resultType "complete") "complete")
+                (and durable? (equal? (hash-ref result 'resultType #f) "input_required")))
+      (mcp-error -32603 "Upstream outcome requires a supported durable translation; Tasks translation remains unimplemented"))
+    (hash-set result 'resultType (hash-ref result 'resultType "complete")))
+  (define (pending? result) (equal? (hash-ref result 'resultType #f) "input_required"))
   (define (build-resource wire uri arguments matcher)
     (make-resource (hash-ref wire 'name) uri
       (lambda supplied-values
@@ -49,9 +69,10 @@
           (for/hasheq ([argument (in-list arguments)] [value (in-list supplied-values)])
             (values (argument-name argument) value))))
         (define result (invoke "resources/read" (hasheq 'uri remote-uri)))
+        (if (pending? result) result
         (apply resource-contents
           (for/list ([content (in-list (hash-ref result 'contents))])
-            (resource-content (hash-set content 'uri (remap-uri (hash-ref content 'uri)))))))
+            (resource-content (hash-set content 'uri (remap-uri (hash-ref content 'uri))))))))
       #:description (hash-ref wire 'description "") #:mime-type (hash-ref wire 'mimeType #f)
       #:arguments arguments #:matcher matcher))
   (define resources
@@ -105,9 +126,10 @@
         (lambda (bound)
           (define result (invoke "prompts/get" (hasheq 'name name 'arguments
             (for/hasheq ([(key value) (in-hash bound)] #:unless (missing? value)) (values key value)))))
+          (if (pending? result) result
           (hash-set result 'messages
             (for/list ([message (in-list (hash-ref result 'messages))])
-              (hash-set message 'content (remap-content (hash-ref message 'content))))))
+              (hash-set message 'content (remap-content (hash-ref message 'content)))))))
         #:description (hash-ref wire 'description ""))))
   (define completions
     (if (hash-has-key? (hash-ref (hash-ref snapshot 'server/discover) 'capabilities) 'completions)
@@ -133,7 +155,7 @@
       (make-tool (hash-ref wire 'name) '()
                  (lambda (bound)
                    (define result (invoke "tools/call" (hasheq 'name (hash-ref wire 'name) 'arguments bound)))
-                   (hash-set result 'content (map remap-content (hash-ref result 'content))))
+                   (if (pending? result) result (hash-set result 'content (map remap-content (hash-ref result 'content)))))
                  #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))
                  #:input-schema schema #:raw? #t))))
