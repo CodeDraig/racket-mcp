@@ -3796,3 +3796,41 @@ packaging and changes no executable/manual content. Independent Go/conformance
 probes were not repeated; the new local/stdio/HTTP integration uses native clients.
 Verification is Linux/Racket 9.2. Active upstream subscription forwarding and
 other complete SDK release gates remain open.
+
+
+## Scoped upstream resource subscription forwarding (2026-09-07)
+
+Added mcp/upstream-subscription with call-with-upstream-resource-subscription,
+an event-valued subscription, accepted-URI inspection and explicit stop. It uses
+application-supplied native request handles and credentials, freezes/verifies the
+pinned snapshot, resolves installed source keys before network access, and waits
+for a correctly tagged accepted filter before invoking the consumer. Accepted
+resource changes flow through the existing principal-partitioned invalidation and
+mounted notification path. Invalid methods, URIs, tags and completion results fail
+explicitly. Queued notifications drain before a simultaneously ready completion.
+
+The consumer scope cancels the upstream request and bounds worker cleanup on return
+or arbitrary raised values, without taking ownership of the upstream client or
+local listeners. Terminal outcomes remain stable. Transport loss stays distinct
+from local cancellation; reconnecting does not issue another listen request.
+Timeouts cover individual snapshot requests, acknowledgement and cleanup, not the
+acknowledged subscription lifetime. The scope belongs inside the borrowed runtime
+and client lifetimes. Upstream list/task forwarding and automatic downstream loss
+propagation remain separate open integration work.
+
+Initial fixture compilation exposed one extra closing parenthesis, corrected before
+behavioral tests. Native local/stdio/HTTP and deterministic request-handle tests
+passed 38 checks initially, then 212 checks with freshness/disconnect regressions.
+Final runner tests passed 58 checks after snapshot timeout/mismatch, callback-failure,
+filter/tag and ordering checks. Malformed-ack tests separately assert the consumer
+never ran. Full final-source verification follows.
+
+
+Final sh scripts/check.sh passed compilation, 4,703 native checks, all 1,301
+pinned core schema cases and Scribble. The rebuilt distribution and isolated
+raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or undefined
+tag matches. git diff --check passed. This final evidence paragraph postdates
+packaging and changes no executable/manual content. The new forwarding path has
+native local/stdio/HTTP coverage; independent Go/conformance probes were not
+repeated and do not yet establish this runner's interoperability. Verification
+is Linux/Racket 9.2; the complete SDK goal remains open.

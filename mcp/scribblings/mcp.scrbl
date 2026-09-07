@@ -812,6 +812,45 @@ across reconstructed interfaces. Resource TTL remains zero unless explicitly
 configured otherwise. This dependency API does not itself open or reconnect an
 upstream subscription, and it does not infer changes in remote systems.
 
+@subsubsection{Scoped upstream resource subscriptions}
+@defmodule[mcp/upstream-subscription]
+
+@tt{call-with-upstream-resource-subscription} takes a local runtime, the original
+installed upstream interface, its pinned snapshot, an asynchronous request
+callback, a nonempty list of remote resource URIs, and a consumer procedure.
+Supply the local notification owner with @tt{#:principal}. The request callback
+accepts a method and parameters and returns an SDK @tt{request-handle}; it owns
+upstream connection configuration, metadata and credentials. It should return
+promptly and leave the subscription request without an ordinary request deadline.
+
+The runner resolves the URIs before network requests, copies the snapshot, and
+verifies discovery and declarations before listening. It invokes the consumer only
+after a correctly tagged acknowledgement whose accepted filter is a subset of the
+requested resource URIs. The consumer receives an
+@tt{upstream-resource-subscription?} event. Its
+@tt{upstream-resource-subscription-accepted} accessor returns the accepted remote
+URI list. A worker drains changes through @tt{runtime-report-change!}, retaining
+the local principal's cache partition, mapped URIs and notification policy.
+Unexpected methods, unaccepted URIs and incorrect subscription tags fail the stream.
+
+Synchronizing the event returns the terminal upstream protocol outcome or an
+exception value. Setup failures raise before the consumer runs. Completion waits
+for already queued notifications to be processed; a retained event keeps the same
+terminal outcome. @tt{stop-upstream-resource-subscription!} cancels the upstream
+request. Returning or escaping from the consumer cancels that request and releases
+the forwarding worker while preserving the consumer's result or raised value.
+The borrowed upstream client and local listeners retain their own lifetimes.
+Nest this scope inside the lifetime of the local runtime and upstream client.
+
+@tt{#:timeout} defaults to five seconds and bounds each snapshot request,
+acknowledgement wait and worker cleanup. It is not the lifetime of an acknowledged
+subscription. Transport loss and native queue overflow remain observable failures.
+The application handles the terminal event, refreshes its state as appropriate,
+and explicitly starts a new scope to listen again. Reconnection does not replay
+subscriptions automatically. This runner handles resource updates; upstream list
+changes, task notifications and automatic downstream failure propagation require
+separate integration.
+
 @subsubsection{Durable upstream MRTR}
 @defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
 @defproc[(upstream-bridge? [value any/c]) boolean?]{
