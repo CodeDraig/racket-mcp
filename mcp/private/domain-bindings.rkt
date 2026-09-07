@@ -79,3 +79,16 @@
      (if (eq? (syntax-local-context) 'top-level)
          #'(define name value)
          #'(define-resource-value/core name value))]))
+
+(provide (for-syntax lookup-domain-kind))
+(begin-for-syntax
+  (define (lookup-domain-kind id #:space [space 'value])
+    (with-handlers ([exn:fail:syntax? (lambda (_) #f)])
+      (define scoped (if (eq? space 'effect) ((make-interned-syntax-introducer 'mcp-effect) id 'add) id))
+      (define value (syntax-local-value scoped (lambda () #f)))
+      (cond [(eq? space 'effect) (and ((binding-class-predicate effect-name) value) 'effect)]
+            [((binding-class-predicate schema-name) value) 'schema]
+            [((binding-class-predicate operation-name) value) 'operation]
+            [((binding-class-predicate resource-name) value) 'resource]
+            [((binding-class-predicate workflow-value) value) 'workflow-value]
+            [else #f]))))

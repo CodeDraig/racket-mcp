@@ -1026,3 +1026,43 @@ fails for explicit recovery without invoking the adapter again; repairing that
 replacement creates a third task while both failed task results remain unchanged.
 These tests do not establish the complete crash/concurrency matrix for every
 workflow, input, and storage transition.
+
+@section{Binding queries for extension authors}
+
+@tt{mcp/extension} supplies expansion-time binding queries. Import it with
+@racket[(require (for-syntax mcp/extension))] alongside the transformer libraries
+used by an extension. The functions must be called during syntax expansion;
+ordinary runtime calls fail. At higher phases, shift this import with the
+transformer's other dependencies.
+
+@tt{(lookup-mcp-binding identifier #:space 'value)} returns an immutable
+@tt{mcp-binding-info} value or @racket[#f] for an unknown or ordinary host binding.
+The optional space is @tt{'value} or @tt{'effect}; effect queries do not confuse
+an adapter name with a same-spelled host variable. Queries use binding predicates
+and lexical metadata, without evaluating application expressions or compiling a
+reference to discover its value.
+
+The information has three fields, with corresponding @tt{mcp-binding-info-kind},
+@tt{mcp-binding-info-name}, and @tt{mcp-binding-info-arguments} accessors:
+@itemlist[
+ @item{@tt{kind}: @tt{schema}, @tt{operation}, @tt{resource}, @tt{prompt},
+       @tt{workflow-value}, or @tt{effect}. Tools and workflows share operation.}
+ @item{@tt{name}: the original static resource/prompt name, otherwise @racket[#f].}
+ @item{@tt{arguments}: a resource/prompt's argument-name symbols in declaration
+       order, otherwise @racket[#f]. An empty list means a known zero-argument
+       declaration; false means the information is unavailable.}]
+
+@tt{(require-mcp-binding identifier kinds #:space 'value #:context syntax)}
+returns the same information when its kind occurs in the nonempty @tt{kinds}
+list. Otherwise it raises a syntax error attached to the identifier within the
+supplied context, which defaults to that identifier. Extension authors should pass
+the complete source form as context. These information values do not create
+bindings and contain no compiler representations. Emit the documented declaration
+and workflow forms to introduce bindings and retain their normal compiler checks.
+
+The separate @tt{examples/extensions/resource-link-tool.rkt} extension demonstrates
+this API: it requires a resource binding, derives a tool description from the
+original resource name, and emits an ordinary tool containing a resource link.
+Its generated reference still receives core arity checks and interface mapping.
+This API does not prove the presence of dynamically composed targets or infer
+references hidden in arbitrary Racket computation.

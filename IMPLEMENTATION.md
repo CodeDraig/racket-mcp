@@ -2012,3 +2012,38 @@ Final validation: sh scripts/check.sh passed compilation, 2,627 native checks,
 all 1,301 pinned JSON Schema core cases, and Scribble. All five Go probes passed
 with sh scripts/check-interop.sh. git diff --check passed. Native verification
 remains Linux/Racket 9.2; complete interface-reference and release gates remain open.
+
+## Public extension binding queries (2026-09-07)
+
+Added mcp/extension with public immutable mcp-binding-info data, lookup-mcp-binding,
+and require-mcp-binding. Extension authors import it for-syntax; the implementation
+uses lexical resource/prompt metadata and syntax-spec binding predicates, without
+exporting private classes/IR or compiling/evaluating application references.
+Value and effect spaces are explicit. Known kinds include schemas, operations,
+resources, prompts, workflow values, and effects; unavailable name/argument data
+is false rather than inferred. Required-kind errors attach to the supplied source
+identifier/context. Documentation covers phases, fields, spaces, and trust limits.
+
+A separate resource-link-tool extension uses only the public API to check its
+target and derive descriptive text, then emits core forms retaining arity and
+runtime interface checks. The 19 API checks cover imported/local bindings, host
+shadowing, separate effect space, workflow values, runtime misuse, source errors,
+live resource-link dispatch, and local/imported schema lookup at a shifted phase.
+The API/extension/domain suites passed 50 checks before the final shifted-local
+assertion; the final API suite passed all 19 checks.
+
+Initial example grammar/literal-context errors were fixed before passing checks.
+An initial lookup implementation compiled checked references; a phase probe
+exposed an existing failure compiling schema-reference for a schema defined in
+begin-for-syntax. Direct binding predicates fix metadata lookup at that phase,
+without claiming the separate reference compilation problem fixed. That problem
+remains part of the full phase matrix. Complete interface-reference analysis and
+the remaining extension/compiler/release gates remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,646 native checks,
+all 1,301 pinned core schema cases, and Scribble. All five Go probes passed with
+sh scripts/check-interop.sh. python3 scripts/package.py rebuilt a clean source
+distribution; env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp
+passed in the isolated package environment, including its documentation build.
+git diff --check passed. Evidence remains Linux/Racket 9.2; the recorded local
+higher-phase reference issue and the full SDK release gates remain open.
