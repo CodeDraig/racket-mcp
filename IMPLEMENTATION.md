@@ -3476,3 +3476,44 @@ passed. This evidence paragraph postdates packaging and changes no executable or
 manual content. These changes were verified on Linux/Racket 9.2; the preceding
 9.3 evidence applies to its recorded earlier revision. Full scenario fault controls
 and the other SDK release gates remain open.
+
+## Subscription scenario lifetimes and discovery interoperability (2026-09-07)
+
+Scenario requests/calls now accept an explicit positive finite #:timeout or #f.
+Ordinary calls retain the session deadline; subscriptions/listen defaults to no
+request deadline, matching the native SDK clients. HTTP response header acquisition
+remains bounded by the session setting. This fixes scenario sessions closing
+healthy listeners merely because an ordinary request deadline elapsed.
+
+Added 107 focused checks across local/stdio/HTTP JSON preference/HTTP SSE. They
+verify accepted filters, acknowledgement ordering, distinct subscription IDs,
+multiple listeners, survival beyond the ordinary deadline, graceful completion,
+fresh listeners, cancellation, explicit subscription deadlines, unbounded calls,
+invalid deadline rejection and facility-derived discovery metadata. The previous
+scenario suites retain their coverage; 217 checks passed before the final three
+discovery assertions were added, and the final subscription suite passed 107.
+
+The new independent Go probes initially timed out awaiting an acknowledgement.
+The pinned Go client opens automatic listeners only for advertised listChanged
+support. The pinned core ServerCapabilities schema includes listChanged and
+resource subscribe, but our discovery published empty capability objects. Discovery
+now advertises the broker/publication facilities already installed for each present
+category; empty categories remain absent. The Go probes then passed over both
+stdio and HTTP: accepted acknowledgement before tagged events, server-requested
+closure, continued tool calls and a fresh connection/listener. All nine Go probes
+passed. Direct completion-result assertions remain in the Racket scenario suite;
+Go's internal asynchronous terminal result is not independently exposed by this probe.
+
+The initial broad run was deliberately terminated after the discovery fix changed
+runtime source; final-source broad verification follows. Documentation describes
+both deadline policy and notification advertisement. Arbitrary network-loss injection,
+full subscription reconnection/overflow conformance, complete capability auditing
+and the remaining scenario/release requirements remain open.
+
+Final-source sh scripts/check.sh passed compilation, 4,217 native checks, all
+1,301 pinned core schema cases and Scribble. All nine official Go probes passed,
+including the two new subscription transport probes. The rebuilt distribution and
+isolated raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or
+undefined-tag matches. git diff --check passed. This final evidence paragraph
+postdates packaging and changes no executable/manual content. Verification of
+these changes remains Linux/Racket 9.2; the full SDK objective is still open.

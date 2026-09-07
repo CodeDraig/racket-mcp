@@ -1,0 +1,65 @@
+#lang racket/base
+(require rackunit racket/async-channel mcp mcp/scenario mcp/stdio mcp/subscription mcp/http)
+(tool (echo) (text-result "ok"))
+(define iface (make-interface #:tools (list echo)))
+(for ([config '((local #f) (stdio #f) (http #f) (http #t))])
+  (call-with-scenario-session iface
+    (lambda (session)
+      (define requested (hasheq 'notifications (hasheq 'toolsListChanged #t 'promptsListChanged #t)))
+      (define (listen) (scenario-request session "subscriptions/listen" requested))
+      (define first (listen))
+      (define second (listen))
+      (define (next h) (sync/timeout 2 (request-handle-notifications h)))
+      (define (tag event)
+        (hash-ref (hash-ref (hash-ref event 'params) '_meta) 'io.modelcontextprotocol/subscriptionId))
+      (for ([h (in-list (list first second))])
+        (define ack (next h))
+        (check-equal? (hash-ref ack 'method) "notifications/subscriptions/acknowledged")
+        (check-equal? (hash-ref (hash-ref ack 'params) 'notifications) (hasheq 'toolsListChanged #t))
+        (check-equal? (tag ack) (request-handle-id h)))
+      ;; The session's ordinary half-second deadline must not close a listener.
+      (check-false (sync/timeout 0.6 first))
+      (check-false (sync/timeout 0 second))
+      (publish-change! (runtime-subscriptions (scenario-session-runtime session))
+                      "notifications/tools/list_changed" (hasheq))
+      (for ([h (in-list (list first second))])
+        (define event (next h))
+        (check-equal? (hash-ref event 'method) "notifications/tools/list_changed")
+        (check-equal? (tag event) (request-handle-id h)))
+      (close-subscriptions! (runtime-subscriptions (scenario-session-runtime session)))
+      (for ([h (in-list (list first second))])
+        (define result (sync/timeout 2 h))
+        (check-equal? (hash-ref (hash-ref result 'result) 'resultType) "complete"))
+      ;; A fresh subscription gets an acknowledgement and its own identifier.
+      (define again (listen))
+      (check-not-equal? (request-handle-id first) (request-handle-id again))
+      (check-equal? (hash-ref (next again) 'method) "notifications/subscriptions/acknowledged")
+      (request-cancel! again)
+      (check-true (exn:fail:request-cancelled? (sync/timeout 2 again)))
+      ;; A scenario may deliberately bound a listener to test deadline closure.
+      (define bounded (scenario-request session "subscriptions/listen" requested #:timeout 0.2))
+      (check-equal? (hash-ref (next bounded) 'method) "notifications/subscriptions/acknowledged")
+      (define outcome (sync/timeout 2 bounded))
+      (check-true (or (exn:fail:request-timeout? outcome) (exn:fail:http:timeout? outcome)))
+      (check-eq? (sync/timeout 0 bounded) outcome)
+      (check-equal? (hash-ref (hash-ref (scenario-call session "tools/call" (hasheq 'name "echo") #:timeout #f) 'result) 'content)
+                    (list (text-content "ok")))
+      (for ([bad (in-list (list 0 -1 +inf.0 +nan.0 "1"))])
+        (check-exn exn:fail:contract?
+          (lambda () (scenario-request session "tools/call" (hasheq 'name "echo") #:timeout bad)))))
+    #:transport (car config) #:sse? (cadr config) #:timeout 0.5))
+
+;; Discovery exposes exactly the notification facilities installed by the runtime.
+(for ([interface (in-list
+                  (list (make-interface)
+                        iface
+                        (make-interface #:resources (list (make-resource "doc" "test:doc" (lambda (_) "doc")))
+                                        #:prompts (list (make-prompt "hint" '() (lambda (_) '()))))))]
+      [expected (in-list (list (hasheq)
+                               (hasheq 'tools (hasheq 'listChanged #t))
+                               (hasheq 'resources (hasheq 'listChanged #t 'subscribe #t)
+                                       'prompts (hasheq 'listChanged #t))))])
+  (call-with-scenario-session interface
+    (lambda (session)
+      (check-equal? (hash-ref (hash-ref (scenario-call session "server/discover") 'result) 'capabilities)
+                    expected))))

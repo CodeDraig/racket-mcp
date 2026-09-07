@@ -20,6 +20,10 @@ func main() {
 		checkHTTPAdaptive(ctx, os.Args[1])
 		return
 	}
+	if len(os.Args) > 2 && (os.Args[2] == "subscriptions" || os.Args[2] == "subscriptions-http") {
+		checkSubscriptions(ctx, os.Args[1], os.Args[2] == "subscriptions-http")
+		return
+	}
 	progress := make(chan *mcp.ProgressNotificationParams, 16)
 	options := &mcp.ClientOptions{}
 	if len(os.Args) > 2 && os.Args[2] == "cancellation" {

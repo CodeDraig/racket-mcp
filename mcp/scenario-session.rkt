@@ -4,15 +4,19 @@
 (provide call-with-scenario-session scenario-session? scenario-session-runtime
          scenario-session-store scenario-session-clock scenario-session-transport
          scenario-session-principal scenario-request scenario-call scenario-interact)
-(struct scenario-session (runtime store clock transport principal capabilities request owner pending lock [active? #:mutable]))
+(struct scenario-session (runtime store clock transport principal capabilities timeout request owner pending lock [active? #:mutable]))
 
 (define (scenario-request session method [params (hasheq)]
-                          #:capabilities [capabilities (scenario-session-capabilities session)])
+                          #:capabilities [capabilities (scenario-session-capabilities session)]
+                          #:timeout [timeout (and (not (equal? method "subscriptions/listen"))
+                                                  (scenario-session-timeout session))])
+  (unless (or (not timeout) (and (rational? timeout) (positive? timeout)))
+    (raise-argument-error 'scenario-request "#f or positive finite timeout" timeout))
   (call-with-semaphore (scenario-session-lock session)
     (lambda ()
       (unless (scenario-session-active? session) (error 'scenario-request "scenario session has closed"))
       (parameterize ([current-custodian (scenario-session-owner session)])
-        (define handle ((scenario-session-request session) method params capabilities))
+        (define handle ((scenario-session-request session) method params capabilities timeout))
         (hash-set! (scenario-session-pending session) handle #t)
         (thread (lambda ()
                   (sync handle)
@@ -20,8 +24,10 @@
                     (lambda () (hash-remove! (scenario-session-pending session) handle)))))
         handle))))
 (define (scenario-call session method [params (hasheq)]
-                       #:capabilities [capabilities (scenario-session-capabilities session)])
-  (define handle (scenario-request session method params #:capabilities capabilities))
+                       #:capabilities [capabilities (scenario-session-capabilities session)]
+                       #:timeout [timeout (and (not (equal? method "subscriptions/listen"))
+                                               (scenario-session-timeout session))])
+  (define handle (scenario-request session method params #:capabilities capabilities #:timeout timeout))
   (dynamic-wind void
     (lambda ()
       (define result (sync handle))
@@ -33,13 +39,13 @@
   (run-interaction (lambda (method params) (scenario-call session method params)) method params
                    #:elicit elicit #:navigate navigate #:max-rounds rounds #:wait wait))
 
-(define (make-local-request rt principal timeout)
+(define (make-local-request rt principal)
   (define ids (box 0))
   (define (next-id)
     (let loop ()
       (define old (unbox ids))
       (if (box-cas! ids old (add1 old)) (add1 old) (loop))))
-  (lambda (method params caps)
+  (lambda (method params caps timeout)
     (define id (next-id))
     (define message (string->json (json->string
       (hasheq 'jsonrpc "2.0" 'id id 'method method
@@ -118,7 +124,7 @@
         (set! rt (make-runtime interface #:store store #:clock clock #:authorize authorize #:adapters adapters))
         (define call
           (case transport
-            [(local) (make-local-request rt principal timeout)]
+            [(local) (make-local-request rt principal)]
             [(stdio)
              (define-values (server-in client-out) (make-pipe 1048576))
              (define-values (client-in server-out) (make-pipe 1048576))
@@ -127,7 +133,7 @@
              (define client (make-stdio-client client-in client-out #:timeout timeout))
              (set! stop (lambda () (client-close! client) (sync/timeout 1 server)
                                     (close-input-port server-in) (close-output-port server-out)))
-             (lambda (method params caps) (client-request client method params #:capabilities caps #:timeout timeout))]
+             (lambda (method params caps timeout) (client-request client method params #:capabilities caps #:timeout timeout))]
             [(http)
              (define confirmation (make-async-channel))
              (set! stop (serve-http rt #:port 0 #:confirmation confirmation #:sse? sse? #:keepalive-seconds (min 1 (/ timeout 2)) #:authenticate (lambda (_) principal)))
@@ -135,8 +141,8 @@
              (when (exn? port) (raise port))
              (unless (exact-positive-integer? port) (error 'scenario "HTTP server did not start"))
              (define client (make-http-client (format "http://127.0.0.1:~a/mcp" port) #:timeout timeout #:header-timeout timeout))
-             (lambda (method params caps) (http-client-request client method params #:capabilities caps #:timeout timeout))]))
-        (set! session (scenario-session rt store clock transport principal caps call owner (make-hasheq) (make-semaphore 1) #t))
+             (lambda (method params caps timeout) (http-client-request client method params #:capabilities caps #:timeout timeout))]))
+        (set! session (scenario-session rt store clock transport principal caps timeout call owner (make-hasheq) (make-semaphore 1) #t))
         (proc session)))
     (lambda ()
       (when session

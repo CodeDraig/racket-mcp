@@ -305,7 +305,10 @@
        (define server (interface-descriptor-server iface))
        (define base-capabilities
          (for/fold ([c (hasheq)]) ([k '(tools resources prompts)] [xs (list (interface-descriptor-tools iface) (interface-descriptor-resources iface) (interface-descriptor-prompts iface))])
-           (if (null? xs) c (hash-set c k (hasheq)))))
+           (if (null? xs) c
+               (hash-set c k (if (eq? k 'resources)
+                                 (hasheq 'listChanged #t 'subscribe #t)
+                                 (hasheq 'listChanged #t))))))
        (define capabilities
          (let* ([c (if (pair? (interface-descriptor-completions iface)) (hash-set base-capabilities 'completions (hasheq)) base-capabilities)]
                 [c (if (and (runtime-store rt) (ormap (lambda (tool) (or (tool-descriptor-workflow tool)

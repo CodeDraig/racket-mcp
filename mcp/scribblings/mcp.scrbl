@@ -1646,7 +1646,12 @@ handle accessors and @tt{request-cancel!}. Synchronizing the handle returns its
 JSON-RPC outcome or exception value; @tt{scenario-call} waits and raises exception
 values. The handle's notification channel supports authored progress and
 subscription assertions while other requests are running. Request deadlines use
-real elapsed time, independently of the scenario clock. Cancellation retains the
+real elapsed time, independently of the scenario clock. Both call forms accept
+@tt{#:timeout}: a positive finite number of seconds, or @tt{#f} to disable the
+request deadline. Ordinary requests default to the session timeout; subscription
+listeners default to @tt{#f}, matching the SDK clients. HTTP still bounds response
+header acquisition by the session timeout. An explicitly bounded subscription
+can test timeout behavior without changing other requests. Cancellation retains the
 first terminal outcome, signals cooperative cancellation, and bounds worker
 cleanup. Session exit cancels outstanding requests before destroying their event
 machinery, so escaped handles remain synchronizable. Local dispatch uses a bounded
@@ -1918,3 +1923,20 @@ caller to @tt{raco mcp --runtime-build-id ID [options] serve MODULE}; it does no
 silently ignore the identity or reload application definitions. The existing
 direct-path imported-helper compatibility limitation therefore remains.
 }
+
+
+@section[#:tag "notification-discovery"]{Discovery of notification support}
+
+For each installed tool, prompt or resource category, discovery advertises
+@tt{listChanged: true}. Resources also advertise @tt{subscribe: true}. These
+flags describe the runtime's installed subscription broker and publication path;
+a category with no declarations remains absent. Applications can publish list
+changes through @tt{publish-change!} from @tt{mcp/subscription}, using the runtime's
+subscription hub. Resource dependency changes use the existing freshness path.
+The flags do not make external application mutations observable automatically.
+
+The independent Go fixtures in @tt{dev/subscription-server.rkt} and
+@tt{dev/interop/subscriptions.go} exercise automatic listener creation on discovery,
+acknowledgement filters, tagged changes, server-requested closure, continued calls
+and fresh connections over stdio and HTTP. They supplement the scenario tests
+that directly assert the subscription completion result.
