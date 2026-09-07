@@ -1,0 +1,66 @@
+{
+  "scenarios": [
+    {
+      "artifact": "http-custom-headers-2026-09-07T08-51-41-792Z/checks.json",
+      "counts": {
+        "SUCCESS": 18
+      },
+      "failures": []
+    },
+    {
+      "artifact": "http-invalid-tool-headers-2026-09-07T08-51-48-656Z/checks.json",
+      "counts": {
+        "SUCCESS": 12
+      },
+      "failures": []
+    },
+    {
+      "artifact": "http-standard-headers-2026-09-07T08-51-47-494Z/checks.json",
+      "counts": {
+        "SUCCESS": 9,
+        "SKIPPED": 2
+      },
+      "failures": []
+    },
+    {
+      "artifact": "json-schema-2020-12-preservation-2026-09-07T08-51-44-082Z/checks.json",
+      "counts": {
+        "SUCCESS": 9
+      },
+      "failures": []
+    },
+    {
+      "artifact": "json-schema-ref-no-deref-2026-09-07T08-51-49-793Z/checks.json",
+      "counts": {
+        "SUCCESS": 1
+      },
+      "failures": []
+    },
+    {
+      "artifact": "request-metadata-2026-09-07T08-51-45-241Z/checks.json",
+      "counts": {
+        "SUCCESS": 6,
+        "SKIPPED": 2
+      },
+      "failures": []
+    },
+    {
+      "artifact": "sep-2322-client-request-state-2026-09-07T08-51-42-910Z/checks.json",
+      "counts": {
+        "SUCCESS": 5
+      },
+      "failures": []
+    },
+    {
+      "artifact": "tools_call-2026-09-07T08-51-46-350Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "failures": []
+    }
+  ],
+  "totals": {
+    "SUCCESS": 62,
+    "SKIPPED": 4
+  }
+}

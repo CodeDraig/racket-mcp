@@ -1,0 +1,48 @@
+[
+  {
+    "id": "tasks-create-result-no-request-state",
+    "name": "TasksCreateResultNoRequestState",
+    "description": "CreateTaskResult MUST NOT carry `requestState` (SEP-2663 does not define the field on the Task base interface)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T09:02:18.573Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ]
+  },
+  {
+    "id": "tasks-get-detailed-no-request-state",
+    "name": "TasksGetDetailedNoRequestState",
+    "description": "tasks/get response (DetailedTask) MUST NOT carry `requestState` for any status (per SEP-2663)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T09:02:18.605Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "observedStatus": "working"
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T09:02:18.621Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 6,
+      "violations": []
+    }
+  }
+]

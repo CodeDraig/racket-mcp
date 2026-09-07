@@ -23,13 +23,32 @@
 
 ;; Numbers are read directly as exact rationals; no binary floating point round trip.
 (define (read-json [in (current-input-port)] #:max-bytes [limit 1048576] #:max-depth [depth-limit 128])
+  (unless (exact-positive-integer? limit) (raise-argument-error 'read-json "exact-positive-integer?" limit))
+  (unless (exact-nonnegative-integer? depth-limit) (raise-argument-error 'read-json "exact-nonnegative-integer?" depth-limit))
   (define count 0)
+  ;; Inspect at most four bytes, retaining the port position until consumption.
+  ;; read-char would replace malformed UTF-8 with U+FFFD, losing wire validity.
+  (define (peek-unit)
+    (define first (peek-byte in))
+    (cond [(eof-object? first) (values eof 0)]
+          [(< first #x80) (values (integer->char first) 1)]
+          [else
+           (define width (cond [(< first #x80) 1] [(<= #xC2 first #xDF) 2]
+                               [(<= #xE0 first #xEF) 3] [(<= #xF0 first #xF4) 4]
+                               [else (error 'read-json "invalid UTF-8 leading byte")]))
+           (when (> (+ count width) limit) (error 'read-json "input byte limit exceeded"))
+           (define raw (peek-bytes width 0 in))
+           (unless (= (bytes-length raw) width) (error 'read-json "truncated UTF-8 sequence"))
+           (define decoded (bytes->string/utf-8 raw))
+           (values (string-ref decoded 0) width)]))
+  (define (peek!) (define-values (c width) (peek-unit)) c)
   (define (take!)
-    (set! count (add1 count))
-    (when (> count limit) (error 'read-json "input limit exceeded"))
-    (read-char in))
+    (define-values (c width) (peek-unit))
+    (when (> (+ count width) limit) (error 'read-json "input byte limit exceeded"))
+    (unless (eof-object? c) (if (= width 1) (read-byte in) (read-bytes width in)) (set! count (+ count width)))
+    c)
   (define (white!)
-    (let loop () (when (memv (peek-char in) '(#\space #\tab #\newline #\return)) (take!) (loop))))
+    (let loop () (when (memv (peek!) '(#\space #\tab #\newline #\return)) (take!) (loop))))
   (define (expect! c) (unless (eqv? (take!) c) (error 'read-json "expected ~s" c)))
   (define (str!)
     (define out (open-output-string))
@@ -44,35 +63,35 @@
   (define (value! depth)
     (when (> depth depth-limit) (error 'read-json "nesting limit exceeded"))
     (white!)
-    (case (peek-char in)
+    (case (peek!)
       [(#\") (str!)]
       [(#\{)
        (take!) (white!)
        (define h (make-hasheq))
-       (unless (eqv? (peek-char in) #\})
+       (unless (eqv? (peek!) #\})
          (let loop ()
            (white!)
-           (unless (eqv? (peek-char in) #\") (error 'read-json "object key must be a string"))
+           (unless (eqv? (peek!) #\") (error 'read-json "object key must be a string"))
            (define k (string->symbol (str!)))
            (when (hash-has-key? h k) (error 'read-json "duplicate object key: ~a" k))
            (white!) (expect! #\:)
            (hash-set! h k (value! (add1 depth))) (white!)
-           (when (eqv? (peek-char in) #\,) (take!) (loop))))
+           (when (eqv? (peek!) #\,) (take!) (loop))))
        (expect! #\}) (make-immutable-hasheq (hash->list h))]
       [(#\[)
        (take!) (white!)
        (define xs
-         (if (eqv? (peek-char in) #\]) '()
+         (if (eqv? (peek!) #\]) '()
              (let loop ([acc '()])
                (define x (value! (add1 depth))) (white!)
-               (if (eqv? (peek-char in) #\,)
+               (if (eqv? (peek!) #\,)
                    (begin (take!) (loop (cons x acc))) (reverse (cons x acc))))))
        (expect! #\]) xs]
       [else
        (define token
          (list->string
           (let loop ([acc '()])
-            (define c (peek-char in))
+            (define c (peek!))
             (if (or (eof-object? c) (memv c '(#\space #\tab #\newline #\return #\, #\] #\})))
                 (reverse acc) (loop (cons (take!) acc))))))
        (cond [(equal? token "true") #t] [(equal? token "false") #f]
@@ -90,7 +109,7 @@
   (when (> (bytes-length (string->bytes/utf-8 str)) limit) (error 'string->json "input limit exceeded"))
   (define in (open-input-string str))
   (define v (read-json in #:max-bytes limit))
-  (unless (regexp-match? #px"^\\s*$" (port->string in)) (error 'string->json "trailing input")) v)
+  (unless (regexp-match? #px"^[ \t\r\n]*$" (port->string in)) (error 'string->json "trailing input")) v)
 
 (define (decimal n)
   (define a (if (exact? n) n (inexact->exact n)))

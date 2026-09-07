@@ -1,0 +1,74 @@
+[
+  {
+    "id": "sep-2322-non-tool-incomplete",
+    "name": "InputRequiredResultNonToolIncomplete",
+    "description": "prompts/get returns InputRequiredResult with inputRequests",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T03:36:19.516Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "topic": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What topic?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "topic": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "topic"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "53ac5bd66473f26ccd832ae9eb532f80204ced5d134bc4d68fe0386f78176f78",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "sep-2322-non-tool-complete",
+    "name": "InputRequiredResultNonToolComplete",
+    "description": "prompts/get returns complete GetPromptResult after retry with inputResponses",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T03:36:19.521Z",
+    "errorMessage": "JSON-RPC error: Elicitation content failed the requested schema",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {}
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T03:36:19.521Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 4,
+      "violations": []
+    }
+  }
+]

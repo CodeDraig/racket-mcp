@@ -1,0 +1,52 @@
+(node:4188661) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-capability-negotiation' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-fixed-20260907-0902/server-tasks-capability-negotiation-2026-09-07T09-02-14-348Z
+Checks:
+[90m2026-09-07T09:02:14.397Z[0m [tasks-extension-advertised               ] [32mSUCCESS[0m Server advertises io.modelcontextprotocol/tasks under capabilities.extensions (and not capabilities.tasks)
+[90m2026-09-07T09:02:14.408Z[0m [sep-2663-tasks-methods-non-declaring     ] [32mSUCCESS[0m tasks/get, tasks/update, tasks/cancel return -32021 when the client did not negotiate the tasks extension (SEP-2575 Missing Required Capabilities)
+[90m2026-09-07T09:02:14.523Z[0m [sep-2663-server-rejects-undeclared-client] [32mSUCCESS[0m tools/call from a session without the extension MUST fall through to sync (no CreateTaskResult, even for task-supporting tools)
+[90m2026-09-07T09:02:14.589Z[0m [tasks-per-request-meta-opt-in            ] [32mSUCCESS[0m tools/call with extension declared in _meta.io.modelcontextprotocol/clientCapabilities produces a CreateTaskResult even when the session did not negotiate the extension
+[90m2026-09-07T09:02:14.589Z[0m [wire-schema-valid                        ] [31mFAILURE[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/5, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - WireSchemaValid: Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+    Error: [implementation] response to 'tasks/get' (spec 2026-07-28): MissingRequiredClientCapabilityError/error: must have required property 'data' — message: {"error":{"code":-32021,"message":"Client Tasks capability is required"},"id":2,"jsonrpc":"2.0"}
+[implementation] response to 'tasks/update' (spec 2026-07-28): MissingRequiredClientCapabilityError/error: must have required property 'data' — message: {"error":{"code":-32021,"message":"Client Tasks capability is required"},"id":3,"jsonrpc":"2.0"}
+[implementation] response to 'tasks/cancel' (spec 2026-07-28): MissingRequiredClientCapabilityError/error: must have required property 'data' — message: {"error":{"code":-32021,"message":"Client Tasks capability is required"},"id":4,"jsonrpc":"2.0"}
+
+Test SEP-2663 capability negotiation for the tasks extension.
+
+[1mServer Implementation Requirements:[0m
+
+[1mCapability advertisement (SEP-2663):[0m
+- The server MUST advertise [2mio.modelcontextprotocol/tasks[0m under
+  [2mcapabilities.extensions[0m in its [2mserver/discover[0m response.
+- It MUST NOT use a v1-style [2mcapabilities.tasks[0m slot (the v1 surface
+  is replaced by the extension).
+
+[1mGating without negotiation (SEP-2663):[0m
+- For requests that do NOT carry the [2mio.modelcontextprotocol/tasks[0m
+  extension in [2m_meta.clientCapabilities[0m, the server MUST reject
+  [2mtasks/get[0m, [2mtasks/update[0m, and [2mtasks/cancel[0m with a
+  [2mMissingRequiredClientCapability[0m error.
+- A [2mtools/call[0m from such a session MUST NOT return
+  [2mCreateTaskResult[0m. Task-supporting tools fall through to synchronous
+  execution and return a plain [2mToolResult[0m with
+  [2mresultType:"complete"[0m.
+
+[1mPer-request opt-in (SEP-2575):[0m
+- A session that did not declare the extension at session level can
+  opt into task creation for a single [2mtools/call[0m by including the
+  extension under [2m_meta.io.modelcontextprotocol/clientCapabilities.extensions[0m.
+  The server MUST honor the per-request opt-in and produce a
+  [2mCreateTaskResult[0m for that call.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result.

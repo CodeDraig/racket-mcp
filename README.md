@@ -47,7 +47,7 @@ instantiation semantics; importing a descriptor does not start a transport.
 ## Implemented paths
 
 - Tool, resource, prompt, shape, schema, completion, and staged workflow
-  declarations, including tail-position conditionals and matches; ordinary Racket
+  declarations, including resumable conditionals, matches, and lexical blocks; ordinary Racket
   constructors expose the same runtime values.
 - Required, optional, and default arguments. Defaults run left-to-right once for
   absent arguments and can refer to preceding arguments. `missing`, `'null`, and
@@ -75,6 +75,12 @@ raco test tests
 racket tests/schema-suite.rkt
 raco scribble +m --htmls --dest .cache/manual mcp/scribblings/mcp.scrbl
 ```
+
+Run `sh scripts/check-interop.sh` for the pinned official Go SDK probes: basic
+discovery/tool calls, pagination, multi-content resource/prompt/tool rendering,
+and progress/cancellation in both client/server directions. Cancellation probes verify that the remote handler actually stops
+and the same connection accepts another request. Go is a development dependency;
+binaries and build caches stay under `.cache`.
 
 HTTP tests require permission to bind ephemeral loopback ports. The official Go
 SDK probe is in `dev/interop`; its dependencies and the conformance harness are

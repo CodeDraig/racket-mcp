@@ -21,8 +21,19 @@
           [else (sync (alarm-evt (+ (current-inexact-milliseconds) 10))) (loop (sub1 remaining))])))
 (void (await-status "input_required"))
 (check-exn exn:fail? (lambda () (call "tasks/get" (hasheq 'taskId id) "bob")))
-(check-exn exn:fail? (lambda () (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq 'wrong (hasheq 'action "decline"))))))
-(check-equal? (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq 'answer (hasheq 'action "accept" 'content (hasheq 'ok #t))))) (hasheq 'resultType "complete"))
+(check-equal? (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq 'wrong (hasheq 'action "decline")))) (hasheq 'resultType "complete"))
+(check-equal? (hash-ref (call "tasks/get" (hasheq 'taskId id)) 'status) "input_required")
+(check-exn (lambda (e) (and (exn:fail:mcp? e) (= (exn:fail:mcp-code e) -32602)))
+  (lambda () (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq 'answer (hasheq 'action "accept" 'content (hasheq 'ok "invalid")))))))
+(check-equal? (hash-ref (call "tasks/get" (hasheq 'taskId id)) 'status) "input_required")
+;; Simulate an update arriving after the previous worker publishes input_required
+;; but before it releases its claim. The new worker must not lose the wakeup.
+(check-true
+ (call-with-instance-worker store id
+   (lambda ()
+     (check-equal? (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq 'answer (hasheq 'action "accept" 'content (hasheq 'ok #t))))) (hasheq 'resultType "complete"))
+     (sync (alarm-evt (+ (current-inexact-milliseconds) 50)))
+     (check-equal? (hash-ref (get-task store id "alice") 'status) "working"))))
 (define final (await-status "completed"))
 (check-equal? (hash-ref (hash-ref final 'result) 'content) (list (text-content "Hi, Ada")))
 (void (call "tasks/cancel" (hasheq 'taskId id)))

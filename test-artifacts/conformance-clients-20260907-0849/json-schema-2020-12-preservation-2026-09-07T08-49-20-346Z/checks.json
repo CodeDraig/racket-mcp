@@ -1,0 +1,136 @@
+[
+  {
+    "id": "json-schema-2020-12-client-tool-found",
+    "name": "JsonSchema2020_12ClientToolFound",
+    "description": "Client called tools/list and the mock server advertised 'json_schema_2020_12_tool'",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "details": {
+      "toolsListCalled": true
+    }
+  },
+  {
+    "id": "json-schema-2020-12-client-echo-completed",
+    "name": "JsonSchema2020_12ClientEchoCompleted",
+    "description": "Client called tools/call 'json_schema_echo' with a 'schema' object argument",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "errorMessage": "Client did not echo back the inputSchema; downstream preservation checks are SKIPPED",
+    "details": {
+      "echoCompleted": false
+    }
+  },
+  {
+    "id": "json-schema-2020-12-client-$schema-preserved",
+    "name": "JsonSchema2020_12Client$SchemaPreserved",
+    "description": "Client preserved the $schema field of the focal tool inputSchema",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "json-schema-2020-12-client-$defs-preserved",
+    "name": "JsonSchema2020_12Client$DefsPreserved",
+    "description": "Client preserved the $defs field of the focal tool inputSchema",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "json-schema-2020-12-client-additionalProperties-preserved",
+    "name": "JsonSchema2020_12ClientAdditionalPropertiesPreserved",
+    "description": "Client preserved the additionalProperties field of the focal tool inputSchema",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-1613",
+        "url": "https://github.com/modelcontextprotocol/specification/pull/655"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "sep-2106-client-composition-keywords-preserved",
+    "name": "JsonSchema2020_12ClientCompositionKeywordsPreserved",
+    "description": "Client preserved composition keywords (allOf/anyOf) on the focal tool inputSchema",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-2106",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2106"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "sep-2106-client-conditional-keywords-preserved",
+    "name": "JsonSchema2020_12ClientConditionalKeywordsPreserved",
+    "description": "Client preserved conditional keywords (if/then/else) on the focal tool inputSchema",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-2106",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2106"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "sep-2106-client-anchor-keyword-preserved",
+    "name": "JsonSchema2020_12ClientAnchorKeywordPreserved",
+    "description": "Client preserved the $anchor keyword inside $defs.address",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "SEP-2106",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2106"
+      }
+    ],
+    "errorMessage": "Skipped because the client did not complete the schema echo"
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:20.962Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 12,
+      "violations": []
+    }
+  }
+]

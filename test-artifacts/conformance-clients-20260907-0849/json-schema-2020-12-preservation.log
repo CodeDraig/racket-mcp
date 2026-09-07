@@ -1,0 +1,25 @@
+(node:3792084) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: json-schema-2020-12-preservation
+Executing client: racket /srv/data/code/racket-mcp/dev/conformance-client.rkt http://localhost:33585/mcp
+(node:3792084) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-clients-20260907-0849/json-schema-2020-12-preservation-2026-09-07T08-49-20-346Z
+Checks:
+[90m2026-09-07T08:49:20.962Z[0m [json-schema-2020-12-client-tool-found                    ] [32mSUCCESS[0m Client called tools/list and the mock server advertised 'json_schema_2020_12_tool'
+[90m2026-09-07T08:49:20.962Z[0m [json-schema-2020-12-client-echo-completed                ] [31mFAILURE[0m Client called tools/call 'json_schema_echo' with a 'schema' object argument
+[90m2026-09-07T08:49:20.962Z[0m [json-schema-2020-12-client-$schema-preserved             ] [0mSKIPPED[0m Client preserved the $schema field of the focal tool inputSchema
+[90m2026-09-07T08:49:20.962Z[0m [json-schema-2020-12-client-$defs-preserved               ] [0mSKIPPED[0m Client preserved the $defs field of the focal tool inputSchema
+[90m2026-09-07T08:49:20.962Z[0m [json-schema-2020-12-client-additionalProperties-preserved] [0mSKIPPED[0m Client preserved the additionalProperties field of the focal tool inputSchema
+[90m2026-09-07T08:49:20.962Z[0m [sep-2106-client-composition-keywords-preserved           ] [0mSKIPPED[0m Client preserved composition keywords (allOf/anyOf) on the focal tool inputSchema
+[90m2026-09-07T08:49:20.962Z[0m [sep-2106-client-conditional-keywords-preserved           ] [0mSKIPPED[0m Client preserved conditional keywords (if/then/else) on the focal tool inputSchema
+[90m2026-09-07T08:49:20.962Z[0m [sep-2106-client-anchor-keyword-preserved                 ] [0mSKIPPED[0m Client preserved the $anchor keyword inside $defs.address
+[90m2026-09-07T08:49:20.962Z[0m [wire-schema-valid                                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 2/3, 1 failed, 0 warnings
+
+Failed Checks:
+  - JsonSchema2020_12ClientEchoCompleted: Client called tools/call 'json_schema_echo' with a 'schema' object argument
+    Error: Client did not echo back the inputSchema; downstream preservation checks are SKIPPED
+
+❌ OVERALL: FAILED

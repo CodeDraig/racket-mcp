@@ -1,0 +1,42 @@
+#lang racket/base
+(require rackunit racket/list racket/runtime-path mcp/cli mcp)
+(define-runtime-path fixture "manifest-rich.rkt")
+(define manifest (read-manifest fixture))
+(define (entry name) (findf (lambda (entry) (equal? (hash-ref entry 'name) name)) manifest))
+(check-equal? (map (lambda (d) (hash-ref d 'kind)) manifest) '(server schema shape tool resource workflow prompt resource))
+(check-equal? (hash-ref (hash-ref (entry 'Title) 'schema) 'value) String)
+(define expected (object-schema (hasheq 'title String 'count Integer) #:required '("title" "count")))
+(check-equal? (hash-ref (hash-ref (entry 'Entry) 'schema) 'value) expected)
+(check-equal? (hash-ref (hash-ref (hash-ref (entry 'inspect-entry) 'metadata) 'output) 'value) expected)
+(define input (hash-ref (hash-ref (entry 'inspect-entry) 'input-schema) 'value))
+(check-equal? (hash-ref input 'required) '("entry"))
+(check-equal? (hash-ref (hash-ref input 'properties) 'entry) expected)
+(check-false (hash-ref (entry 'inspect-entry) 'dynamic-metadata))
+(check-true (hash-ref (entry 'entry) 'dynamic-metadata))
+(check-false (hash-ref (hash-ref (hash-ref (entry 'entry) 'metadata) 'description) 'known?))
+(check-true (andmap (lambda (entry) (and (equal? (hash-ref entry 'manifest-version) 2)
+                                      (exact-positive-integer? (hash-ref entry 'position))
+                                      (exact-positive-integer? (hash-ref entry 'span)))) manifest))
+(check-exn exn:fail? (lambda () (dynamic-require fixture #f)))
+(check-exn #rx"duplicate statically known published identity"
+           (lambda ()
+             (expand #'(module bad mcp/lang
+                         (resource (one) #:uri "same:///" "one")
+                         (resource (two) #:uri "same:///" "two")))))
+
+(check-equal? (map (lambda (stage) (hash-ref stage 'kind)) (hash-ref (entry 'approval) 'workflow-stages)) '(checkpoint input complete))
+(check-equal? (hash-ref (entry 'approval) 'runtime-requirements) '(workflow-storage))
+
+(check-equal? (map (lambda (stage) (hash-ref stage 'kind))
+                   (hash-ref (entry 'approval-prompt) 'workflow-stages)) '(checkpoint complete))
+(check-equal? (hash-ref (entry 'approval-prompt) 'runtime-requirements) '(workflow-storage))
+(check-equal? (map (lambda (stage) (hash-ref stage 'kind))
+                   (hash-ref (entry 'approval-resource) 'workflow-stages)) '(effect complete))
+(check-equal? (hash-ref (entry 'approval-resource) 'runtime-requirements) '(workflow-storage adapters))
+(check-equal? (hash-ref (car (hash-ref (entry 'approval-resource) 'workflow-stages)) 'adapter-or-targets) 'save)
+
+;; A computed server name remains readable data, never embedded syntax objects.
+(define server-entry (car manifest))
+(check-equal? (hash-ref server-entry 'name) '(string-append "mani" "fest"))
+(check-false (hash-ref (hash-ref (hash-ref server-entry 'metadata) 'name) 'known?))
+(check-equal? (read (open-input-string (format "~s" manifest))) manifest)

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "scenario-timeout",
+    "name": "Scenario completes within the timeout",
+    "description": "The scenario must finish within the configured timeout. A server that accepts the connection but never responds leaves it running forever.",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T09:01:00.778Z",
+    "errorMessage": "Scenario 'tasks-mrtr-input' did not complete within 30000ms. The server under test accepted the connection but did not finish the exchange."
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T09:01:00.778Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 3,
+      "violations": []
+    }
+  }
+]

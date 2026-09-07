@@ -1,0 +1,119 @@
+#lang racket/base
+(require racket/list syntax/parse
+         (for-template racket/base "../schema.rkt"))
+(provide (struct-out declaration-node) parse-declaration declarations->manifest)
+;; This IR contains lexical identifiers and complete source syntax. Only the
+;; final manifest conversion discards syntax objects; handlers are never expanded
+;; or evaluated here to infer metadata.
+(struct declaration-node (kind name source arguments clauses value) #:transparent)
+(define (parse-declaration kind name source)
+  (define parts (syntax->list source))
+  (define signature (and (pair? (cdr parts)) (syntax->list (cadr parts))))
+  (define arguments (if (and signature (memq kind '(tool workflow resource prompt))) (cdr signature) '()))
+  (define clauses
+    (let loop ([rest (if (memq kind '(server)) (cdr parts) (cddr parts))] [out (hasheq)])
+      (if (and (pair? rest) (keyword? (syntax-e (car rest))) (pair? (cdr rest)))
+          (loop (cddr rest) (hash-set out (syntax-e (car rest)) (cadr rest))) out)))
+  (declaration-node kind name source arguments clauses
+                    (case kind [(schema) (caddr parts)] [(shape) (cddr parts)] [else #f])))
+(define unknown (gensym 'unknown))
+(define (literal stx)
+  (define datum (syntax->datum stx))
+  (cond [(or (string? datum) (boolean? datum) (number? datum) (hash? datum)) datum]
+        [else (syntax-parse stx #:literals (quote)
+                [(quote value) (syntax->datum #'value)] [_ unknown])]))
+(define (source-fields stx)
+  (hasheq 'source (format "~a" (syntax-source stx)) 'line (syntax-line stx)
+          'column (syntax-column stx) 'position (syntax-position stx) 'span (syntax-span stx)))
+(define (declarations->manifest nodes)
+  (define (schema-value stx [seen '()])
+    (define basic
+      (for/or ([id (in-list (list #'String #'Integer #'Number #'Boolean #'Null #'Any))]
+               [value (in-list (list (hasheq 'type "string") (hasheq 'type "integer") (hasheq 'type "number") (hasheq 'type "boolean") (hasheq 'type "null") #t))])
+        (and (identifier? stx) (free-identifier=? id stx) (cons #t value))))
+    (cond [basic (cdr basic)]
+          [(identifier? stx)
+           (define node (findf (lambda (node) (and (memq (declaration-node-kind node) '(schema shape))
+                                                 (free-identifier=? stx (declaration-node-name node)))) nodes))
+           (cond [(not node) unknown]
+                 [(memq node seen) (raise-syntax-error 'schema "cyclic schema alias" (declaration-node-source node) stx)]
+                 [(eq? (declaration-node-kind node) 'schema) (schema-value (declaration-node-value node) (cons node seen))]
+                 [else
+                  (define fields (map syntax->list (declaration-node-value node)))
+                  (define field-schemas (map (lambda (field) (schema-value (cadr field) (cons node seen))) fields))
+                  (if (memq unknown field-schemas) unknown
+                      (hasheq 'type "object" 'additionalProperties #f
+                              'required (map (lambda (field) (symbol->string (syntax-e (car field)))) fields)
+                              'properties (for/hasheq ([field (in-list fields)] [value (in-list field-schemas)])
+                                            (values (syntax-e (car field)) value))))])]
+          [else (literal stx)]))
+  (define (describe stx [schema? #f])
+    (define value ((if schema? schema-value literal) stx))
+    (if (eq? value unknown)
+        (hasheq 'known? #f 'expression (format "~s" (syntax->datum stx)))
+        (hasheq 'known? #t 'value value)))
+  (define seen (make-hash))
+  (for ([node (in-list nodes)])
+    (define kind (declaration-node-kind node))
+    (define key (case kind
+                  [(tool workflow) (cons 'tool (syntax-e (declaration-node-name node)))]
+                  [(prompt) (cons 'prompt (syntax-e (declaration-node-name node)))]
+                  [(server) '(server)]
+                  [(resource) (define uri (hash-ref (declaration-node-clauses node) '#:uri #f))
+                              (and uri (let ([value (literal uri)]) (and (not (eq? value unknown)) (cons 'resource-uri value))))]
+                  [else #f]))
+    (when key
+      (when (hash-has-key? seen key)
+        (raise-syntax-error 'mcp "duplicate statically known published identity" (declaration-node-source node) (declaration-node-name node)))
+      (hash-set! seen key #t)))
+  (for/list ([node (in-list nodes)])
+    (define kind (declaration-node-kind node))
+    (define metadata
+      (for/hasheq ([(keyword expression) (in-hash (declaration-node-clauses node))])
+        (values (string->symbol (keyword->string keyword)) (describe expression (eq? keyword '#:output)))))
+    (define arguments
+      (for/list ([argument (in-list (declaration-node-arguments node))])
+        (define parts (syntax->list argument))
+        (define options (cddr parts))
+        (define optional? (for/or ([part (in-list options)]) (memq (syntax-e part) '(#:optional #:default))))
+        (define extra
+          (let loop ([parts options] [out (hasheq)])
+            (cond [(null? parts) out]
+                  [(eq? (syntax-e (car parts)) '#:optional) (loop (cdr parts) out)]
+                  [else (loop (cddr parts) (hash-set out (string->symbol (keyword->string (syntax-e (car parts)))) (describe (cadr parts))))])))
+        (hash-set* extra 'name (syntax-e (car parts)) 'required (not optional?) 'schema (describe (cadr parts) #t))))
+    (define result
+      (hash-set* (source-fields (declaration-node-source node)) 'kind kind 'name (syntax->datum (declaration-node-name node))
+                 'arguments arguments 'metadata metadata 'manifest-version 2))
+    (define with-schema
+      (cond [(memq kind '(schema shape)) (hash-set result 'schema (describe (declaration-node-name node) #t))]
+            [(memq kind '(tool workflow))
+             (hash-set result 'input-schema
+                       (if (andmap (lambda (argument) (hash-ref (hash-ref argument 'schema) 'known?)) arguments)
+                           (hasheq 'known? #t 'value
+                                   (hasheq 'type "object" 'additionalProperties #f
+                                           'required (for/list ([a (in-list arguments)] #:when (hash-ref a 'required)) (symbol->string (hash-ref a 'name)))
+                                           'properties (for/hasheq ([a (in-list arguments)]) (values (hash-ref a 'name) (hash-ref (hash-ref a 'schema) 'value)))))
+                           (hasheq 'known? #f 'expression "dynamic argument schemas")))]
+            [else result]))
+    (define with-workflow
+      (if (and (memq kind '(workflow resource prompt)) (declaration-node-value node))
+          (hash-set* with-schema
+                     'runtime-requirements
+                     (append '(workflow-storage)
+                             (if (for/or ([stage (in-list (declaration-node-value node))])
+                                   (eq? (syntax-e (cadr (syntax->list stage))) 'effect)) '(adapters) '()))
+                     'workflow-stages
+                     (for/list ([stage (in-list (declaration-node-value node))])
+                       (define fields (syntax->list stage))
+                       (hash-set* (source-fields (list-ref fields 5))
+                                  'id (syntax-e (car fields)) 'kind (syntax-e (cadr fields))
+                                  'schema (describe (caddr fields) #t)
+                                  'adapter-or-targets (syntax->datum (list-ref fields 3))
+                                  'policy (syntax->datum (list-ref fields 4)))))
+          with-schema))
+    (define dynamic?
+      (let walk ([value with-workflow])
+        (cond [(hash? value) (or (eq? (hash-ref value 'known? #t) #f) (for/or ([child (in-hash-values value)]) (walk child)))]
+              [(list? value) (ormap walk value)] [else #f])))
+    (hash-set with-workflow 'dynamic-metadata dynamic?)))

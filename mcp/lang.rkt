@@ -10,7 +10,7 @@
      (define expanded
        (for/list ([f (in-list (syntax->list #'(form ...)))])
          (syntax-parse f #:literals (server tool resource prompt workflow)
-           [(server . _) (set! servers (cons f servers)) #`(void #,f)]
+           [(server . _) (set! servers (cons f servers)) f]
            [((~and kind (~or tool resource prompt workflow)) (id:id . _) . _)
             (case (syntax-e #'kind)
               [(tool workflow) (set! tools (cons #'id tools))] [(resource) (set! resources (cons #'id resources))] [(prompt) (set! prompts (cons #'id prompts))])
@@ -37,10 +37,12 @@
         (define mounted (filter interface-descriptor? declarations))
         (when (> (length collected-servers) 1) (error 'mcp "only one server declaration is allowed"))
         (define #,interface-id (make-interface #:server (and (pair? collected-servers) (car collected-servers))
+                                              #:requirements (interface-requirements (apply mount-interfaces mounted))
+                                              #:adapter-bindings (interface-adapter-bindings (apply mount-interfaces mounted))
                                               #:tools (append (reverse (filter tool-descriptor? declarations)) (apply append (map interface-descriptor-tools mounted)))
                                               #:resources (append (reverse (filter resource-descriptor? declarations)) (apply append (map interface-descriptor-resources mounted)))
                                               #:prompts (append (reverse (filter prompt-descriptor? declarations)) (apply append (map interface-descriptor-prompts mounted)))
                                               #:completions (append (reverse (filter completion-descriptor? declarations)) (apply append (map interface-descriptor-completions mounted)))))
         (provide #,interface-id)
         (#,finish)
-        #,@(if (null? servers) '() (list #`(module+ main (serve-interface #,interface-id)))))]))
+        (module+ main (serve-interface #,interface-id)))]))

@@ -1,0 +1,14 @@
+(node:3788014) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: tools_call
+Executing client: racket /srv/data/code/racket-mcp/dev/conformance-client.rkt http://localhost:38341/mcp
+(node:3788014) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-clients-20260907-0849/tools_call-2026-09-07T08-49-12-489Z
+Checks:
+[90m2026-09-07T08:49:13.105Z[0m [tool-add-numbers ] [32mSUCCESS[0m Validates that the add_numbers tool works correctly
+[90m2026-09-07T08:49:13.106Z[0m [wire-schema-valid] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 2/2, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

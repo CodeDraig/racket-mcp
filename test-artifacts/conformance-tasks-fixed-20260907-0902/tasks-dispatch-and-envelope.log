@@ -1,0 +1,129 @@
+(node:4192040) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-dispatch-and-envelope' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-fixed-20260907-0902/server-tasks-dispatch-and-envelope-2026-09-07T09-02-20-981Z
+Checks:
+[90m2026-09-07T09:02:21.021Z[0m [sep-2663-tasks-result-removed-method-not-found  ] [32mSUCCESS[0m tasks/result is removed in v2 and MUST reject with -32601
+[90m2026-09-07T09:02:21.026Z[0m [tasks-removed-tasks-list                        ] [32mSUCCESS[0m tasks/list is removed in v2 and MUST reject with -32601
+[90m2026-09-07T09:02:21.080Z[0m [tasks-server-directed-creation-no-hint          ] [32mSUCCESS[0m tools/call with no client `task` hint param MUST still produce CreateTaskResult for task-supporting tools
+[90m2026-09-07T09:02:21.086Z[0m [sep-2663-legacy-task-param-ignored              ] [32mSUCCESS[0m tools/call with legacy `task` param against a sync tool MUST NOT error and MUST NOT be promoted to a task
+[90m2026-09-07T09:02:21.105Z[0m [tasks-immediate-result-shortcut                 ] [32mSUCCESS[0m For a fast operation, a task-supporting tool MAY skip task creation and return a sync ToolResult; either path is valid
+[90m2026-09-07T09:02:21.516Z[0m [tasks-result-type-complete-on-non-task-responses] [31mFAILURE[0m Sync tools/call, tasks/get, tasks/update ack, and tasks/cancel ack MUST all carry resultType:"complete"
+[90m2026-09-07T09:02:21.578Z[0m [sep-2663-durable-create-strong-consistency      ] [32mSUCCESS[0m tasks/get issued immediately after CreateTaskResult arrives MUST resolve (server MUST NOT return CreateTaskResult before the task is durably created)
+[90m2026-09-07T09:02:21.581Z[0m [sep-2663-tasks-get-invalid-task-id-32602        ] [31mFAILURE[0m tasks/get for a taskId the server does not recognize MUST return -32602
+[90m2026-09-07T09:02:21.581Z[0m [wire-schema-valid                               ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 7/9, 2 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - TasksResultTypeCompleteOnNonTaskResponses: Sync tools/call, tasks/get, tasks/update ack, and tasks/cancel ack MUST all carry resultType:"complete"
+    Error: Internal error
+
+Test SEP-2663 dispatch / envelope rules across the tasks surface.
+
+[1mServer Implementation Requirements:[0m
+
+[1mRemoved v1 methods (SEP-2663):[0m
+- [2mtasks/result[0m is removed in v2 — the result is inlined on
+  [2mtasks/get[0m. Servers MUST reject the method with JSON-RPC [2m-32601[0m.
+- [2mtasks/list[0m is removed in v2. Servers MUST reject it with
+  [2m-32601[0m.
+
+[1mServer-directed task creation (SEP-2663):[0m
+- The client does NOT send a [2mtask[0m hint param. The server alone
+  decides whether to create a task. A [2mtools/call[0m against a
+  task-supporting tool MUST produce [2mCreateTaskResult[0m even with no
+  client hint.
+
+[1mLegacy [2mtask[0m param tolerated (SEP-2663):[0m
+- A v1 client may still send [2mtask: { ttl, pollInterval }[0m on
+  [2mtools/call[0m. The server MUST tolerate it (no error) AND MUST NOT
+  promote a sync-only tool to a task on its presence. The body
+  arguments + tool registration are authoritative.
+
+[1mImmediate-result shortcut (SEP-2663):[0m
+- A server MAY return a sync [2mToolResult[0m for task-supporting tools
+  when the operation completes fast enough. Either return a
+  [2mCreateTaskResult[0m (with [2mresultType:"task"[0m) or a sync
+  [2mToolResult[0m (with [2mresultType:"complete"[0m); both are valid.
+
+[1mresultType:"complete" on non-task responses (SEP-2322):[0m
+- Every JSON-RPC response on the tools+tasks surface other than a
+  CreateTaskResult MUST carry [2mresultType:"complete"[0m. This applies
+  to: sync [2mtools/call[0m, [2mtasks/get[0m, [2mtasks/update[0m ack,
+  [2mtasks/cancel[0m ack.
+
+[1mStrong consistency / durable create (SEP-2663):[0m
+- A server MUST NOT return [2mCreateTaskResult[0m until the task is
+  durably created — that is, until a [2mtasks/get[0m for the returned
+  [2mtaskId[0m would resolve. Issuing [2mtasks/get[0m immediately after the
+  CreateTaskResult arrives MUST succeed, not -32602.
+
+[1mUnknown taskId on tasks/get (SEP-2663):[0m
+- [2mtasks/get[0m for a taskId the server doesn't recognize MUST return
+  JSON-RPC [2m-32602[0m (InvalidParams). Mirrors the same rule for
+  [2mtasks/cancel[0m (clarified upstream in spec commit d963ad0).
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only.
+- [2mslow_compute[0m — task-supporting ([2mseconds: 0[0m for the immediate
+  shortcut path).
+- [2mconfirm_delete[0m — task-supporting, parks for elicitation.
+- [2mfailing_job[0m — task-supporting, returns a tool execution error.
+
+  - TasksGetUnknownTaskIdRejected: tasks/get for a taskId the server does not recognize MUST return -32602
+    Error: expected -32602; got -32603 (if the server is otherwise compliant, verify it does not validate other dimensions — routing headers, _meta, params shape — before method dispatch)
+
+Test SEP-2663 dispatch / envelope rules across the tasks surface.
+
+[1mServer Implementation Requirements:[0m
+
+[1mRemoved v1 methods (SEP-2663):[0m
+- [2mtasks/result[0m is removed in v2 — the result is inlined on
+  [2mtasks/get[0m. Servers MUST reject the method with JSON-RPC [2m-32601[0m.
+- [2mtasks/list[0m is removed in v2. Servers MUST reject it with
+  [2m-32601[0m.
+
+[1mServer-directed task creation (SEP-2663):[0m
+- The client does NOT send a [2mtask[0m hint param. The server alone
+  decides whether to create a task. A [2mtools/call[0m against a
+  task-supporting tool MUST produce [2mCreateTaskResult[0m even with no
+  client hint.
+
+[1mLegacy [2mtask[0m param tolerated (SEP-2663):[0m
+- A v1 client may still send [2mtask: { ttl, pollInterval }[0m on
+  [2mtools/call[0m. The server MUST tolerate it (no error) AND MUST NOT
+  promote a sync-only tool to a task on its presence. The body
+  arguments + tool registration are authoritative.
+
+[1mImmediate-result shortcut (SEP-2663):[0m
+- A server MAY return a sync [2mToolResult[0m for task-supporting tools
+  when the operation completes fast enough. Either return a
+  [2mCreateTaskResult[0m (with [2mresultType:"task"[0m) or a sync
+  [2mToolResult[0m (with [2mresultType:"complete"[0m); both are valid.
+
+[1mresultType:"complete" on non-task responses (SEP-2322):[0m
+- Every JSON-RPC response on the tools+tasks surface other than a
+  CreateTaskResult MUST carry [2mresultType:"complete"[0m. This applies
+  to: sync [2mtools/call[0m, [2mtasks/get[0m, [2mtasks/update[0m ack,
+  [2mtasks/cancel[0m ack.
+
+[1mStrong consistency / durable create (SEP-2663):[0m
+- A server MUST NOT return [2mCreateTaskResult[0m until the task is
+  durably created — that is, until a [2mtasks/get[0m for the returned
+  [2mtaskId[0m would resolve. Issuing [2mtasks/get[0m immediately after the
+  CreateTaskResult arrives MUST succeed, not -32602.
+
+[1mUnknown taskId on tasks/get (SEP-2663):[0m
+- [2mtasks/get[0m for a taskId the server doesn't recognize MUST return
+  JSON-RPC [2m-32602[0m (InvalidParams). Mirrors the same rule for
+  [2mtasks/cancel[0m (clarified upstream in spec commit d963ad0).
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only.
+- [2mslow_compute[0m — task-supporting ([2mseconds: 0[0m for the immediate
+  shortcut path).
+- [2mconfirm_delete[0m — task-supporting, parks for elicitation.
+- [2mfailing_job[0m — task-supporting, returns a tool execution error.

@@ -45,6 +45,10 @@
 (workflow (test_input_required_result_tampered_state) #:version "1" #:description "Reject unknown opaque continuations."
   (await-input [confirm Any] (hasheq 'mode "form" 'message "Please confirm" 'requestedSchema (object-schema (hasheq 'ok Boolean))))
   (text-result "state-ok"))
+(workflow (test_input_required_result_multi_round) #:version "1" #:description "Collect two inputs across durable rounds."
+  (await-input [step1 Any] (hasheq 'mode "form" 'message "What is your name?" 'requestedSchema (object-schema (hasheq 'name String))))
+  (await-input [step2 Any] (hasheq 'mode "form" 'message "What is your favorite color?" 'requestedSchema (object-schema (hasheq 'color String))))
+  (text-result (format "Name: ~a; color: ~a" (hash-ref step1 'content (hasheq)) (hash-ref step2 'content (hasheq)))))
 (define preservation-schema
   (hasheq '$schema "https://json-schema.org/draft/2020-12/schema" 'type "object"
           '$defs (hasheq 'address (hasheq '$anchor "addressDef" 'type "object"
@@ -62,6 +66,9 @@
                                         #:input-schema preservation-schema #:raw? #t))))
 (prompt (test_simple_prompt) #:description "A simple prompt."
   (role "user" (text-content "This is a simple prompt for testing.")))
+(prompt (test_input_required_result_prompt) #:description "A prompt that requests input." #:workflow "1"
+  (await-input [user_context Any] (hasheq 'mode "form" 'message "What context should the prompt use?" 'requestedSchema (object-schema (hasheq 'context String))))
+  (role "user" (text-content (format "Discuss ~a" (hash-ref user_context 'content (hasheq))))))
 (prompt (test_prompt_with_arguments [arg1 String] [arg2 String]) #:description "A prompt with arguments."
   (role "user" (text-content (format "Prompt with arguments: arg1='~a', arg2='~a'" arg1 arg2))))
 (completion (test_prompt_with_arguments arg1)

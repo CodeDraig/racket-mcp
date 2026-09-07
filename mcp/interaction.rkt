@@ -5,6 +5,8 @@
 ;; No request is retried after an exception or uncertain initial response.
 (define (run-interaction request method params #:elicit elicit #:navigate navigate
                          #:max-rounds [max-rounds 100] #:wait [wait (lambda (ms) (sync (alarm-evt (+ (current-inexact-milliseconds) ms))))])
+  (unless (exact-positive-integer? max-rounds)
+    (raise-argument-error 'run-interaction "exact-positive-integer?" max-rounds))
   (let loop ([method method] [params params] [remaining max-rounds])
     (when (zero? remaining) (error 'run-interaction "interaction round limit exceeded"))
     (define outcome (request method params))
@@ -16,9 +18,18 @@
                (unless (equal? (hash-ref request 'method) "elicitation/create") (error 'run-interaction "unsupported input method"))
                (define input (hash-ref request 'params))
                (values id ((if (equal? (hash-ref input 'mode "form") "url") navigate elicit) input))))
-           (case (string->symbol (hash-ref result 'resultType))
+           (case (string->symbol (hash-ref result 'resultType "complete"))
              [(input_required)
-              (loop method (hash-set* params 'requestState (hash-ref result 'requestState) 'inputResponses (answers (hash-ref result 'inputRequests))) (sub1 remaining))]
+              (unless (and (or (hash-has-key? result 'requestState) (hash-has-key? result 'inputRequests))
+                           (or (not (hash-has-key? result 'requestState)) (string? (hash-ref result 'requestState)))
+                           (or (not (hash-has-key? result 'inputRequests)) (hash? (hash-ref result 'inputRequests))))
+                (error 'run-interaction "Malformed input_required result; refusing automatic retry"))
+              (define retry (hash-remove (hash-remove params 'requestState) 'inputResponses))
+              (define with-state (if (hash-has-key? result 'requestState)
+                                     (hash-set retry 'requestState (hash-ref result 'requestState)) retry))
+              (define with-input (if (hash-has-key? result 'inputRequests)
+                                     (hash-set with-state 'inputResponses (answers (hash-ref result 'inputRequests))) with-state))
+              (loop method with-input (sub1 remaining))]
              [(task) (wait (hash-ref result 'pollIntervalMs 100)) (loop "tasks/get" (hasheq 'taskId (hash-ref result 'taskId)) (sub1 remaining))]
              [else
               (if (not (equal? method "tasks/get")) outcome

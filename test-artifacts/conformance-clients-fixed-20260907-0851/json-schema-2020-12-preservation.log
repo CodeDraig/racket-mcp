@@ -1,0 +1,21 @@
+(node:3865641) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: json-schema-2020-12-preservation
+Executing client: racket /srv/data/code/racket-mcp/dev/conformance-client.rkt http://localhost:36231/mcp
+(node:3865641) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-clients-fixed-20260907-0851/json-schema-2020-12-preservation-2026-09-07T08-51-44-082Z
+Checks:
+[90m2026-09-07T08:51:44.658Z[0m [json-schema-2020-12-client-tool-found                    ] [32mSUCCESS[0m Client called tools/list and the mock server advertised 'json_schema_2020_12_tool'
+[90m2026-09-07T08:51:44.658Z[0m [json-schema-2020-12-client-echo-completed                ] [32mSUCCESS[0m Client called tools/call 'json_schema_echo' with a 'schema' object argument
+[90m2026-09-07T08:51:44.658Z[0m [json-schema-2020-12-client-$schema-preserved             ] [32mSUCCESS[0m Client preserved $schema = 'https://json-schema.org/draft/2020-12/schema'
+[90m2026-09-07T08:51:44.658Z[0m [json-schema-2020-12-client-$defs-preserved               ] [32mSUCCESS[0m Client preserved $defs with the expected nested definitions
+[90m2026-09-07T08:51:44.658Z[0m [json-schema-2020-12-client-additionalProperties-preserved] [32mSUCCESS[0m Client preserved additionalProperties = false on the focal inputSchema
+[90m2026-09-07T08:51:44.658Z[0m [sep-2106-client-composition-keywords-preserved           ] [32mSUCCESS[0m Client preserved composition keywords (allOf/anyOf) on the focal inputSchema
+[90m2026-09-07T08:51:44.658Z[0m [sep-2106-client-conditional-keywords-preserved           ] [32mSUCCESS[0m Client preserved conditional keywords (if/then/else) on the focal inputSchema
+[90m2026-09-07T08:51:44.658Z[0m [sep-2106-client-anchor-keyword-preserved                 ] [32mSUCCESS[0m Client preserved $anchor inside $defs.address
+[90m2026-09-07T08:51:44.658Z[0m [wire-schema-valid                                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

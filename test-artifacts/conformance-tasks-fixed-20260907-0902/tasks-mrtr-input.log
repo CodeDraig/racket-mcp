@@ -1,0 +1,55 @@
+(node:4191208) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-mrtr-input' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-fixed-20260907-0902/server-tasks-mrtr-input-2026-09-07T09-02-19-241Z
+Checks:
+[90m2026-09-07T09:02:19.370Z[0m [sep-2663-tasks-get-status-input-required] [32mSUCCESS[0m tasks/get on an input_required task MUST surface a non-empty inputRequests map
+[90m2026-09-07T09:02:19.552Z[0m [tasks-mrtr-tasks-update-resumes         ] [32mSUCCESS[0m tasks/update with matching inputResponses MUST be acked with {resultType:"complete"} and resume the task to a terminal state
+[90m2026-09-07T09:02:19.683Z[0m [tasks-mrtr-partial-fulfillment          ] [31mFAILURE[0m tasks/update with a subset of keys MUST keep the task in input_required with only the unanswered key remaining
+[90m2026-09-07T09:02:19.683Z[0m [wire-schema-valid                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 3/4, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - TasksMRTRPartialFulfillment: tasks/update with a subset of keys MUST keep the task in input_required with only the unanswered key remaining
+    Error: Internal error
+
+Test SEP-2322 MRTR input flow on the tasks surface.
+
+[1mServer Implementation Requirements:[0m
+
+[1mSurfacing inputRequests (SEP-2322):[0m
+- A task waiting on client input MUST report [2mstatus:"input_required"[0m
+  on tasks/get and surface a non-empty [2minputRequests[0m map keyed by
+  server-minted opaque ids. Each entry carries the underlying request
+  ([2melicitation/create[0m, [2msampling/createMessage[0m, etc.).
+
+[1mResuming via tasks/update (SEP-2663):[0m
+- The client delivers responses through [2mtasks/update[0m with
+  [2minputResponses[0m keyed to match the server-emitted ids. The server
+  MUST return an empty [2m{resultType:"complete"}[0m ack on the
+  tasks/update response — the resulting task state is observed via the
+  next tasks/get.
+- After the response is delivered, the task MUST resume execution and
+  proceed to a terminal state (or back to input_required for another
+  round).
+
+[1mPartial fulfillment (SEP-2663):[0m
+- A tool that emits multiple simultaneous input requests parks the task
+  with multiple keys in [2minputRequests[0m. A client MAY answer them one
+  at a time:
+  - tasks/update with a subset of keys MUST be acked.
+  - The task MUST stay in [2minput_required[0m until every pending request
+    has been answered.
+  - tasks/get after a partial update MUST surface only the still-pending
+    keys; the answered key MUST be removed.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mconfirm_delete[0m — task-supporting, emits a single
+  [2melicitation/create[0m inputRequest then completes when the response
+  arrives.
+- [2mmulti_input[0m — task-supporting, fans out two [2melicitation/create[0m
+  inputRequests in parallel so two keys are pending at once (used by
+  the partial-fulfillment check).

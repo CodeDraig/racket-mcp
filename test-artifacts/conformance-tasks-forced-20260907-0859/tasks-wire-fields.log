@@ -1,0 +1,12 @@
+(node:4118821) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-wire-fields' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-forced-20260907-0859/server-tasks-wire-fields-2026-09-07T08-59-56-585Z
+Checks:
+[90m2026-09-07T09:00:05.439Z[0m [tasks-wire-field-renames                    ] [32mSUCCESS[0m CreateTaskResult uses ttlMs + pollIntervalMs (integer milliseconds); legacy ttl / pollInterval keys absent
+[90m2026-09-07T09:00:08.263Z[0m [tasks-no-early-ttl-expiry                   ] [32mSUCCESS[0m Task remains accessible via tasks/get for the duration of its ttlMs
+[90m2026-09-07T09:00:09.518Z[0m [tasks-no-related-task-meta-on-inlined-result] [32mSUCCESS[0m tasks/get inlined result MUST NOT include the v1 io.modelcontextprotocol/related-task _meta key (taskId is at the root)
+[90m2026-09-07T09:00:09.518Z[0m [wire-schema-valid                           ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/4, 0 failed, 0 warnings

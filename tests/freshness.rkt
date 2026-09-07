@@ -21,3 +21,19 @@
 (drain-change-outbox! store (lambda args (error 'test "duplicate delivery without crash")))
 (check-equal? delivered '(("x")))
 (close-store! store)
+
+;; Reentrant computations must not deadlock, and invalidation must prevent stale insertion.
+(check-equal? (cache-ref! cache "alice" "outer" '("x") 10
+                        (lambda () (cache-ref! cache "alice" "inner" '("x") 10 (lambda () "nested")))) "nested")
+(define begun (make-semaphore 0))
+(define release (make-semaphore 0))
+(define result (make-channel))
+(define loader (thread (lambda ()
+  (channel-put result (cache-ref! cache "alice" "racing" '("race") 100
+    (lambda () (semaphore-post begun) (semaphore-wait release) "old"))))))
+(semaphore-wait begun)
+(void (invalidate-keys! cache '("race") #:principal "alice"))
+(semaphore-post release)
+(check-equal? (sync/timeout 2 result) "old")
+(check-equal? (cache-ref! cache "alice" "racing" '("race") 100 (lambda () "new")) "new")
+(thread-wait loader)

@@ -1,0 +1,16 @@
+#lang racket/base
+(provide (struct-out effect-adapter) (struct-out versioned-effect-adapter) check-adapter-bindings)
+(struct effect-adapter (policy invoke) #:transparent)
+(struct versioned-effect-adapter effect-adapter (version) #:transparent
+  #:guard (lambda (policy invoke version who)
+    (unless (and (memq policy '(transactional idempotent manual))
+                 (procedure? invoke) (procedure-arity-includes? invoke 3)
+                 (string? version) (positive? (string-length version)))
+      (error who "expected effect policy, ternary invocation procedure, and nonempty version"))
+    (values policy invoke (string->immutable-string version))))
+(define (check-adapter-bindings bindings)
+  (unless (hash? bindings) (raise-argument-error 'adapter-bindings "hash?" bindings))
+  (for/hasheq ([(name adapter) (in-hash bindings)])
+    (unless (and (symbol? name) (versioned-effect-adapter? adapter))
+      (error 'adapter-bindings "view bindings require a symbol and versioned-effect-adapter"))
+    (values name adapter)))

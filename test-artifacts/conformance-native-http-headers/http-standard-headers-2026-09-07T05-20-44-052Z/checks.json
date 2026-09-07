@@ -1,0 +1,189 @@
+[
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_tools_list",
+    "description": "Client sends correct Mcp-Method header on tools/list request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.585Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "tools/list",
+      "actualHeader": "tools/list"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_tools_call",
+    "description": "Client sends correct Mcp-Method header on tools/call request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.586Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "tools/call",
+      "actualHeader": "tools/call"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpNameHeader_tools_call",
+    "description": "Client sends correct Mcp-Name header on tools/call request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.586Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "method": "tools/call",
+      "sourceField": "params.name",
+      "expectedValue": "test_headers",
+      "actualHeader": "test_headers"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_resources_list",
+    "description": "Client sends correct Mcp-Method header on resources/list request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.587Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "resources/list",
+      "actualHeader": "resources/list"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_resources_read",
+    "description": "Client sends correct Mcp-Method header on resources/read request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.588Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "resources/read",
+      "actualHeader": "resources/read"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpNameHeader_resources_read",
+    "description": "Client sends correct Mcp-Name header on resources/read request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.588Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "method": "resources/read",
+      "sourceField": "params.uri",
+      "expectedValue": "file:///path/to/file%20name.txt",
+      "actualHeader": "file:///path/to/file%20name.txt"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_prompts_list",
+    "description": "Client sends correct Mcp-Method header on prompts/list request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.589Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "prompts/list",
+      "actualHeader": "prompts/list"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_prompts_get",
+    "description": "Client sends correct Mcp-Method header on prompts/get request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.590Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "expectedMethod": "prompts/get",
+      "actualHeader": "prompts/get"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpNameHeader_prompts_get",
+    "description": "Client sends correct Mcp-Name header on prompts/get request",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T05:20:44.590Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ],
+    "details": {
+      "method": "prompts/get",
+      "sourceField": "params.name",
+      "expectedValue": "test_prompt",
+      "actualHeader": "test_prompt"
+    }
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_initialize",
+    "description": "Client sends correct Mcp-Method header on initialize request",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T05:20:44.604Z",
+    "errorMessage": "Client did not send a initialize request; Mcp-Method header was not exercised for this method.",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ]
+  },
+  {
+    "id": "sep-2243-client-includes-standard-headers",
+    "name": "ClientMcpMethodHeader_notifications_initialized",
+    "description": "Client sends correct Mcp-Method header on notifications/initialized request",
+    "status": "SKIPPED",
+    "timestamp": "2026-09-07T05:20:44.604Z",
+    "errorMessage": "Client did not send a notifications/initialized request; Mcp-Method header was not exercised for this method.",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Standard-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+      }
+    ]
+  }
+]

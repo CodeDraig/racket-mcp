@@ -1,0 +1,30 @@
+#lang racket/base
+(require rackunit mcp/json)
+(define snow (string->bytes/utf-8 "\"雪\""))
+(check-equal? (read-json (open-input-bytes snow) #:max-bytes 5) "雪")
+(check-exn #rx"byte limit" (lambda () (read-json (open-input-bytes snow) #:max-bytes 4)))
+(check-equal? (read-json (open-input-string "\"😀\"") #:max-bytes 6) "😀")
+(check-exn #rx"byte limit" (lambda () (read-json (open-input-string "\"😀\"") #:max-bytes 5)))
+(for ([bad (list #"\"\377\"" #"\"\300\257\"" #"\"\355\240\200\""
+                 #"\"\364\220\200\200\"" #"\"\342\202" #"\"\200\"" #"\"\342A\202\"")])
+  (check-exn exn:fail? (lambda () (read-json (open-input-bytes bad)))))
+(check-equal? (read-json (open-input-string "\"�\"")) "�")
+(for ([space '(#\vtab #\page #\u0085 #\u00A0 #\u2003)])
+  (check-exn exn:fail? (lambda () (string->json (string-append "true" (string space))))))
+(check-true (string->json "true \t\r\n"))
+(define stream (open-input-string "\"雪\" false"))
+(check-equal? (read-json stream #:max-bytes 5) "雪")
+(check-equal? (read-byte stream) 32)
+(check-false (read-json stream #:max-bytes 5))
+(check-exn exn:fail? (lambda () (read-json (open-input-string "[]") #:max-depth -1)))
+(check-exn exn:fail? (lambda () (read-json (open-input-string "[]") #:max-bytes 0)))
+
+;; Reject a known oversized code point without waiting for missing continuation bytes.
+(define-values (partial-in partial-out) (make-pipe))
+(void (write-bytes #"\"\342" partial-out))
+(define result (make-channel))
+(define worker
+  (thread (lambda ()
+    (channel-put result (with-handlers ([exn:fail? values]) (read-json partial-in #:max-bytes 2))))))
+(check-true (exn:fail? (sync/timeout 1 result)))
+(close-output-port partial-out) (close-input-port partial-in) (kill-thread worker)

@@ -1,0 +1,77 @@
+[
+  {
+    "id": "sep-2322-client-parallel-isolation",
+    "name": "MRTRClientParallelIsolation",
+    "description": "inputRequests and requestState MUST NOT be used for any other request the client may be sending",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:19.755Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {}
+  },
+  {
+    "id": "sep-2322-default-result-type-complete",
+    "name": "DefaultResultTypeComplete",
+    "description": "Client MUST assume resultType \"complete\" when not specified",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:19.756Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ]
+  },
+  {
+    "id": "sep-2322-client-request-state-echoed",
+    "name": "sep-2322-client-request-state-echoed",
+    "description": "MRTR client check: sep-2322-client-request-state-echoed",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:19.771Z",
+    "details": {
+      "message": "Tool was not called by client or MRTR flow not completed"
+    },
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ]
+  },
+  {
+    "id": "sep-2322-client-jsonrpc-id-different",
+    "name": "sep-2322-client-jsonrpc-id-different",
+    "description": "MRTR client check: sep-2322-client-jsonrpc-id-different",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:19.771Z",
+    "details": {
+      "message": "Tool was not called by client or MRTR flow not completed"
+    },
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ]
+  },
+  {
+    "id": "sep-2322-client-no-state-omitted",
+    "name": "sep-2322-client-no-state-omitted",
+    "description": "MRTR client check: sep-2322-client-no-state-omitted",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:19.771Z",
+    "details": {
+      "message": "Tool was not called by client or MRTR flow not completed"
+    },
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ]
+  }
+]

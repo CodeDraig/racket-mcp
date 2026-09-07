@@ -1,0 +1,45 @@
+#lang racket/base
+(require rackunit mcp/authorization)
+(define issuer "https://issuer.example/tenant")
+(define oauth (hasheq 'issuer issuer 'authorization_endpoint "https://issuer.example/authorize"
+                     'token_endpoint "https://issuer.example/token" 'response_types_supported '("code")))
+(define oidc (hash-set (hash-set (hash-set oauth 'jwks_uri "https://issuer.example/keys")
+                                'subject_types_supported '("public" "pairwise"))
+                       'id_token_signing_alg_values_supported '("RS256" "ES256")))
+(check-equal? (validate-authorization-metadata! oauth issuer) oauth)
+(check-equal? (validate-authorization-metadata! oidc issuer #:oidc? #t) oidc)
+(for ([key '(jwks_uri subject_types_supported id_token_signing_alg_values_supported)])
+  (check-exn exn:fail? (lambda () (validate-authorization-metadata! (hash-remove oidc key) issuer #:oidc? #t))))
+(for ([entry (list (cons 'jwks_uri "http://issuer.example/keys")
+                   (cons 'subject_types_supported '("invalid"))
+                   (cons 'id_token_signing_alg_values_supported '("HS256"))
+                   (cons 'token_endpoint "https://user:secret@issuer.example/token")
+                   (cons 'response_types_supported #t) (cons 'grant_types_supported '("client_credentials"))
+                   (cons 'client_id_metadata_document_supported "true")
+                   (cons 'authorization_response_iss_parameter_supported "false")
+                   (cons 'claims_parameter_supported 0) (cons 'userinfo_endpoint "http://issuer.example/user")
+                   (cons 'code_challenge_methods_supported '(#t))
+                   (cons 'token_endpoint_auth_signing_alg_values_supported '("none")))])
+  (check-exn exn:fail? (lambda () (validate-authorization-metadata! (hash-set oidc (car entry) (cdr entry)) issuer #:oidc? #t))))
+(check-exn #rx"JWT client authentication" (lambda ()
+  (validate-authorization-metadata! (hash-set oauth 'token_endpoint_auth_methods_supported '("private_key_jwt")) issuer)))
+(define signed-client (hash-set (hash-set oauth 'token_endpoint_auth_methods_supported '("private_key_jwt"))
+                                 'token_endpoint_auth_signing_alg_values_supported '("RS256")))
+(check-equal? (validate-authorization-metadata! signed-client issuer) signed-client)
+(check-equal? (hash-ref (validate-authorization-metadata! (hash-set oauth 'client_id_metadata_document_supported #f) issuer)
+                        'client_id_metadata_document_supported) #f)
+;; Endpoint provenance determines OIDC requirements; invalid OIDC does not fall
+;; through to another URL that happens to offer a less restrictive document.
+(define resource "https://api.example/mcp")
+(define prm (protected-resource-metadata resource (list issuer)))
+(define urls (authorization-metadata-urls issuer))
+(define seen '())
+(check-exn #rx"jwks_uri" (lambda ()
+  (discover-authorization-for-resource resource
+    (lambda (url)
+      (set! seen (append seen (list url)))
+      (cond [(equal? url (protected-resource-metadata-url resource)) prm]
+            [(equal? url (car urls)) #f]
+            [(equal? url (cadr urls)) oauth]
+            [else (error 'test "must not continue after invalid metadata")])))))
+(check-equal? seen (list (protected-resource-metadata-url resource) (car urls) (cadr urls)))

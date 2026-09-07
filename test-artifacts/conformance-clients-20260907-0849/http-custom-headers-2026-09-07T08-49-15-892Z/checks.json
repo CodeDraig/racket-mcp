@@ -1,0 +1,349 @@
+[
+  {
+    "id": "sep-2243-client-supports-custom-headers",
+    "name": "ClientSupportsCustomHeaders",
+    "description": "Client supports custom headers: calls the x-mcp-header annotated tool and mirrors at least one parameter",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.389Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Custom-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#custom-headers-from-tool-parameters"
+      }
+    ]
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_Region",
+    "description": "Client sends correct Mcp-Param-Region header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.389Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Region",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-encode-values",
+    "name": "ClientCustomHeader_Priority",
+    "description": "Client sends correct Mcp-Param-Priority header (integer value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Priority",
+      "rawHeaderValue": "1",
+      "bodyValue": 1,
+      "valueType": "integer",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-encode-values",
+    "name": "ClientCustomHeader_Verbose",
+    "description": "Client sends correct Mcp-Param-Verbose header (boolean value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Verbose",
+      "rawHeaderValue": "true",
+      "bodyValue": true,
+      "valueType": "boolean",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-encode-values",
+    "name": "ClientCustomHeader_Debug",
+    "description": "Client sends correct Mcp-Param-Debug header (boolean value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Debug",
+      "rawHeaderValue": "true",
+      "bodyValue": true,
+      "valueType": "boolean",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_EmptyVal",
+    "description": "Client sends correct Mcp-Param-EmptyVal header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-EmptyVal",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_Method",
+    "description": "Client sends correct Mcp-Param-Method header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Method",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeaderNoMirrorNumber",
+    "description": "Client MUST NOT add Mcp-Param headers for parameters without x-mcp-header (number-typed float_val is served unannotated per SEP-2243)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Custom-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#custom-headers-from-tool-parameters"
+      }
+    ]
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_NonAscii",
+    "description": "Client sends correct Mcp-Param-NonAscii header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-NonAscii",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_Whitespace",
+    "description": "Client sends correct Mcp-Param-Whitespace header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Whitespace",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_LeadingSpace",
+    "description": "Client sends correct Mcp-Param-LeadingSpace header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-LeadingSpace",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_TrailingSpace",
+    "description": "Client sends correct Mcp-Param-TrailingSpace header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-TrailingSpace",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_InternalSpace",
+    "description": "Client sends correct Mcp-Param-InternalSpace header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-InternalSpace",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_ControlChar",
+    "description": "Client sends correct Mcp-Param-ControlChar header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-ControlChar",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_CrLf",
+    "description": "Client sends correct Mcp-Param-CrLf header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-CrLf",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeader_Tab",
+    "description": "Client sends correct Mcp-Param-Tab header (string value)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Value-Encoding",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#value-encoding"
+      }
+    ],
+    "details": {
+      "headerName": "Mcp-Param-Tab",
+      "rawHeaderValue": "test",
+      "bodyValue": "test",
+      "valueType": "string",
+      "needsBase64": false
+    }
+  },
+  {
+    "id": "sep-2243-client-mirrors-designated-params",
+    "name": "ClientCustomHeaderNoMirrorUnannotated",
+    "description": "Client MUST NOT add Mcp-Param headers for parameters without x-mcp-header",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Custom-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#custom-headers-from-tool-parameters"
+      }
+    ]
+  },
+  {
+    "id": "sep-2243-client-omit-null",
+    "name": "ClientCustomHeaderOmitNull",
+    "description": "Client MUST omit Mcp-Param header when parameter value is null or not provided",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:16.390Z",
+    "errorMessage": "Mcp-Param-Verbose should be omitted when null/undefined, but got 'true'",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Custom-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#custom-headers-from-tool-parameters"
+      }
+    ]
+  },
+  {
+    "id": "sep-2243-client-base64-unsafe",
+    "name": "NotObserved",
+    "description": "Declared check sep-2243-client-base64-unsafe was never emitted",
+    "status": "FAILURE",
+    "timestamp": "2026-09-07T08:49:16.404Z",
+    "errorMessage": "Check was not observed: no tool call exercised it.",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Custom-Headers",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#custom-headers-from-tool-parameters"
+      }
+    ]
+  }
+]

@@ -1,0 +1,40 @@
+(node:4125438) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-request-state-removal' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-forced-20260907-0859/server-tasks-request-state-removal-2026-09-07T09-00-10-112Z
+Checks:
+[90m2026-09-07T09:00:10.202Z[0m [tasks-create-result-no-request-state] [32mSUCCESS[0m CreateTaskResult MUST NOT carry `requestState` (SEP-2663 does not define the field on the Task base interface)
+[90m2026-09-07T09:00:20.204Z[0m [tasks-get-detailed-no-request-state ] [31mFAILURE[0m tasks/get response (DetailedTask) MUST NOT carry `requestState` for any status (per SEP-2663)
+[90m2026-09-07T09:00:30.205Z[0m [wire-schema-valid                   ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 2/3, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - TasksGetDetailedNoRequestState: tasks/get response (DetailedTask) MUST NOT carry `requestState` for any status (per SEP-2663)
+    Error: This operation was aborted
+
+Verify the absence of [2mrequestState[0m on the tasks-v2 wire.
+
+[1mServer Implementation Requirements:[0m
+
+SEP-2663 does not define a [2mrequestState[0m field on the [2mTask[0m base
+interface, so:
+
+- [2mCreateTaskResult[0m MUST NOT carry [2mrequestState[0m on the
+  [2mtools/call[0m response that creates a task.
+- The [2mtasks/get[0m response (DetailedTask) MUST NOT carry
+  [2mrequestState[0m for any status ([2mworking[0m / [2minput_required[0m /
+  [2mcompleted[0m / [2mcancelled[0m / [2mfailed[0m).
+
+SEP-2322's [2mInputRequiredResult[0m does carry [2mrequestState[0m — that is
+the MRTR multi-round-trip surface, unrelated to the tasks-v2 wire, and
+is exercised by mrtr-input.ts. This scenario exists because the two
+SEPs put [2mrequestState[0m in lexically adjacent positions, making
+accidental copy-paste from the MRTR shape into the tasks-v2 shape a
+foreseeable mistake for fresh implementations.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result.

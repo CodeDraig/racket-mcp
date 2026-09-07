@@ -1,0 +1,123 @@
+[
+  {
+    "id": "sep-2322-multi-round-r1",
+    "name": "InputRequiredResultMultiRoundR1",
+    "description": "Round 1: Server returns InputRequiredResult with requestState",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:55:35.376Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "step1": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What is your name?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "6d8d98ab73da41e7537ea5eac5b846d0deec2eadb45c1542a674ee7ea07d1f0a",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "sep-2322-multi-round-r2",
+    "name": "InputRequiredResultMultiRoundR2",
+    "description": "Round 2: Server returns another InputRequiredResult with updated requestState",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:55:35.393Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "step2": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What is your favorite color?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "color": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "color"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "d60f5ed6937f0d415acbaeb86ae51c8d7987b6690df2495428de2f73a242d7d8",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "sep-2322-multi-round-r3",
+    "name": "InputRequiredResultMultiRoundR3",
+    "description": "Round 3: Server returns complete result",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:55:35.408Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "content": [
+          {
+            "text": "Name: #hasheq((name . Alice)); color: #hasheq((color . blue))",
+            "type": "text"
+          }
+        ],
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-07T08:55:35.408Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 6,
+      "violations": []
+    }
+  }
+]

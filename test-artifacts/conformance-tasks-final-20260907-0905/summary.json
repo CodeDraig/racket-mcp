@@ -1,0 +1,107 @@
+{
+  "scenarios": [
+    {
+      "artifact": "server-tasks-capability-negotiation-2026-09-07T09-06-11-313Z/checks.json",
+      "counts": {
+        "SUCCESS": 5
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-dispatch-and-envelope-2026-09-07T09-06-18-633Z/checks.json",
+      "counts": {
+        "SUCCESS": 9
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-lifecycle-2026-09-07T09-06-07-047Z/checks.json",
+      "counts": {
+        "SUCCESS": 9
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-mrtr-input-2026-09-07T09-06-16-344Z/checks.json",
+      "counts": {
+        "SUCCESS": 4
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-request-headers-2026-09-07T09-06-17-918Z/checks.json",
+      "counts": {
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2663-server-rejects-mismatched-mcp-name-on-tasks-get",
+          "name": "Sep2663ServerRejectsMismatchedMcpNameOnTasksGet",
+          "description": "When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch",
+          "status": "FAILURE",
+          "timestamp": "2026-09-07T09:06:18.014Z",
+          "errorMessage": "tasks/get with mismatched Mcp-Name returned a result; SEP-2243 requires -32020 rejection",
+          "specReferences": [
+            {
+              "id": "SEP-2243",
+              "url": "https://modelcontextprotocol.io/seps/2243-http-standardization"
+            },
+            {
+              "id": "SEP-2663",
+              "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "artifact": "server-tasks-request-state-removal-2026-09-07T09-06-15-596Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-required-task-error-2026-09-07T09-06-20-473Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tasks-status-notifications-2026-09-07T09-06-19-873Z/checks.json",
+      "counts": {
+        "SKIPPED": 1
+      },
+      "nonpassing": [
+        {
+          "id": "tasks-status-notifications",
+          "name": "TasksStatusNotificationsScenario",
+          "description": "Status notifications conformance, pending subscriptions/listen rewrite.",
+          "status": "SKIPPED",
+          "timestamp": "2026-09-07T09:06:19.874Z",
+          "errorMessage": "Skipped: SEP-2663 delivers notifications/tasks via the SEP-2575 subscriptions/listen stream, not via the tools/call POST SSE response that the prior harness observed. The harness needs a rewrite against the new channel; tracked as a follow-up.",
+          "specReferences": [
+            {
+              "id": "SEP-2663",
+              "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "artifact": "server-tasks-wire-fields-2026-09-07T09-06-12-196Z/checks.json",
+      "counts": {
+        "SUCCESS": 4
+      },
+      "nonpassing": []
+    }
+  ],
+  "totals": {
+    "SUCCESS": 41,
+    "FAILURE": 1,
+    "SKIPPED": 1
+  }
+}

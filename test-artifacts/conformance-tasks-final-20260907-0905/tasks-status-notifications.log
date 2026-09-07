@@ -1,0 +1,9 @@
+(node:124982) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-status-notifications' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-final-20260907-0905/server-tasks-status-notifications-2026-09-07T09-06-19-873Z
+Checks:
+[90m2026-09-07T09:06:19.874Z[0m [tasks-status-notifications] [0mSKIPPED[0m Status notifications conformance, pending subscriptions/listen rewrite.
+
+Test Results:
+Passed: 0/0, 0 failed, 0 warnings

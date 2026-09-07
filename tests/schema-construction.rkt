@@ -1,0 +1,39 @@
+#lang racket/base
+(require rackunit mcp/schema)
+(define malformed
+  (list (hasheq 'required '("x" "x")) (hasheq 'required '(1))
+        (hasheq 'dependentRequired (hasheq 'x '("y" "y")))
+        (hasheq 'uniqueItems "yes") (hasheq 'allOf '()) (hasheq 'anyOf '())
+        (hasheq 'prefixItems '()) (hasheq 'enum "one") (hasheq 'pattern 3)
+        (hasheq '$anchor "bad anchor") (hasheq '$dynamicAnchor "0bad")
+        (hasheq '$id "https://example.test/schema#fragment") (hasheq '$ref 42)
+        (hasheq '$vocabulary (hasheq 'https://example.test/vocab "required"))
+        (hasheq 'title #f) (hasheq 'readOnly "yes") (hasheq 'examples "example")
+        (hasheq 'contentMediaType #f) (hasheq 'contentSchema 2)
+        (hasheq 'properties (hasheq 'nested (hasheq 'required '("x" "x"))))))
+(for ([schema (in-list malformed)])
+  (check-exn exn:fail:schema? (lambda () (check-schema! schema))))
+(define error
+  (with-handlers ([exn:fail:schema? values])
+    (check-schema! (hasheq 'properties (hasheq 'nested (hasheq 'required '("x" "x")))))))
+(check-true (for/or ([detail (in-list (exn:fail:schema-errors error))])
+              (equal? (schema-error-instance-location detail) "/properties/nested/required")))
+;; Annotation-only formats do not become assertions during metaschema checking.
+(check-not-exn (lambda () (check-schema! (hasheq 'format "custom-format" 'enum '()))))
+(check-not-exn (lambda () (check-schema! (hasheq 'unknownKeyword (hasheq 'arbitrary "annotation")))))
+(check-exn #rx"cannot replace" (lambda () (check-schema! (hasheq) #:registry (hash "https://json-schema.org/draft/2020-12/schema" #t))))
+(check-exn #rx"unsupported required vocabulary"
+           (lambda () (check-schema! (hasheq '$schema "https://example.test/custom")
+                                    #:registry (hash "https://example.test/custom"
+                                                     (hasheq '$vocabulary (hasheq 'https://example.test/unknown #t))))))
+(define cyclic (make-hasheq)) (hash-set! cyclic 'properties cyclic)
+(check-exn #rx"cyclic" (lambda () (check-schema! cyclic)))
+(check-exn #rx"non-JSON" (lambda () (check-schema! (hasheq 'default (lambda () 1)))))
+(check-exn #rx"limit" (lambda () (check-schema! (hasheq 'properties (hasheq 'nested (hasheq 'type "string"))) #:max-depth 1)))
+(check-exn #rx"limit" (lambda () (check-schema! (hasheq 'enum '(1 2 3)) #:max-nodes 2)))
+
+(define path-errors (validate (hasheq 'allOf (list (hasheq 'properties (hasheq 'a/b String)))) (hasheq 'a/b 2)))
+(check-true (for/or ([detail (in-list path-errors)])
+              (and (equal? (schema-error-instance-location detail) "/a~1b")
+                   (equal? (schema-error-schema-location detail) "/allOf/0/properties/a~1b/type"))))
+(check-equal? (schema-error-schema-location (car (validate (hasheq 'prefixItems (list String)) '(2)))) "/prefixItems/0/type")

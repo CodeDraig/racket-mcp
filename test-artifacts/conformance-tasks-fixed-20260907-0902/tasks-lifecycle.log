@@ -1,0 +1,17 @@
+(node:4186590) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-lifecycle' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-fixed-20260907-0902/server-tasks-lifecycle-2026-09-07T09-02-10-253Z
+Checks:
+[90m2026-09-07T09:02:10.313Z[0m [tasks-sync-tool-call                     ] [32mSUCCESS[0m Sync tool returns ToolResult (resultType:"complete"), no taskId at top level
+[90m2026-09-07T09:02:10.347Z[0m [sep-2663-result-type-task-on-create      ] [32mSUCCESS[0m Task-supporting tool returns flat CreateTaskResult (no nested `task` wrapper)
+[90m2026-09-07T09:02:10.351Z[0m [sep-2663-tasks-get-status-working        ] [32mSUCCESS[0m tasks/get returns status + metadata for an active task
+[90m2026-09-07T09:02:12.396Z[0m [sep-2663-tasks-get-status-completed      ] [32mSUCCESS[0m Completed task tasks/get inlines result with content[] (no separate tasks/result method)
+[90m2026-09-07T09:02:12.484Z[0m [sep-2663-tool-error-uses-completed-status] [32mSUCCESS[0m Tool execution error reports as completed + result.isError (NOT failed)
+[90m2026-09-07T09:02:12.534Z[0m [sep-2663-tasks-get-status-failed         ] [32mSUCCESS[0m Protocol-level error reports as failed + inlined error{code,message}, no result
+[90m2026-09-07T09:02:12.600Z[0m [sep-2663-cancel-ack-empty-result         ] [32mSUCCESS[0m tasks/cancel returns {resultType:"complete"} ack; status settles to cancelled
+[90m2026-09-07T09:02:13.725Z[0m [tasks-cancel-terminal-idempotent-ack     ] [32mSUCCESS[0m tasks/cancel on a terminal task returns the same empty-ack as on an active task (idempotent)
+[90m2026-09-07T09:02:13.725Z[0m [wire-schema-valid                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings

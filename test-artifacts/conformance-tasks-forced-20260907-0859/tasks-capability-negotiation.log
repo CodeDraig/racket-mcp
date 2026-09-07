@@ -1,0 +1,49 @@
+(node:4103177) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-capability-negotiation' against server: http://127.0.0.1:18768/mcp
+
+Scenario timed out after 30000ms
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-forced-20260907-0859/server-tasks-capability-negotiation-2026-09-07T08-59-25-975Z
+Checks:
+[90m2026-09-07T08:59:55.978Z[0m [scenario-timeout ] [31mFAILURE[0m The scenario must finish within the configured timeout. A server that accepts the connection but never responds leaves it running forever.
+[90m2026-09-07T08:59:55.978Z[0m [wire-schema-valid] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 1/2, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - Scenario completes within the timeout: The scenario must finish within the configured timeout. A server that accepts the connection but never responds leaves it running forever.
+    Error: Scenario 'tasks-capability-negotiation' did not complete within 30000ms. The server under test accepted the connection but did not finish the exchange.
+
+Test SEP-2663 capability negotiation for the tasks extension.
+
+[1mServer Implementation Requirements:[0m
+
+[1mCapability advertisement (SEP-2663):[0m
+- The server MUST advertise [2mio.modelcontextprotocol/tasks[0m under
+  [2mcapabilities.extensions[0m in its [2mserver/discover[0m response.
+- It MUST NOT use a v1-style [2mcapabilities.tasks[0m slot (the v1 surface
+  is replaced by the extension).
+
+[1mGating without negotiation (SEP-2663):[0m
+- For requests that do NOT carry the [2mio.modelcontextprotocol/tasks[0m
+  extension in [2m_meta.clientCapabilities[0m, the server MUST reject
+  [2mtasks/get[0m, [2mtasks/update[0m, and [2mtasks/cancel[0m with a
+  [2mMissingRequiredClientCapability[0m error.
+- A [2mtools/call[0m from such a session MUST NOT return
+  [2mCreateTaskResult[0m. Task-supporting tools fall through to synchronous
+  execution and return a plain [2mToolResult[0m with
+  [2mresultType:"complete"[0m.
+
+[1mPer-request opt-in (SEP-2575):[0m
+- A session that did not declare the extension at session level can
+  opt into task creation for a single [2mtools/call[0m by including the
+  extension under [2m_meta.io.modelcontextprotocol/clientCapabilities.extensions[0m.
+  The server MUST honor the per-request opt-in and produce a
+  [2mCreateTaskResult[0m for that call.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result.

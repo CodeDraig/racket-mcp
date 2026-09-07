@@ -1,0 +1,135 @@
+(node:4091500) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-lifecycle' against server: http://127.0.0.1:18768/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-tasks-forced-20260907-0859/server-tasks-lifecycle-2026-09-07T08-59-02-969Z
+Checks:
+[90m2026-09-07T08:59:03.028Z[0m [tasks-sync-tool-call                     ] [32mSUCCESS[0m Sync tool returns ToolResult (resultType:"complete"), no taskId at top level
+[90m2026-09-07T08:59:03.079Z[0m [sep-2663-result-type-task-on-create      ] [32mSUCCESS[0m Task-supporting tool returns flat CreateTaskResult (no nested `task` wrapper)
+[90m2026-09-07T08:59:05.136Z[0m [sep-2663-tasks-get-status-working        ] [32mSUCCESS[0m tasks/get returns status + metadata for an active task
+[90m2026-09-07T08:59:05.170Z[0m [sep-2663-tasks-get-status-completed      ] [32mSUCCESS[0m Completed task tasks/get inlines result with content[] (no separate tasks/result method)
+[90m2026-09-07T08:59:05.270Z[0m [sep-2663-tool-error-uses-completed-status] [32mSUCCESS[0m Tool execution error reports as completed + result.isError (NOT failed)
+[90m2026-09-07T08:59:05.337Z[0m [sep-2663-tasks-get-status-failed         ] [32mSUCCESS[0m Protocol-level error reports as failed + inlined error{code,message}, no result
+[90m2026-09-07T08:59:15.371Z[0m [sep-2663-cancel-ack-empty-result         ] [31mFAILURE[0m tasks/cancel returns {resultType:"complete"} ack; status settles to cancelled
+[90m2026-09-07T08:59:25.371Z[0m [tasks-cancel-terminal-idempotent-ack     ] [31mFAILURE[0m tasks/cancel on a terminal task returns the same empty-ack as on an active task (idempotent)
+[90m2026-09-07T08:59:25.372Z[0m [wire-schema-valid                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 7/9, 2 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - TasksCancelEmptyAck: tasks/cancel returns {resultType:"complete"} ack; status settles to cancelled
+    Error: This operation was aborted
+
+Test SEP-2663 Tasks extension lifecycle on the server.
+
+[1mServer Implementation Requirements (SEP-2663):[0m
+
+The server MUST advertise [2mio.modelcontextprotocol/tasks[0m under
+[2mcapabilities.extensions[0m and gate the task surface on negotiation.
+
+[1mSync dispatch (no task created):[0m
+- A [2mtools/call[0m against a sync-only tool MUST return a flat
+  [2mToolResult[0m with [2mresultType:"complete"[0m and a [2mcontent[][0m array.
+- It MUST NOT carry [2mtaskId[0m at the top level (that would imply a
+  CreateTaskResult).
+
+[1mServer-directed task creation:[0m
+- For task-supporting tools, the server decides whether to create a task —
+  the client MUST NOT need to opt in via a request param.
+- The response MUST be a [2mCreateTaskResult[0m — a flat [2mResult & Task[0m
+  intersection: [2mresultType:"task"[0m, plus [2mtaskId[0m / [2mstatus[0m /
+  [2mcreatedAt[0m / [2mlastUpdatedAt[0m / [2mttlMs[0m at the top level.
+  There MUST NOT be a nested [2mtask[0m wrapper key.
+
+[1mtasks/get DetailedTask:[0m
+- Working tasks return [2mstatus[0m and basic metadata; result/error are
+  absent.
+- Completed tasks MUST inline the original tool result under [2mresult[0m
+  with [2mcontent[][0m. There is no separate [2mtasks/result[0m method.
+
+[1mTool errors vs protocol errors (SEP-2663 §error-semantics):[0m
+- A tool that ran but reported an error MUST surface as
+  [2mstatus:"completed"[0m with [2mresult.isError:true[0m. The status
+  [2m"failed"[0m is reserved for protocol-level errors.
+- A protocol-level error (server crash, internal failure) MUST surface
+  as [2mstatus:"failed"[0m with an inlined [2merror[0m object (JSON-RPC
+  error shape: code/message/data) and MUST NOT carry [2mresult[0m.
+
+[1mCancellation:[0m
+- [2mtasks/cancel[0m MUST return an empty
+  [2m{resultType:"complete"}[0m ack — no task envelope (SEP-2322
+  discriminator). The cancelled status is observed via the next
+  [2mtasks/get[0m.
+- [2mtasks/cancel[0m against a terminal task returns the same empty ack
+  (idempotent) — the spec reserves [2m-32602[0m for unknown taskIds only.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result. [2mseconds: 0[0m for the immediate path. MUST settle to
+  [2mcancelled[0m (not [2mcompleted[0m/[2mfailed[0m) when [2mtasks/cancel[0m
+  arrives while running, so the lifecycle cancel check has a
+  deterministic terminal status.
+- [2mfailing_job[0m — task-supporting, always returns a tool execution
+  error after ~1s.
+- [2mprotocol_error_job[0m — task-supporting, panics into a protocol
+  error.
+
+  - TasksCancelTerminalIdempotentAck: tasks/cancel on a terminal task returns the same empty-ack as on an active task (idempotent)
+    Error: This operation was aborted
+
+Test SEP-2663 Tasks extension lifecycle on the server.
+
+[1mServer Implementation Requirements (SEP-2663):[0m
+
+The server MUST advertise [2mio.modelcontextprotocol/tasks[0m under
+[2mcapabilities.extensions[0m and gate the task surface on negotiation.
+
+[1mSync dispatch (no task created):[0m
+- A [2mtools/call[0m against a sync-only tool MUST return a flat
+  [2mToolResult[0m with [2mresultType:"complete"[0m and a [2mcontent[][0m array.
+- It MUST NOT carry [2mtaskId[0m at the top level (that would imply a
+  CreateTaskResult).
+
+[1mServer-directed task creation:[0m
+- For task-supporting tools, the server decides whether to create a task —
+  the client MUST NOT need to opt in via a request param.
+- The response MUST be a [2mCreateTaskResult[0m — a flat [2mResult & Task[0m
+  intersection: [2mresultType:"task"[0m, plus [2mtaskId[0m / [2mstatus[0m /
+  [2mcreatedAt[0m / [2mlastUpdatedAt[0m / [2mttlMs[0m at the top level.
+  There MUST NOT be a nested [2mtask[0m wrapper key.
+
+[1mtasks/get DetailedTask:[0m
+- Working tasks return [2mstatus[0m and basic metadata; result/error are
+  absent.
+- Completed tasks MUST inline the original tool result under [2mresult[0m
+  with [2mcontent[][0m. There is no separate [2mtasks/result[0m method.
+
+[1mTool errors vs protocol errors (SEP-2663 §error-semantics):[0m
+- A tool that ran but reported an error MUST surface as
+  [2mstatus:"completed"[0m with [2mresult.isError:true[0m. The status
+  [2m"failed"[0m is reserved for protocol-level errors.
+- A protocol-level error (server crash, internal failure) MUST surface
+  as [2mstatus:"failed"[0m with an inlined [2merror[0m object (JSON-RPC
+  error shape: code/message/data) and MUST NOT carry [2mresult[0m.
+
+[1mCancellation:[0m
+- [2mtasks/cancel[0m MUST return an empty
+  [2m{resultType:"complete"}[0m ack — no task envelope (SEP-2322
+  discriminator). The cancelled status is observed via the next
+  [2mtasks/get[0m.
+- [2mtasks/cancel[0m against a terminal task returns the same empty ack
+  (idempotent) — the spec reserves [2m-32602[0m for unknown taskIds only.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result. [2mseconds: 0[0m for the immediate path. MUST settle to
+  [2mcancelled[0m (not [2mcompleted[0m/[2mfailed[0m) when [2mtasks/cancel[0m
+  arrives while running, so the lifecycle cancel check has a
+  deterministic terminal status.
+- [2mfailing_job[0m — task-supporting, always returns a tool execution
+  error after ~1s.
+- [2mprotocol_error_job[0m — task-supporting, panics into a protocol
+  error.

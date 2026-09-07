@@ -1,10 +1,10 @@
 #lang racket/base
-(require db racket/random racket/list "json.rkt")
+(require db racket/random racket/list racket/file "json.rkt" "private/worker-lock.rkt" "private/render-provenance.rkt")
 (provide open-sqlite-store open-memory-store close-store! store-transaction
          (struct-out state-store) (struct-out stored-instance)
          create-instance! load-instance list-instances update-instance! record-event! instance-events
-         opaque-handle current-store-connection)
-(struct state-store (connection lock ephemeral?) #:transparent)
+         call-with-instance-worker opaque-handle current-store-connection continuation-token! resolve-continuation find-instance-by-key)
+(struct state-store (connection lock ephemeral? worker-directory) #:transparent)
 (struct stored-instance (handle principal operation arguments version fingerprint expires revision state) #:transparent)
 (define current-store-connection (make-parameter #f))
 (define (opaque-handle)
@@ -12,11 +12,43 @@
                         (define s (number->string b 16)) (if (= (string-length s) 1) (string-append "0" s) s))))
 (define (open-store database ephemeral?)
   (define conn (sqlite3-connect #:database database #:mode 'create #:busy-retry-limit 1000))
-  (unless ephemeral? (query-exec conn "PRAGMA journal_mode=WAL"))
-  (query-exec conn "PRAGMA foreign_keys=ON")
-  (query-exec conn "CREATE TABLE IF NOT EXISTS instances (handle TEXT PRIMARY KEY, principal TEXT NOT NULL, operation TEXT NOT NULL, arguments TEXT NOT NULL, version TEXT NOT NULL, fingerprint TEXT NOT NULL, expires INTEGER NOT NULL, revision INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL, invocation_key TEXT, UNIQUE(principal,operation,invocation_key))")
-  (query-exec conn "CREATE TABLE IF NOT EXISTS journal (sequence INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL REFERENCES instances(handle), event TEXT NOT NULL, recorded INTEGER NOT NULL)")
-  (state-store conn (make-semaphore 1) ephemeral?))
+  (define transferred? #f)
+  (dynamic-wind void
+    (lambda ()
+      (unless ephemeral? (query-exec conn "PRAGMA journal_mode=WAL"))
+      (query-exec conn "PRAGMA foreign_keys=ON")
+      (query-exec conn "CREATE TABLE IF NOT EXISTS instances (handle TEXT PRIMARY KEY, principal TEXT NOT NULL, operation TEXT NOT NULL, arguments TEXT NOT NULL, version TEXT NOT NULL, fingerprint TEXT NOT NULL, expires INTEGER NOT NULL, revision INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL, invocation_key TEXT, UNIQUE(principal,operation,invocation_key))")
+      (query-exec conn "CREATE TABLE IF NOT EXISTS journal (sequence INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL REFERENCES instances(handle), event TEXT NOT NULL, recorded INTEGER NOT NULL)")
+      (query-exec conn "CREATE TABLE IF NOT EXISTS continuations (token TEXT PRIMARY KEY, handle TEXT NOT NULL REFERENCES instances(handle), stage TEXT NOT NULL, UNIQUE(handle,stage))")
+      ;; Nullable sidecars distinguish pre-provenance rows from new ordinary JSON.
+      ;; Serialize migrations so concurrent openers do not race ALTER TABLE.
+      (call-with-transaction conn
+        (lambda ()
+          (for ([entry (in-list '(("instances" "state_marks") ("instances" "argument_marks") ("journal" "event_marks")))])
+            (define table (car entry)) (define column (cadr entry))
+            (unless (for/or ([row (in-list (query-rows conn (string-append "PRAGMA table_info(" table ")")))])
+                      (equal? (vector-ref row 1) column))
+              (query-exec conn (string-append "ALTER TABLE " table " ADD COLUMN " column " TEXT"))))) #:option 'immediate)
+      (define worker-directory
+        (and (not ephemeral?)
+             (string->path (string-append (path->string (simplify-path (path->complete-path database))) ".workers"))))
+      (when worker-directory
+        (make-directory* worker-directory)
+        (unless (directory-exists? worker-directory)
+          (error 'open-sqlite-store "Worker path is not a directory: ~a" worker-directory)))
+      (define result (state-store conn (make-semaphore 1) ephemeral? worker-directory))
+      (set! transferred? #t)
+      result)
+    (lambda ()
+      (unless transferred?
+        ;; Preserve the original exception, break, or arbitrary raised value.
+        (with-handlers ([(lambda (_) #t) void]) (disconnect conn))))))
+(define (call-with-instance-worker store handle thunk)
+  (unless (and (string? handle) (regexp-match? #px"^[0-9a-f]{64}$" handle))
+    (raise-argument-error 'call-with-instance-worker "opaque instance handle" handle))
+  (define directory (state-store-worker-directory store))
+  (define path (and directory (build-path directory handle)))
+  (call-with-worker-lock (if path path (cons store handle)) path thunk))
 (define (open-sqlite-store path) (unless (path-string? path) (raise-argument-error 'open-sqlite-store "explicit path" path)) (open-store path #f))
 (define (open-memory-store) (open-store 'memory #t))
 (define (close-store! store) (disconnect (state-store-connection store)))
@@ -25,19 +57,53 @@
       (call-with-semaphore (state-store-lock store)
         (lambda () (call-with-transaction (state-store-connection store)
                      (lambda () (parameterize ([current-store-connection (state-store-connection store)]) (proc))) #:option 'immediate)))))
+(define (decode-stored-json text marks)
+  (define value (string->json text))
+  (cond [(sql-null? marks)
+         ;; Old marker-shaped JSON is ambiguous: preserve ordinary legacy data,
+         ;; but never guess whether these objects originally authorized I/O.
+         (define (ambiguous? value)
+           (cond [(hash? value)
+                  (or (and (hash-has-key? value '$mcp/embedding) (hash-has-key? value 'uri))
+                      (hash-has-key? value '$mcp/embedded)
+                      (ormap ambiguous? (hash-values value)))]
+                 [(list? value) (ormap ambiguous? value)] [else #f]))
+         (when (ambiguous? value) (error 'load-instance "Legacy rendering marker provenance is unavailable; explicit recovery is required"))
+         value]
+        [else (restore-render-provenance value (string->json marks))]))
 (define (row->instance row)
-  (stored-instance (vector-ref row 0) (vector-ref row 1) (vector-ref row 2) (string->json (vector-ref row 3))
-                   (vector-ref row 4) (vector-ref row 5) (vector-ref row 6) (vector-ref row 7) (string->json (vector-ref row 8))))
+  (stored-instance (vector-ref row 0) (vector-ref row 1) (vector-ref row 2) (decode-stored-json (vector-ref row 3) (vector-ref row 10))
+                   (vector-ref row 4) (vector-ref row 5) (vector-ref row 6) (vector-ref row 7) (decode-stored-json (vector-ref row 8) (vector-ref row 9))))
 (define (load-instance store handle)
   (store-transaction store
-    (lambda () (define row (query-maybe-row (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state FROM instances WHERE handle=?" handle))
+    (lambda () (define row (query-maybe-row (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances WHERE handle=?" handle))
       (and row (row->instance row)))))
+(define (find-instance-by-key store principal operation key)
+  (store-transaction store
+    (lambda ()
+      (define handle (query-maybe-value (state-store-connection store)
+                                       "SELECT handle FROM instances WHERE principal=? AND operation=? AND invocation_key=?"
+                                       principal operation key))
+      (and handle (load-instance store handle)))))
+(define (continuation-token! store handle stage)
+  (store-transaction store
+    (lambda ()
+      (define conn (state-store-connection store))
+      (or (query-maybe-value conn "SELECT token FROM continuations WHERE handle=? AND stage=?" handle (symbol->string stage))
+          (let ([token (opaque-handle)])
+            (query-exec conn "INSERT INTO continuations(token,handle,stage) VALUES (?,?,?)" token handle (symbol->string stage))
+            token)))))
+(define (resolve-continuation store token)
+  (store-transaction store
+    (lambda ()
+      (define row (query-maybe-row (state-store-connection store) "SELECT handle,stage FROM continuations WHERE token=?" token))
+      (and row (cons (vector-ref row 0) (string->symbol (vector-ref row 1)))))))
 (define (list-instances store #:operation [operation #f])
   (store-transaction store
     (lambda () (map row->instance
                     (if operation
-                        (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state FROM instances WHERE operation=?" operation)
-                        (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state FROM instances"))))))
+                        (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances WHERE operation=?" operation)
+                        (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances"))))))
 (define (create-instance! store principal operation arguments version fingerprint expires state #:key [key #f])
   (store-transaction store
     (lambda ()
@@ -46,17 +112,17 @@
       (cond [existing (define instance (load-instance store existing))
                       (unless (equal? arguments (stored-instance-arguments instance)) (error 'create-instance! "invocation key reused with different arguments")) instance]
             [else (define handle (opaque-handle))
-                  (query-exec conn "INSERT INTO instances(handle,principal,operation,arguments,version,fingerprint,expires,state,invocation_key) VALUES (?,?,?,?,?,?,?,?,?)"
-                              handle principal operation (json->string arguments) version fingerprint expires (json->string state) (or key sql-null))
+                  (query-exec conn "INSERT INTO instances(handle,principal,operation,arguments,version,fingerprint,expires,state,invocation_key,state_marks,argument_marks) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                              handle principal operation (json->string arguments) version fingerprint expires (json->string state) (or key sql-null) (json->string (render-provenance state)) (json->string (render-provenance arguments)))
                   (record-event! store handle (hasheq 'kind "created")) (load-instance store handle)]))))
 (define (update-instance! store instance state)
   (store-transaction store
     (lambda ()
-      (query-exec (state-store-connection store) "UPDATE instances SET state=?, revision=revision+1 WHERE handle=? AND revision=?"
-                  (json->string state) (stored-instance-handle instance) (stored-instance-revision instance))
+      (query-exec (state-store-connection store) "UPDATE instances SET state=?, state_marks=?, revision=revision+1 WHERE handle=? AND revision=?"
+                  (json->string state) (json->string (render-provenance state)) (stored-instance-handle instance) (stored-instance-revision instance))
       (unless (= 1 (query-value (state-store-connection store) "SELECT changes()")) (error 'update-instance! "concurrent state transition"))
       (load-instance store (stored-instance-handle instance)))))
 (define (record-event! store handle event)
-  (store-transaction store (lambda () (query-exec (state-store-connection store) "INSERT INTO journal(handle,event,recorded) VALUES (?,?,?)" handle (json->string event) (current-seconds)))))
+  (store-transaction store (lambda () (query-exec (state-store-connection store) "INSERT INTO journal(handle,event,recorded,event_marks) VALUES (?,?,?,?)" handle (json->string event) (current-seconds) (json->string (render-provenance event))))))
 (define (instance-events store handle)
-  (store-transaction store (lambda () (map string->json (query-list (state-store-connection store) "SELECT event FROM journal WHERE handle=? ORDER BY sequence" handle)))))
+  (store-transaction store (lambda () (for/list ([row (in-list (query-rows (state-store-connection store) "SELECT event,event_marks FROM journal WHERE handle=? ORDER BY sequence" handle))]) (decode-stored-json (vector-ref row 0) (vector-ref row 1))))))

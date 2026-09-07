@@ -1,0 +1,20 @@
+#lang racket/base
+(require rackunit racket/file mcp)
+(define dir (make-temporary-file "mcp-worker-lock-~a" 'directory (current-directory)))
+(define path (build-path dir "state.sqlite"))
+(define a (open-sqlite-store path))
+(define b (open-sqlite-store path))
+(define id (opaque-handle))
+(dynamic-wind void
+  (lambda ()
+    (check-true (call-with-instance-worker a id
+                  (lambda () (check-false (call-with-instance-worker b id (lambda () (error 'test "duplicate worker")))))))
+    (check-true (call-with-instance-worker b id void))
+    (define ready (make-semaphore 0))
+    (define worker (thread (lambda () (call-with-instance-worker a id (lambda () (semaphore-post ready) (sync never-evt))))))
+    (check-not-false (sync/timeout 2 ready))
+    (kill-thread worker)
+    (sync worker)
+    (check-true (call-with-instance-worker b id void))
+    (check-exn exn:fail? (lambda () (call-with-instance-worker a "../bad" void))))
+  (lambda () (close-store! a) (close-store! b) (delete-directory/files dir)))

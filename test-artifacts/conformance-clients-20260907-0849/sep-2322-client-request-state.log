@@ -1,0 +1,22 @@
+(node:3791484) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: sep-2322-client-request-state
+Executing client: racket /srv/data/code/racket-mcp/dev/conformance-client.rkt http://localhost:37991/mcp
+(node:3791484) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/conformance-clients-20260907-0849/sep-2322-client-request-state-2026-09-07T08-49-19-252Z
+Checks:
+[90m2026-09-07T08:49:19.755Z[0m [sep-2322-client-parallel-isolation   ] [32mSUCCESS[0m inputRequests and requestState MUST NOT be used for any other request the client may be sending
+[90m2026-09-07T08:49:19.756Z[0m [sep-2322-default-result-type-complete] [32mSUCCESS[0m Client MUST assume resultType "complete" when not specified
+[90m2026-09-07T08:49:19.771Z[0m [sep-2322-client-request-state-echoed ] [31mFAILURE[0m MRTR client check: sep-2322-client-request-state-echoed
+[90m2026-09-07T08:49:19.771Z[0m [sep-2322-client-jsonrpc-id-different ] [31mFAILURE[0m MRTR client check: sep-2322-client-jsonrpc-id-different
+[90m2026-09-07T08:49:19.771Z[0m [sep-2322-client-no-state-omitted     ] [31mFAILURE[0m MRTR client check: sep-2322-client-no-state-omitted
+
+Test Results:
+Passed: 2/5, 3 failed, 0 warnings
+
+Failed Checks:
+  - sep-2322-client-request-state-echoed: MRTR client check: sep-2322-client-request-state-echoed
+  - sep-2322-client-jsonrpc-id-different: MRTR client check: sep-2322-client-jsonrpc-id-different
+  - sep-2322-client-no-state-omitted: MRTR client check: sep-2322-client-no-state-omitted
+
+❌ OVERALL: FAILED

@@ -1,0 +1,21 @@
+#lang racket/base
+(require rackunit net/url mcp/authorization)
+(define registration (oauth-registration "https://issuer.example" "client" "http://127.0.0.1/callback" "https://api.example/mcp" '()))
+(define metadata (hasheq 'issuer "https://issuer.example" 'authorization_endpoint "https://issuer.example/authorize"
+                        'token_endpoint "https://issuer.example/token" 'code_challenge_methods_supported '("S256")))
+(define-values (url pending) (begin-authorization registration metadata))
+(check-false (assq 'scope (url-query (string->url url))))
+(define response (hasheq 'state (oauth-pending-state pending) 'iss "https://issuer.example" 'code "code"))
+(define token (hasheq 'access_token "token" 'token_type "Bearer" 'expires_in 30))
+(for ([bad (list (hash-set token 'access_token "bad\r\nheader") (hash-set token 'access_token "")
+                 (hash-set token 'token_type #f) (hash-set token 'expires_in -1) (hash-set token 'expires_in 1/2)
+                 (hash-set token 'refresh_token "bad\nvalue") (hash-set token 'scope "read\twrite")
+                 (hash-set token 'error "invalid_grant"))])
+  (check-exn exn:fail? (lambda () (finish-authorization pending response (lambda (_u _p) bad)))))
+(check-exn #rx"nonempty authorization code" (lambda () (finish-authorization pending (hash-set response 'code "") (lambda (_u _p) (error 'test "must not exchange")))))
+(define old (oauth-credential "https://issuer.example" "https://api.example/mcp" "old" "refresh" 0 '("read")))
+(define refreshed (refresh-credential (struct-copy oauth-registration registration [scopes '("read" "write")]) old metadata
+                    (lambda (_u _p) token) #:clock (lambda () 100)))
+(check-equal? (oauth-credential-scopes refreshed) '("read"))
+(check-equal? (oauth-credential-refresh-token refreshed) "refresh")
+(check-equal? (oauth-credential-expires refreshed) 130)

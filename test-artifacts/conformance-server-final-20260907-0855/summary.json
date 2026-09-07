@@ -1,0 +1,411 @@
+{
+  "scenarios": [
+    {
+      "artifact": "server-caching-2026-09-07T08-55-34-989Z/checks.json",
+      "counts": {
+        "SUCCESS": 8
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-completion-complete-2026-09-07T08-55-34-756Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-dns-rebinding-protection-2026-09-07T08-55-34-980Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-http-custom-header-server-validation-2026-09-07T08-55-35-024Z/checks.json",
+      "counts": {
+        "SUCCESS": 10
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-http-header-validation-2026-09-07T08-55-35-005Z/checks.json",
+      "counts": {
+        "SUCCESS": 14
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-basic-elicitation-2026-09-07T08-55-35-036Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-basic-list-roots-2026-09-07T08-55-35-129Z/checks.json",
+      "counts": {
+        "FAILURE": 1,
+        "SUCCESS": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2322-list-roots-incomplete",
+          "name": "InputRequiredResultListRootsIncomplete",
+          "description": "Server returns InputRequiredResult with roots/list inputRequest",
+          "status": "FAILURE",
+          "timestamp": "2026-09-07T08:55:35.132Z",
+          "errorMessage": "JSON-RPC error: Unknown name",
+          "specReferences": [
+            {
+              "id": "SEP-2322",
+              "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+            }
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "artifact": "server-input-required-result-basic-sampling-2026-09-07T08-55-35-126Z/checks.json",
+      "counts": {
+        "FAILURE": 1,
+        "SUCCESS": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2322-sampling-incomplete",
+          "name": "InputRequiredResultSamplingIncomplete",
+          "description": "Server returns InputRequiredResult with sampling inputRequest",
+          "status": "FAILURE",
+          "timestamp": "2026-09-07T08:55:35.129Z",
+          "errorMessage": "JSON-RPC error: Unknown name",
+          "specReferences": [
+            {
+              "id": "SEP-2322",
+              "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+            }
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "artifact": "server-input-required-result-capability-check-2026-09-07T08-55-35-749Z/checks.json",
+      "counts": {
+        "FAILURE": 1,
+        "SUCCESS": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2322-respect-client-capabilities",
+          "name": "RespectClientCapabilities",
+          "description": "Server only includes inputRequests for declared client capabilities",
+          "status": "FAILURE",
+          "timestamp": "2026-09-07T08:55:35.751Z",
+          "errorMessage": "JSON-RPC error: Unknown name",
+          "specReferences": [
+            {
+              "id": "SEP-2322",
+              "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+            }
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "artifact": "server-input-required-result-ignore-extra-params-2026-09-07T08-55-35-752Z/checks.json",
+      "counts": {
+        "WARNING": 1,
+        "SUCCESS": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2322-ignore-unexpected-params",
+          "name": "IgnoreUnexpectedParams",
+          "description": "Server ignores extra unrecognized keys in inputResponses",
+          "status": "WARNING",
+          "timestamp": "2026-09-07T08:55:35.755Z",
+          "errorMessage": "Server returned JSON-RPC error when extra params were included: Input responses require a continuation. Servers SHOULD ignore unrecognized information.",
+          "specReferences": [
+            {
+              "id": "SEP-2322",
+              "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+            }
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "artifact": "server-input-required-result-missing-input-response-2026-09-07T08-55-35-409Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-multi-round-2026-09-07T08-55-35-314Z/checks.json",
+      "counts": {
+        "SUCCESS": 4
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-multiple-input-requests-2026-09-07T08-55-35-310Z/checks.json",
+      "counts": {
+        "FAILURE": 1,
+        "SUCCESS": 1
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2322-multiple-inputs-incomplete",
+          "name": "InputRequiredResultMultipleInputsIncomplete",
+          "description": "Server returns InputRequiredResult with multiple inputRequests of different types",
+          "status": "FAILURE",
+          "timestamp": "2026-09-07T08:55:35.313Z",
+          "errorMessage": "JSON-RPC error: Unknown name",
+          "specReferences": [
+            {
+              "id": "SEP-2322",
+              "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+            }
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "artifact": "server-input-required-result-non-tool-request-2026-09-07T08-55-35-477Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-request-state-2026-09-07T08-55-35-132Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-result-type-2026-09-07T08-55-35-594Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-tampered-state-2026-09-07T08-55-35-666Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-unsupported-methods-2026-09-07T08-55-35-661Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-input-required-result-validate-input-2026-09-07T08-55-35-755Z/checks.json",
+      "counts": {
+        "SUCCESS": 3
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-json-schema-2020-12-2026-09-07T08-55-34-929Z/checks.json",
+      "counts": {
+        "SUCCESS": 8
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-prompts-get-embedded-resource-2026-09-07T08-55-34-974Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-prompts-get-simple-2026-09-07T08-55-34-965Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-prompts-get-with-args-2026-09-07T08-55-34-971Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-prompts-get-with-image-2026-09-07T08-55-34-977Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-prompts-list-2026-09-07T08-55-34-959Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-resources-list-2026-09-07T08-55-34-937Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-resources-read-binary-2026-09-07T08-55-34-950Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-resources-read-text-2026-09-07T08-55-34-945Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-resources-templates-read-2026-09-07T08-55-34-953Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-sep-2164-resource-not-found-2026-09-07T08-55-34-956Z/checks.json",
+      "counts": {
+        "SUCCESS": 4
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-server-sse-multiple-streams-2026-09-07T08-55-34-933Z/checks.json",
+      "counts": {
+        "SUCCESS": 1,
+        "INFO": 1
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-server-stateless-2026-09-07T08-55-32-324Z/checks.json",
+      "counts": {
+        "SUCCESS": 28,
+        "SKIPPED": 2
+      },
+      "nonpassing": [
+        {
+          "id": "sep-2575-server-sends-prompts-list-changed-on-subscription",
+          "name": "ServerSendsPromptsListChangedOnSubscription",
+          "description": "List-changed-capable servers notify listen streams with promptsListChanged: true (SHOULD)",
+          "status": "SKIPPED",
+          "timestamp": "2026-09-07T08:55:32.327Z",
+          "specReferences": [
+            {
+              "id": "SEP-2575",
+              "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2575"
+            }
+          ],
+          "details": {
+            "note": "Server did not declare prompts.listChanged capability in server/discover"
+          }
+        },
+        {
+          "id": "sep-2575-server-sends-tools-list-changed-on-subscription",
+          "name": "ServerSendsToolsListChangedOnSubscription",
+          "description": "List-changed-capable servers notify listen streams with toolsListChanged: true (SHOULD)",
+          "status": "SKIPPED",
+          "timestamp": "2026-09-07T08:55:32.327Z",
+          "specReferences": [
+            {
+              "id": "SEP-2575",
+              "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2575"
+            }
+          ],
+          "details": {
+            "note": "Server did not declare tools.listChanged capability in server/discover"
+          }
+        }
+      ]
+    },
+    {
+      "artifact": "server-tools-call-audio-2026-09-07T08-55-34-823Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-embedded-resource-2026-09-07T08-55-34-827Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-error-2026-09-07T08-55-34-919Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-image-2026-09-07T08-55-34-820Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-mixed-content-2026-09-07T08-55-34-882Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-simple-text-2026-09-07T08-55-34-802Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-call-with-progress-2026-09-07T08-55-34-923Z/checks.json",
+      "counts": {
+        "SUCCESS": 2
+      },
+      "nonpassing": []
+    },
+    {
+      "artifact": "server-tools-list-2026-09-07T08-55-34-790Z/checks.json",
+      "counts": {
+        "SUCCESS": 4
+      },
+      "nonpassing": []
+    }
+  ],
+  "totals": {
+    "SUCCESS": 142,
+    "FAILURE": 4,
+    "WARNING": 1,
+    "INFO": 1,
+    "SKIPPED": 2
+  }
+}
