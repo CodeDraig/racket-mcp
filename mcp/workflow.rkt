@@ -122,7 +122,7 @@
     (for/fold ([decoded env]) ([stage (in-list (workflow-descriptor-stages workflow))]
                               #:when (and (value-codec? (workflow-stage-schema stage)) (hash-has-key? env (workflow-stage-id stage))))
       (hash-set decoded (workflow-stage-id stage) (decode-value (workflow-stage-schema stage) (hash-ref env (workflow-stage-id stage))))))
-  (define (advance! current stage value)
+  (define (prepare-value stage value)
     (define keys '())
     (when (committed-result? value)
       (unless (eq? (workflow-stage-kind stage) 'effect) (error 'workflow "commit acknowledgements belong to effect stages"))
@@ -131,6 +131,11 @@
     (define schema (workflow-stage-schema stage))
     (when (value-codec? schema) (set! value (encode-value schema value)))
     (unless (and (json-value? value) (valid? (if (value-codec? schema) (codec-storage-schema schema) schema) value)) (error 'run-workflow "stage ~a failed its codec schema" (workflow-stage-id stage)))
+    (values value keys))
+  (define (advance! current stage value)
+    (define-values (encoded keys) (prepare-value stage value))
+    (advance-prepared! current stage encoded keys))
+  (define (advance-prepared! current stage value keys)
     (define state (stored-instance-state current))
     (define next (hash-set* (hash-remove (hash-remove state 'pending-input) 'pending-group) 'position (add1 (hash-ref state 'position)) 'status "working"
                            'values (hash-set (hash-ref state 'values) (workflow-stage-id stage) value)))
@@ -284,19 +289,21 @@
        ;; Replay-safe host computation may block. Keep the instance worker claim,
        ;; but release SQLite so polling, cancellation, and other instances proceed.
        (define value ((workflow-stage-procedure stage) (decoded-env env)))
+       (define-values (encoded keys) (prepare-value stage value))
        (store-transaction store
          (lambda ()
            (when (cancelled?) (error 'run-workflow "execution cancelled"))
-           (advance! snapshot stage value)))
+           (advance-prepared! snapshot stage encoded keys)))
        (loop)]
       [(effect)
        (match-define (list _ stage adapter input key) action)
        (define result ((effect-adapter-invoke adapter) input key #f))
+       (define-values (encoded keys) (prepare-value stage result))
        (store-transaction store
          (lambda ()
            (define current (load-instance store (stored-instance-handle instance)))
            (when (= (hash-ref (stored-instance-state current) 'position) (hash-ref (stored-instance-state instance) 'position))
-             (advance! current stage result))))
+             (advance-prepared! current stage encoded keys))))
        (publish-workflow-changes!)
        (loop)])))
   ;; The database transaction protects each transition; this separate claim

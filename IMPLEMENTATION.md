@@ -1879,3 +1879,29 @@ all 1,301 pinned JSON Schema core cases, and Scribble. All five probes passed wi
 sh scripts/check-interop.sh. git diff --check passed. Verification remains
 Linux/Racket 9.2; remaining codec/effect lock boundaries, the full crash matrix,
 and the overall release gates remain open.
+
+## Checkpoint and external-effect encoding lock boundaries (2026-09-07)
+
+Stage representation preparation is now separate from the atomic advancement.
+Checkpoint encoders and nontransactional effect-result encoders execute outside
+SQLite while the instance worker claim remains held. The prepared value, stage
+journal, and committed changes still persist together. Checkpoint cancellation is
+checked before advancement. An already acknowledged external effect still records
+its outcome and outbox after cancellation; it does not overwrite the cancelled
+task result or execute workflow completion. Transactional effect encoding remains
+inside the mutation transaction so invalid representations roll back the mutation.
+
+The codec-stage-lock suite passed 88 checks for blocked checkpoint/manual/idempotent
+encoders, responsive polling and cancellation, single encoding/effect invocation,
+checkpoint non-advancement after cancellation, and retained external outcomes and
+change records. Transactional success/failure checks prove connection ownership
+and mutation/outbox/stage rollback on encoding errors. Existing codec, checkpoint,
+freshness, and recovery-race suites passed 61 checks. Effect input/environment and
+explicit recovery codecs still require their separate lock-boundary work; this
+change does not claim every application callback or crash boundary is covered.
+
+Final validation: sh scripts/check.sh passed compilation, 2,464 native checks,
+all 1,301 pinned core schema cases, and Scribble. All five Go probes passed with
+sh scripts/check-interop.sh. git diff --check passed. Verification remains
+Linux/Racket 9.2, with effect-input/recovery callback boundaries and the broader
+SDK release gates still open.

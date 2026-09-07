@@ -254,9 +254,14 @@ transactions. Task polling and cancellation can proceed while these callbacks
 block. Cancellation is checked again before their transitions commit; cancelled
 completion does not record change-outbox entries. Callbacks can run again after
 process loss before their transition commits, so persistent mutations belong in
-declared effects. Checkpoint encoding and effect codecs have separate transaction
-boundaries; this is not a guarantee that all application callbacks run without a
-storage transaction.
+declared effects. Checkpoint encoders and external-effect result encoders also run
+outside SQLite. Cancellation prevents a checkpoint from advancing; an external
+effect that already returned a committed outcome still records that outcome and
+its change keys after cancellation, without changing the task's cancelled result.
+Transactional effect encoders retain the mutation transaction so encoding failure
+rolls back both mutation and stage completion. Effect-input and recovery codecs
+have separate boundaries; this is not a guarantee that all application callbacks
+run without a storage transaction.
 
 Single and grouped input requests are persisted after construction and before
 input processing continues. Retries reuse this saved request data; they do not
