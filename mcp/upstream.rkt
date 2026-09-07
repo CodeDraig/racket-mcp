@@ -134,6 +134,6 @@
                  (lambda (bound)
                    (define result (invoke "tools/call" (hasheq 'name (hash-ref wire 'name) 'arguments bound)))
                    (hash-set result 'content (map remap-content (hash-ref result 'content))))
-                 #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema #f)
+                 #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))
                  #:input-schema schema #:raw? #t))))

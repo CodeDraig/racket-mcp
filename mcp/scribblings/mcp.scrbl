@@ -1191,3 +1191,24 @@ reports identify known incompatible version changes, added/removed workflows, an
 stage changes requiring review. Identical stage metadata reports
 @tt{not-established-from-manifest}; compatible executable code still requires
 the runtime's independent version/fingerprint checks.
+
+@section{Boolean tool schemas and omission}
+
+An omitted @tt{#:output} declares no structured-output contract. Explicit
+@tt{#:output #t} (including @tt{Any}) declares an unrestricted structured value;
+@tt{#:output #f} declares an impossible successful structured value. The latter
+still permits an explicit execution-error result. @tt{make-tool} uses @tt{missing}
+as its optional-keyword sentinel, so applications can explicitly pass
+@tt{#:output missing} to omit the contract.
+
+The pinned MCP schema requires schema objects on the wire. Constructors lower
+@tt{#t} to an empty schema object and @tt{#f} to an object whose @tt{not} keyword
+contains an empty schema. The descriptor's @tt{output-schema} field remains
+@tt{#f} when absent; present boolean declarations are stored in normalized object
+form. Raw @tt{tool-descriptor} values must already use this representation.
+
+An omitted @tt{#:input-schema} derives the ordinary argument schema. Explicit
+boolean input schemas are normalized over JSON objects: @tt{#t} accepts any
+object, and @tt{#f} accepts none. Supplied object schemas must declare
+@tt{type: "object"} at the root, as MCP requires. Interface construction also
+checks normalized schema fields and header annotations for raw descriptors.

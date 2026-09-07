@@ -2298,3 +2298,33 @@ python3 scripts/package.py rebuilt a clean distribution, and the isolated
 env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed against
 that distribution, including its documentation build. git diff --check passed.
 Native evidence remains Linux/Racket 9.2; full release gates remain open.
+
+## Tool boolean schemas and wire-schema parity (2026-09-07)
+
+A descriptor audit found that explicit #:output #f was silently treated as
+omission and #:output #t would be advertised as an invalid wire schema. The
+pinned core Tool definition requires schema objects (input additionally requires
+root type object). make-tool and tool now distinguish omission with missing,
+lower true/false output schemas to equivalent objects, and retain #f as the
+normalized descriptor's absent-output representation. Upstream adapters pass
+missing when outputSchema is absent. Successful results still validate against
+the normalized contract; execution-error results remain exempt.
+
+Boolean custom input schemas lower over the JSON-object domain; supplied schema
+objects must explicitly declare type object. make-interface checks that same
+input/output representation and header-annotation validity for raw descriptors.
+No wire boolean schema is emitted. The native general schema evaluator retains
+its existing full boolean-schema semantics.
+
+Existing core/upstream/declaration suites passed 143 checks. The new 34 checks
+cover omitted/explicit/dynamic schemas, one-time declaration evaluation, scalar
+false/null outputs, impossible success versus explicit errors, blocked input
+before handler execution, raw descriptor/schema/header rejection, and validation
+of every advertised fixture tool against the pinned core Tool schema. Initial
+fixture parenthesis errors were corrected before passing runs. Full constructor
+parity and the broader release gates remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,824 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five Go SDK probes. git diff --check passed. Evidence remains
+Linux/Racket 9.2; the complete SDK release gates are still open.

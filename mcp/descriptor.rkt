@@ -46,8 +46,20 @@
         (error who "argument default must accept previously bound arguments"))
       (unless (argument-optional? a) (error who "argument with a default must be optional")))
     (check-schema! (argument-schema a))))
-(define (make-tool name arguments handler #:description [description ""] #:output [output #f] #:annotations [annotations (hasheq)] #:workflow [workflow #f] #:execution [execution 'mrtr]
-                   #:input-schema [input-schema #f] #:raw? [raw? #f] #:changes [changes (lambda (_args _result) '())])
+(define (schema-object schema)
+  (cond [(eq? schema #t) (hasheq)]
+        [(eq? schema #f) (hasheq 'not (hasheq))]
+        [else schema]))
+(define (check-tool-input! schema)
+  (check-schema! schema)
+  (unless (and (hash? schema) (equal? (hash-ref schema 'type #f) "object"))
+    (error 'make-tool "input schema must declare type object at its root")))
+(define (check-tool-output! schema)
+  (when schema
+    (check-schema! schema)
+    (unless (hash? schema) (error 'make-tool "stored output schema must be an object or absent"))))
+(define (make-tool name arguments handler #:description [description ""] #:output [output missing] #:annotations [annotations (hasheq)] #:workflow [workflow #f] #:execution [execution 'mrtr]
+                   #:input-schema [input-schema missing] #:raw? [raw? #f] #:changes [changes (lambda (_args _result) '())])
   (unless (memq execution '(mrtr task task-optional))
     (error 'make-tool "execution must be mrtr, task, or task-optional"))
   (when (and (not (eq? execution 'mrtr)) (not workflow))
@@ -55,13 +67,17 @@
   (unless (and (procedure? changes) (procedure-arity-includes? changes 2)) (error 'make-tool "changes must accept arguments and committed result"))
   (unless (and (string? name) (positive? (string-length name))) (error 'make-tool "expected nonempty wire name"))
   (check-arguments! 'make-tool arguments)
-  (when output (check-schema! output))
-  (define input (or input-schema
-                    (object-schema (for/hasheq ([a (in-list arguments)]) (values (argument-name a) (argument-schema a)))
-                                   #:required (for/list ([a (in-list arguments)] #:unless (argument-optional? a)) (symbol->string (argument-name a))))))
-  (check-schema! input) (header-bindings input)
+  (define normalized-output (if (missing? output) #f (schema-object output)))
+  (check-tool-output! normalized-output)
+  (define input
+    (cond [(missing? input-schema)
+           (object-schema (for/hasheq ([a (in-list arguments)]) (values (argument-name a) (argument-schema a)))
+                          #:required (for/list ([a (in-list arguments)] #:unless (argument-optional? a)) (symbol->string (argument-name a))))]
+          [(boolean? input-schema) (hash-set (schema-object input-schema) 'type "object")]
+          [else input-schema]))
+  (check-tool-input! input) (header-bindings input)
   (tool-descriptor name description arguments
-                   input output handler annotations workflow execution raw? changes))
+                   input normalized-output handler annotations workflow execution raw? changes))
 (define (make-resource name uri handler #:description [description ""] #:mime-type [mime-type #f] #:render [renderer #f]
                        #:arguments [arguments '()] #:matcher [matcher #f] #:workflow [workflow #f] #:depends-on [depends-on (lambda (_args) '())] #:ttl-ms [ttl-ms 0])
   (unless (and (string? name) (positive? (string-length name))) (error 'make-resource "expected nonempty wire name"))
@@ -111,8 +127,9 @@
     (for ([descriptor (in-list descriptors)])
       (check-arguments! 'make-interface (arguments-of descriptor))))
   (for ([tool (in-list tools)])
-    (check-schema! (tool-descriptor-input-schema tool))
-    (when (tool-descriptor-output-schema tool) (check-schema! (tool-descriptor-output-schema tool))))
+    (check-tool-input! (tool-descriptor-input-schema tool))
+    (header-bindings (tool-descriptor-input-schema tool))
+    (check-tool-output! (tool-descriptor-output-schema tool)))
   (for ([resource (in-list resources)])
     (check-resource-template! (resource-descriptor-uri resource) (resource-descriptor-arguments resource)))
   (for ([xs (list tools resources prompts)] [name (list tool-descriptor-name resource-descriptor-uri prompt-descriptor-name)])

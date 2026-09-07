@@ -62,7 +62,7 @@
 (define-syntax (tool stx)
   (syntax-parse stx
     [(_ (name:id a:arg ...) (~optional (~seq #:description description:expr) #:defaults ([description #'""]))
-        (~optional (~seq #:output output:expr) #:defaults ([output #'#f]))
+        (~optional (~seq #:output output:expr) #:defaults ([output #'missing]))
         (~optional (~seq #:annotations annotations:expr) #:defaults ([annotations #'(hasheq)]))
         (~optional (~seq #:changes [outcome:id changes:expr]) #:defaults ([outcome #'committed] [changes #''()]))
         body:expr ...+)
