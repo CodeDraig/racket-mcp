@@ -105,6 +105,8 @@
   (resume-task! workflow store (stored-instance-handle instance) principal #:adapters adapters #:custodian custodian)
   (hash-set (hash-ref (stored-instance-state instance) 'task) 'resultType "task"))
 (define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)])
+  ;; A view restriction must reject resumption before accepting/persisting input.
+  (void (workflow-executable-fingerprint workflow adapters))
   (define updated (store-transaction store
     (lambda ()
       (define instance (owned store id principal)) (define state (stored-instance-state instance)) (define task (hash-ref state 'task))

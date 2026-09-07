@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/adapter-policy.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
 (provide runtime-clock runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
@@ -39,6 +40,7 @@
                         #:completions (interface-descriptor-completions interface)
                         #:requirements (interface-requirements interface)
                         #:adapter-bindings (interface-adapter-bindings interface)
+                        #:adapter-restrictions (interface-adapter-restrictions interface)
                         #:references (interface-resource-references interface)))
   (define (scopes method params)
     (remove-duplicates
@@ -96,12 +98,17 @@
   (remove-duplicates (append-map (lambda (target) (hash-ref (interface-requirements interface) target '()))
     (operation-targets interface store method params))))
 (define (operation-adapters rt target)
-  (for/fold ([bindings (runtime-adapters rt)])
+  (define bindings
+    (for/fold ([bindings (runtime-adapters rt)])
             ([(name adapter) (in-hash (hash-ref (interface-adapter-bindings (runtime-interface rt)) target (hasheq)))])
-    (hash-set bindings name adapter)))
+      (hash-set bindings name adapter)))
+  (restrict-adapters bindings
+    (hash-ref (interface-adapter-restrictions (runtime-interface rt)) target #f)
+    #:parent (current-workflow-adapters)))
 (define (request-adapters rt method params)
   (define targets (operation-targets (runtime-interface rt) (runtime-store rt) method params))
-  (if (= (length targets) 1) (operation-adapters rt (car targets)) (runtime-adapters rt)))
+  (if (= (length targets) 1) (operation-adapters rt (car targets))
+      (restrict-adapters (runtime-adapters rt) #f #:parent (current-workflow-adapters))))
 (define (change-keys! keys)
   (unless (and (list? keys) (json-value? keys)) (error 'freshness "dependency keys must be a JSON list"))
   keys)

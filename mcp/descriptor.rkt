@@ -1,10 +1,10 @@
 #lang racket/base
-(require "completion.rkt" "private/handler-info.rkt")
+(require "completion.rkt" "private/handler-info.rkt" "private/adapter-policy.rkt")
 (require racket/list racket/match "schema.rkt" "json.rkt" "uri-template.rkt" "header-schema.rkt" "rendering.rkt" "codec.rkt" "error.rkt" "presentation.rkt" "effect.rkt" (only-in "authorization.rkt" check-scopes!))
 (provide (struct-out server-descriptor) (struct-out argument) (struct-out prompt-argument) (struct-out tool-descriptor)
          (struct-out resource-descriptor) (struct-out prompt-descriptor)
          (struct-out interface-descriptor) (struct-out resource-ref) (struct-out request-context)
-         interface-requirements interface-adapter-bindings interface-resource-references make-interface make-tool make-resource make-prompt bind-arguments encode-prompt-arguments prompt-codec-fingerprint
+         interface-requirements interface-adapter-bindings interface-adapter-restrictions interface-effect-summary interface-resource-references make-interface make-tool make-resource make-prompt bind-arguments encode-prompt-arguments prompt-codec-fingerprint
          text-content text-result structured-result error-result resource-link
          current-request-context current-interface current-resource-resolver resource-uri link embed)
 (struct server-descriptor (name version instructions) #:transparent)
@@ -20,13 +20,29 @@
     (resource-ref self args)))
 (struct prompt-descriptor (name description arguments handler workflow) #:transparent)
 (struct interface-descriptor (server tools resources prompts completions) #:transparent)
-(struct scoped-interface interface-descriptor (requirements adapters references) #:transparent)
+(struct scoped-interface interface-descriptor (requirements adapters references restrictions) #:transparent)
 (define (interface-requirements interface)
   (if (scoped-interface? interface) (scoped-interface-requirements interface) (hasheq)))
 (define (interface-adapter-bindings interface)
   (if (scoped-interface? interface) (scoped-interface-adapters interface) (hasheq)))
 (define (interface-resource-references interface)
   (if (scoped-interface? interface) (scoped-interface-references interface) (hasheq)))
+(define (interface-adapter-restrictions interface)
+  (if (scoped-interface? interface) (scoped-interface-restrictions interface) (hasheq)))
+(define (interface-effect-summary interface)
+  (append-map
+    (lambda (declarations kind name-of workflow-of)
+      (for/list ([declaration (in-list declarations)])
+        (define allowed (hash-ref (interface-adapter-restrictions interface) declaration #f))
+        (define summary
+          (hasheq 'kind kind 'name (name-of declaration) 'hostEffects "unknown"
+                  'declaredAdapters (map symbol->string (declared-adapters (workflow-of declaration)))
+                  'adapterPolicy (if allowed "allowlist" "unrestricted")))
+        (if allowed (hash-set summary 'allowedAdapters (map symbol->string allowed)) summary)))
+    (list (interface-descriptor-tools interface) (interface-descriptor-resources interface) (interface-descriptor-prompts interface))
+    '("tool" "resource" "prompt")
+    (list tool-descriptor-name resource-descriptor-name prompt-descriptor-name)
+    (list tool-descriptor-workflow resource-descriptor-workflow prompt-descriptor-workflow)))
 (struct resource-ref (declaration arguments) #:transparent)
 (struct request-context (principal capabilities request-id cancelled? notify) #:transparent)
 (define current-request-context (make-parameter #f))
@@ -121,7 +137,7 @@
     (define wire (if (prompt-argument? a) (encode-string-value (prompt-argument-codec a) value) value))
     (unless (string? wire) (error 'encode-prompt-arguments "non-string argument requires a codec"))
     (values name wire)))
-(define (make-interface #:server [server #f] #:tools [tools '()] #:resources [resources '()] #:prompts [prompts '()] #:completions [completions '()] #:requirements [requirements (hasheq)] #:adapter-bindings [adapters (hasheq)] #:references [references (hasheq)])
+(define (make-interface #:server [server #f] #:tools [tools '()] #:resources [resources '()] #:prompts [prompts '()] #:completions [completions '()] #:requirements [requirements (hasheq)] #:adapter-bindings [adapters (hasheq)] #:references [references (hasheq)] #:adapter-restrictions [restrictions (hasheq)])
   (for ([descriptors (in-list (list tools resources prompts))]
         [arguments-of (in-list (list tool-descriptor-arguments resource-descriptor-arguments prompt-descriptor-arguments))])
     (for ([descriptor (in-list descriptors)])
@@ -174,6 +190,11 @@
     (for/hasheq ([(target bindings) (in-hash adapters)])
       (unless (memq target declarations) (error 'make-interface "adapter binding references an absent declaration"))
       (values target (check-adapter-bindings bindings))))
+  (unless (hash? restrictions) (raise-argument-error 'make-interface "hash?" restrictions))
+  (define checked-restrictions
+    (for/hasheq ([(target allowed) (in-hash restrictions)])
+      (unless (memq target declarations) (error 'make-interface "adapter restriction references an absent declaration"))
+      (values target (check-allowed-adapters allowed))))
   (unless (hash? references) (raise-argument-error 'make-interface "hash?" references))
   (define collected-references
     (for/fold ([collected (for/hasheq ([(source targets) (in-hash references)])
@@ -210,7 +231,7 @@
             (error 'make-interface "declaration ~a references an ambiguous mounted resource: ~a" source-name (resource-descriptor-name target)))
           (car candidates)))
       (values source (remove-duplicates resolved eq?))))
-  (scoped-interface server tools resources prompts completions checked checked-adapters checked-references))
+  (scoped-interface server tools resources prompts completions checked checked-adapters checked-references checked-restrictions))
 (define (bind-arguments arguments input)
   (unless (hash? input) (error 'bind-arguments "arguments must be an object"))
   (for/fold ([bound (hasheq)]) ([a (in-list arguments)])

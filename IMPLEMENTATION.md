@@ -13,7 +13,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 2. Schemas and declarations | Native schema evaluator; shapes; resources, prompts, completion; negative syntax tests | URI/pattern coverage, full durable embedding failure matrix |
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
-| 5. Interface integration | Mounts/views, reference remapping, upstream domain adapters, cache/outbox primitives, separate extension example | Enforced effect restrictions, external freshness reconciliation, upstream MRTR/Tasks translation |
+| 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters, cache/outbox primitives, separate extension example | External freshness reconciliation, upstream MRTR/Tasks translation, complete integration coverage |
 | 6. Developer experience | All named CLI commands have implementations; manifests, Scribble, examples | Complete manifests/diagrams/docs, scenario fault DSL, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
@@ -54,7 +54,7 @@ complete coverage of its surrounding milestone.
 | Workflow executable compatibility | Version and source-form fingerprint stored | Imported helper changes are not included in build fingerprint; complete executable compatibility gate missing |
 | Tasks | `tasks.rkt`; tasks tests | Persist-before-return, polling, input update, owner checks, terminal immutability; task workers detached from request cancellation/output |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
-| Interface views | `composition.rkt`; domain tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scope requirements and versioned adapter replacements survive composition; enforced effect restrictions remain missing |
+| Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
 | Upstream adapters | `upstream.rkt`; upstream tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; durable MRTR/Tasks translation remains missing |
 | Freshness | `freshness.rkt`; freshness tests | Private cache and SQLite outbox primitives; Resource dependencies, acknowledged tool changes, runtime invalidation/publication, and explicit outbox hooks added; workflow completion/effect publication added; Opt-in ordinary resource caching and authorization-context partitioning added; external reconciliation and cross-principal policy remain |
 | CLI and authored scenarios | `cli.rkt`; compiler tests, executable examples | Basic commands; scenarios run test submodules only; deterministic fault-injection scenario language missing |
@@ -2675,3 +2675,47 @@ definition without addressing descriptor initialization order. Reading files on
 each continuation would not identify the already loaded executable and was not
 implemented. The executable dependency fingerprint remains an open release gate;
 this probe establishes its required rejection behavior with durable state.
+
+## Enforced named adapter restrictions on interface views (2026-09-07)
+
+view now accepts #:allow-adapters, with #f meaning no added restriction and an
+empty list denying all named adapters. make-interface has the equivalent
+per-declaration #:adapter-restrictions map; construction validates and copies it.
+Views intersect existing restrictions, and mounts, declaration renaming and the
+generated #lang interface preserve them. Adapter replacement cannot widen the
+allowlist. The public interface-adapter-restrictions getter retains compatibility
+with raw interface descriptors, which have no restrictions by default.
+
+Runtime operation adapters are immutable guarded hashes. A forbidden lookup
+raises -32001 even if that name was not configured. Workflow executable-fingerprint
+construction looks up all declared adapters before checkpointing or task creation,
+so denial occurs before either workflow state or a task is persisted. Task update
+now performs that check before accepting input. Task recovery and repaired-task
+retry use the operation's guarded map. Nested dispatch intersects the inherited
+parent restriction, including dispatch through another runtime. Dynamic workflows
+using the supplied adapter map receive the same enforcement.
+
+interface-effect-summary exposes JSON-compatible declaration records with known
+workflow adapter names, the adapter policy/allowlist, and hostEffects explicitly
+set to "unknown". Native host code remains trusted: these are named SDK adapter
+restrictions, not a Racket sandbox or a claim of read-only host computation. Tool
+annotations are not used as evidence of effect safety. Stronger arbitrary-host
+effect guarantees have not been inferred or advertised.
+
+The focused suite grew from 20 to 34 to 45 passing checks. It covers denial before
+checkpoint/effect/task creation, absent forbidden adapters, replacement, nested
+views/mounts, dynamically constructed workflows, nested runtimes, immutable policy
+snapshots, the generated #lang interface, effect summary metadata, local/stdio/
+HTTP JSON/HTTP SSE scenarios, denied task updates leaving the stored revision
+unchanged, allowed retries, and task-worker termination followed by recovery under
+a stricter view without re-entering the checkpoint. The existing scope suite also
+passed. All six official Go probes and isolated package dependency/documentation
+checks passed with this implementation. Full native results follow below.
+
+Final validation: sh scripts/check.sh passed compilation, 3,139 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all six official Go probes. python3 scripts/package.py and isolated
+env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed before this
+evidence-only ledger addition. git diff --check passed. Verification remains
+Linux/Racket 9.2; the imported-helper compatibility probe and the other recorded
+integration, durability, scenario, conformance and platform gates remain open.

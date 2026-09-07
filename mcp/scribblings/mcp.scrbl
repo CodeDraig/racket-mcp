@@ -1443,3 +1443,33 @@ Origin policy uses the configured host and the actual listener port obtained
 from the connection. It does not derive authority from the request's Host header.
 An explicit @tt{#:origins} list replaces this default, including for ephemeral
 listeners.
+
+@section[#:tag "view-adapter-restrictions"]{Restricting named effect adapters}
+
+@tt{view} accepts @tt{#:allow-adapters}, either @tt{#f} (no additional restriction)
+or a list of adapter symbols. An empty list denies all named adapters. Nested
+views intersect their lists; a later view or adapter replacement cannot widen an
+earlier restriction. Mounts, renaming, URI remapping and the generated
+@tt{mcp-interface} retain each declaration's policy.
+
+The equivalent data API is @tt{make-interface #:adapter-restrictions}, an immutable
+snapshot of a hash mapping included declaration descriptors to allowlists or
+@tt{#f}. @tt{interface-adapter-restrictions} returns this map. Invalid adapter names
+and policies referring to absent declarations fail construction.
+
+Runtime dispatch supplies a guarded adapter map. Looking up a forbidden adapter
+raises MCP error @tt{-32001}, including when that name is not configured. Declared
+workflow adapters are looked up before checkpoints and task creation; denied task
+updates do not persist input. Task recovery uses the recovering runtime's policy.
+Nested dispatch intersects the parent restriction with the child's policy, even
+when the child uses another runtime. This also covers dynamically constructed
+workflows using the supplied adapter map.
+
+These restrictions govern named SDK adapters. Arbitrary host Racket code remains
+trusted and can have effects outside that API; this is not a Racket sandbox or a
+claim that a tool is read-only. Tool annotations do not establish effect safety.
+@tt{interface-effect-summary} returns JSON-compatible records with declaration
+kind/name, declared workflow adapters, the adapter policy and optional allowlist.
+Every record explicitly reports @tt{hostEffects} as @tt{"unknown"}. An empty list
+of declared adapters does not establish host-code purity. This summary uses
+descriptors and does not execute handlers.

@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "descriptor.rkt" "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
+(require racket/list "descriptor.rkt" "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
 (provide mount mount-interfaces view role message image-content audio-content)
 (define-syntax (mount stx) (syntax-parse stx [(_ interface:expr ...)
                                            #'(let ([result (mount-interfaces interface ...)]) (register-declaration result) result)]))
@@ -15,13 +15,19 @@
                   #:adapter-bindings
                   (for*/hasheq ([interface (in-list interfaces)] [(target bindings) (in-hash (interface-adapter-bindings interface))])
                     (values target bindings))
+                  #:adapter-restrictions
+                  (for*/fold ([restrictions (hasheq)]) ([interface (in-list interfaces)]
+                    [(target allowed) (in-hash (interface-adapter-restrictions interface))])
+                    (hash-set restrictions target
+                      (intersect-allowed-adapters (hash-ref restrictions target #f) allowed)))
                   #:requirements
                   (for*/fold ([requirements (hasheq)]) ([interface (in-list interfaces)]
                     [(target scopes) (in-hash (interface-requirements interface))])
                     (hash-set requirements target (remove-duplicates
                       (append (hash-ref requirements target '()) scopes))))))
-(define (view iface #:include [include #f] #:exclude [exclude '()] #:rename [rename (hash)] #:namespace [namespace ""] #:uris [uris (hash)] #:require-scopes [scopes '()] #:adapters [adapters (hasheq)])
+(define (view iface #:include [include #f] #:exclude [exclude '()] #:rename [rename (hash)] #:namespace [namespace ""] #:uris [uris (hash)] #:require-scopes [scopes '()] #:adapters [adapters (hasheq)] #:allow-adapters [allowed #f])
   (define replacements (check-adapter-bindings adapters))
+  (define permitted (check-allowed-adapters allowed))
   (check-scopes! scopes)
   (define (keep? name) (and (or (not include) (member name include)) (not (member name exclude))))
   (define (name old) (string-append namespace (hash-ref rename old old)))
@@ -57,6 +63,9 @@
       (values transformed
         (for/fold ([bindings (hash-ref (interface-adapter-bindings iface) original (hasheq))])
                   ([(name adapter) (in-hash replacements)]) (hash-set bindings name adapter))))
+    #:adapter-restrictions (for/hasheq ([(original transformed) (in-hash targets)])
+      (values transformed (intersect-allowed-adapters
+                            (hash-ref (interface-adapter-restrictions iface) original #f) permitted)))
     #:requirements (for/hasheq ([(original transformed) (in-hash targets)])
       (values transformed (remove-duplicates
         (append (hash-ref (interface-requirements iface) original '()) scopes))))
