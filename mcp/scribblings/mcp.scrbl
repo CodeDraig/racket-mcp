@@ -1324,3 +1324,69 @@ The clock example now uses an ordinary @tt{module+ test} RackUnit import followe
 by its authored @tt{scenario}. The existing scenario body remains Racket test
 code. The complete transport-selectable fault-injection language remains an
 implementation gate; this runner does not claim to supply it.
+
+@section[#:tag "scenario-sessions"]{Configured interaction scenarios}
+
+A configured scenario binds a session for its Racket body:
+@racketblock[
+(scenario (greeting session)
+  #:interface mcp-interface
+  #:transport 'stdio
+  #:clock (make-manual-clock #:seconds 100)
+  #:principal "reader"
+  (define reply
+    (scenario-call session "tools/call"
+                   (hasheq 'name "greet" 'arguments (hasheq 'name "Ada"))))
+  (check-equal? (hash-ref (hash-ref reply 'result) 'content)
+                (list (text-content "Hello, Ada"))))
+]
+
+The @tt{#:interface} expression is required. Optional clauses follow this order:
+@tt{#:transport}, @tt{#:clock}, @tt{#:principal}, @tt{#:adapters},
+@tt{#:capabilities}, @tt{#:state}, @tt{#:authorize}, @tt{#:timeout},
+@tt{#:sse?}. Configuration expressions run once, in that order, when the test
+submodule executes. They do not run when the application's interface descriptors
+are constructed. The session binder has ordinary lexical Racket scope in the
+body. Missing interface clauses, malformed binders and repeated/out-of-order
+clauses fail expansion. The older @tt{(scenario name body ...)} form remains valid.
+
+@tt{call-with-scenario-session}, exported by @tt{mcp} and @tt{mcp/scenario}, is
+the equivalent procedure. It takes an interface and a one-argument callback plus
+the same optional keywords. It returns the callback's values and closes the
+session's transport, runtime workers and store on exit. A retained session rejects
+later calls. The defaults are local dispatch, a manual clock at Unix zero,
+principal @tt{"scenario"}, empty adapters/capabilities, memory storage, an
+allowing authorization callback, a five-second real request timeout, and HTTP
+JSON responses. @tt{#:state} supplies an explicit SQLite path. Reusing that path
+in another session permits continuation tests across runtime/store reopenings;
+it does not simulate killing a separate process.
+
+@tt{scenario-call} takes the session, a method string and an optional JSON params
+object. @tt{#:capabilities} can override the session's capabilities for that call.
+Each call gets a fresh request ID and returns its JSON-RPC outcome. Local calls
+round-trip request data through JSON and use @tt{dispatch-message}. Stdio calls
+use the actual SDK client/server over bounded pipes; HTTP uses a loopback server
+and the actual SDK client. @tt{#:sse? #t} selects HTTP SSE responses. Transport
+errors retain their native exception types; for example, HTTP authorization
+challenges may raise an HTTP authorization exception. Failed or uncertain calls
+are never automatically replayed.
+
+@tt{scenario-interact} accepts session, method and params, requires explicit
+@tt{#:elicit} and @tt{#:navigate} callbacks, and delegates MRTR/Tasks interaction
+to @tt{run-interaction}. Optional @tt{#:max-rounds} and @tt{#:wait} retain that
+runner's policy. Logical clock advancement does not replace real task scheduling.
+Session accessors expose its runtime, store, clock, transport and principal for
+authored assertions and fixtures.
+
+The HTTP session installs the supplied principal through a testing authentication
+adapter; it exercises runtime authorization rather than a hosted OAuth flow.
+@tt{serve-stdio} now also accepts @tt{#:principal}, defaulting to @tt{'local}, so
+the same principal/policy can be tested through all three paths. HTTP scenario
+keep-alives are at most one second and at most half the request timeout.
+
+Call timeouts and session teardown are tested with uncooperative handlers. HTTP
+JSON mode still cannot promptly observe a disconnected peer while a handler
+produces no output: @tt{dev/check-http-json-disconnect.rkt} remains a failing
+release probe. Teardown closes that worker, which does not prove disconnect-only
+cleanup. Asynchronous scenario steps, notification assertions, injected network
+loss, process restarts and the complete fault grammar remain unfinished.

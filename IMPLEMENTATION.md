@@ -2481,3 +2481,50 @@ distribution and isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
 probe passed a test-local tool declaration shadowing a parent tool's name.
 git diff --check passed. Evidence remains Linux/Racket 9.2; the complete SDK
 release and full fault-injection scenario language remain unfinished.
+
+## Configured scenario sessions across SDK transports (2026-09-07)
+
+Added call-with-scenario-session and a checked (scenario (name session)
+#:interface ... body ...) form. Configuration runs once in authored clause order
+inside the test submodule; the session is an ordinary lexical Racket binding.
+The procedure API and form share runtime/store/transport setup and teardown.
+scenario-call uses dispatch-message with a JSON request snapshot locally, the
+native stdio client/server over bounded pipes, or native loopback HTTP JSON/SSE.
+scenario-interact supplies explicit input callbacks to the existing interaction
+runner. Sessions default to an ephemeral memory store and a manual clock; an
+explicit SQLite path supports continuation across sequential sessions.
+
+serve-stdio now accepts a configured principal instead of unconditionally using
+local for dispatch. HTTP scenarios install a fixture authentication callback;
+all paths still apply the runtime authorization callback. The session API exposes
+its runtime/store/clock/transport/principal for authored assertions. Requests have
+real bounded timeouts and uncertain outcomes are not replayed automatically.
+The clock example now uses the configured form; transport-scenarios.rkt adds
+stdio and HTTP SSE examples. Separate-process restarts, asynchronous steps,
+notification assertions and the complete fault-injection grammar remain open.
+
+Initial tests exposed the known HTTP disconnect gap: JSON handlers that produce
+no output survive client timeout until the server/session closes. This is retained
+as dev/check-http-json-disconnect.rkt, which was run and exits 1; it is not counted
+as an expected-failure native test. SSE sessions use a short keep-alive interval
+and pass disconnect cleanup; all session modes pass owned teardown cleanup.
+A stale compiled language export and stdio export mismatch were resolved by
+recompiling dependent modules. Afterward the focused session/runner/stdio suites
+passed 80 checks, before adding three negative configured-form assertions.
+The three authored example scenarios passed separately.
+
+The final session suite passed 35 checks, including three negative grammar cases
+and a complete Tasks creation/input-update/completion interaction in all four
+local/stdio/HTTP JSON/HTTP SSE configurations. Nested assertions cover principal
+and clock identity, fresh request IDs, protocol errors, MRTR decline/cancellation,
+adapter invocation, persisted checkpoint reuse, closed-session rejection, real
+request timeouts, and owned worker cleanup. The Tasks additions ran in the focused
+suite and before the full runner reached the session test file.
+
+Final validation: sh scripts/check.sh passed compilation, 3,065 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five official Go probes. python3 scripts/package.py rebuilt a clean
+distribution; isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
+--pkgs racket-mcp passed with documentation. git diff --check passed. The separate
+HTTP JSON disconnect release probe still exits 1, as explicitly recorded above.
+Linux/Racket 9.2 remains the verified platform; full SDK release gates stay open.

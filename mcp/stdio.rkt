@@ -6,7 +6,7 @@
   #:property prop:evt (lambda (self) (wrap-evt (semaphore-peek-evt (request-handle-ready self))
                                              (lambda (_) (unbox (request-handle-result self))))))
 (define (request-cancel! handle) ((request-handle-cancel handle)))
-(define (serve-stdio rt #:input [in (current-input-port)] #:output [out (current-output-port)] #:workers [limit 32])
+(define (serve-stdio rt #:input [in (current-input-port)] #:output [out (current-output-port)] #:workers [limit 32] #:principal [principal 'local])
   (define lock (make-semaphore 1))
   (define slots (make-semaphore limit))
   (define running (make-hash))
@@ -29,7 +29,7 @@
           (define parsed (with-handlers ([exn:fail? (lambda (_) (send (hasheq 'jsonrpc "2.0" 'error (hasheq 'code -32700 'message "Parse error"))) missing)]) (string->json line)))
           (define message
             (if (missing? parsed) missing
-                (with-handlers ([exn:fail? (lambda (_) (send (dispatch-message rt parsed)) missing)])
+                (with-handlers ([exn:fail? (lambda (_) (send (dispatch-message rt parsed #:principal principal)) missing)])
                   (check-client-message parsed)
                   parsed)))
           (unless (missing? message)
@@ -40,7 +40,7 @@
                (with-handlers ([exn:fail? void])
                  (check-cancellation-params params)
                  (cancel! (hash-ref params 'requestId)))]
-              [(missing? id) (dispatch-message rt message)]
+              [(missing? id) (dispatch-message rt message #:principal principal)]
               [(not (semaphore-try-wait? slots)) (reject id -32000 "Concurrent request limit exceeded")]
               [else
                (define child (make-custodian owner))
@@ -55,7 +55,7 @@
                               (parameterize ([current-output-port (current-error-port)]
                                              [current-cancellation-event (semaphore-peek-evt cancelled)]
                                              [current-cancelled? (lambda () (and (sync/timeout 0 (semaphore-peek-evt cancelled)) #t))])
-                                (define result (dispatch-message rt message #:notify send))
+                                (define result (dispatch-message rt message #:principal principal #:notify send))
                                 (when (or (not ((current-cancelled?))) (equal? (hash-ref message 'method #f) "subscriptions/listen"))
                                   (send result) (set-box! responded? #t))))))])
                      (vector-set! entry 2 worker)

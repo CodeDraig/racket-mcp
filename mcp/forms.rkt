@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
+(require "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
          (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform completion scenario define-mcp-extension)
 (begin-for-syntax
@@ -184,7 +184,26 @@
            (register-declaration descriptor)
            descriptor))]))
 (define-syntax (scenario stx)
-  (syntax-parse stx [(_ name:id body ...+) #'(module+ test (require rackunit) (test-case (symbol->string 'name) body ...))]))
+  (syntax-parse stx
+    [(_ (name:id session:id) #:interface interface:expr
+        (~optional (~seq #:transport transport:expr) #:defaults ([transport #''local]))
+        (~optional (~seq #:clock clock:expr) #:defaults ([clock #'(make-manual-clock)]))
+        (~optional (~seq #:principal principal:expr) #:defaults ([principal #'"scenario"]))
+        (~optional (~seq #:adapters adapters:expr) #:defaults ([adapters #'(hasheq)]))
+        (~optional (~seq #:capabilities capabilities:expr) #:defaults ([capabilities #'(hasheq)]))
+        (~optional (~seq #:state state:expr) #:defaults ([state #'#f]))
+        (~optional (~seq #:authorize authorize:expr) #:defaults ([authorize #'(lambda (_p _m _a) #t)]))
+        (~optional (~seq #:timeout timeout:expr) #:defaults ([timeout #'5]))
+        (~optional (~seq #:sse? sse:expr) #:defaults ([sse #'#f]))
+        body:expr ...+)
+     #'(module+ test
+         (require rackunit)
+         (test-case (symbol->string 'name)
+           (call-with-scenario-session interface
+             (lambda (session) body ...)
+             #:transport transport #:clock clock #:principal principal #:adapters adapters
+             #:capabilities capabilities #:state state #:authorize authorize #:timeout timeout #:sse? sse)))]
+    [(_ name:id body ...+) #'(module+ test (require rackunit) (test-case (symbol->string 'name) body ...))]))
 (define-syntax (define-mcp-extension stx)
   (syntax-parse stx
     [(_ name:id #:workflow transformer:expr)
