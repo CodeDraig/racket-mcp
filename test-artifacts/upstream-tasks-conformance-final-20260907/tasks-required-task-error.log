@@ -1,0 +1,11 @@
+(node:969028) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-required-task-error' against server: http://127.0.0.1:46505/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-final-20260907/server-tasks-required-task-error-2026-09-07T23-11-25-879Z
+Checks:
+[90m2026-09-07T23:11:25.953Z[0m [sep-2663-server-returns-missing-capability-when-required] [32mSUCCESS[0m tools/call for a TaskSupport=required tool MUST reject with code -32021 (Missing Required Client Capability) when the client did not declare io.modelcontextprotocol/tasks
+[90m2026-09-07T23:11:25.953Z[0m [sep-2663-server-returns-missing-capability-data-shape   ] [32mSUCCESS[0m Error data for -32021 SHOULD carry data.requiredCapabilities.extensions["io.modelcontextprotocol/tasks"]
+[90m2026-09-07T23:11:25.953Z[0m [wire-schema-valid                                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 3/3, 0 failed, 0 warnings

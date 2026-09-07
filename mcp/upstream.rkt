@@ -6,7 +6,13 @@
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)
-  (when (and (not (hash-has-key? outcome 'resultType)) (hash-has-key? outcome 'error)) (mcp-error -32603 "Upstream request failed" (hash-ref outcome 'error)))
+  (when (and (not (hash-has-key? outcome 'resultType)) (hash-has-key? outcome 'error))
+    (define failure (hash-ref outcome 'error))
+    ;; Capability requirements retain their meaning across the bridge. Do not
+    ;; turn an actionable client capability error into an internal SDK failure.
+    (when (and (hash? failure) (equal? (hash-ref failure 'code #f) -32021))
+      (mcp-error -32021 "Upstream requires additional client capabilities" (hash-ref failure 'data #f)))
+    (mcp-error -32603 "Upstream request failed" failure))
   (if (hash-has-key? outcome 'resultType) outcome (hash-ref outcome 'result outcome)))
 (define (capture-snapshot request)
   (define discovery (result! (request "server/discover" (hasheq))))

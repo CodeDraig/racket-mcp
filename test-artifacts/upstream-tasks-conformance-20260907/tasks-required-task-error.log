@@ -1,0 +1,52 @@
+(node:907765) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-required-task-error' against server: http://127.0.0.1:43035/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-20260907/server-tasks-required-task-error-2026-09-07T23-09-20-483Z
+Checks:
+[90m2026-09-07T23:09:20.548Z[0m [sep-2663-server-returns-missing-capability-when-required] [31mFAILURE[0m tools/call for a TaskSupport=required tool MUST reject with code -32021 (Missing Required Client Capability) when the client did not declare io.modelcontextprotocol/tasks
+[90m2026-09-07T23:09:20.548Z[0m [wire-schema-valid                                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 1/2, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - Sep2663ServerReturnsMissingCapabilityWhenRequired: tools/call for a TaskSupport=required tool MUST reject with code -32021 (Missing Required Client Capability) when the client did not declare io.modelcontextprotocol/tasks
+    Error: tools/call for failing_job returned error code -32603; spec requires -32021.
+
+Verify the -32021 error path for required-task tools when the
+client has not negotiated the io.modelcontextprotocol/tasks extension.
+
+[1mServer Implementation Requirements:[0m
+
+Per SEP-2575 §"Missing Required Capabilities" and SEP-2663 §"Required
+Capabilities":
+
+> If a server is unable to service a request to a client that does not
+> declare this extension capability without returning [2mCreateTaskResult[0m,
+> the server MUST return an error with the code [2m-32021[0m (Missing
+> Required Client Capability), indicating the required extension in the
+> error response.
+
+The error data SHOULD include a [2mrequiredCapabilities[0m object whose
+shape mirrors [2mInitializeRequest.capabilities[0m, e.g.
+
+``[2mjson
+{
+  "requiredCapabilities": {
+    "extensions": {
+      "io.modelcontextprotocol/tasks": {}
+    }
+  }
+}
+[0m`[2m
+
+The scenario calls [0mtools/call[2m for a tool registered with task support
+[0mrequired[2m from a client that did NOT declare the extension. A
+conformant server MUST reject with [0m-32021[2m.
+
+[1mRequired server fixtures ([0mtools/list[2m MUST include all):[0m
+- [0mfailing_job[2m — registered with task support declared as [0mrequired`.
+  The tool's payload behavior is irrelevant; only the registration-time
+  declaration matters, because the error is returned by the middleware
+  before the handler runs.

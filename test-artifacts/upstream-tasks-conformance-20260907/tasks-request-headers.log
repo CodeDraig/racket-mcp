@@ -1,0 +1,46 @@
+(node:908482) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-request-headers' against server: http://127.0.0.1:43035/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-20260907/server-tasks-request-headers-2026-09-07T23-09-22-071Z
+Checks:
+[90m2026-09-07T23:09:22.138Z[0m [tasks-headers-tolerate-mcp-method-on-tools-call         ] [32mSUCCESS[0m Server tolerates Mcp-Method request header on tools/call (sync tool dispatch unaffected)
+[90m2026-09-07T23:09:22.292Z[0m [sep-2663-routing-headers-accepted-on-tasks-get          ] [32mSUCCESS[0m Server accepts matched Mcp-Method + Mcp-Name request headers on tasks/get and dispatches normally
+[90m2026-09-07T23:09:22.295Z[0m [tasks-headers-reject-mismatched-method                  ] [32mSUCCESS[0m When Mcp-Method header disagrees with body on a tools/call, server MUST reject with -32020 HeaderMismatch (SEP-2243 §Server Validation)
+[90m2026-09-07T23:09:22.367Z[0m [sep-2663-server-rejects-mismatched-mcp-name-on-tasks-get] [31mFAILURE[0m When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch
+[90m2026-09-07T23:09:22.439Z[0m [wire-schema-valid                                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/5, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - Sep2663ServerRejectsMismatchedMcpNameOnTasksGet: When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch
+    Error: tasks/get with mismatched Mcp-Name returned a result; SEP-2243 requires -32020 rejection
+
+Test SEP-2243 Mcp-Method / Mcp-Name request-header validation, tasks surface.
+
+[1mServer Implementation Requirements:[0m
+
+SEP-2243 defines two required request headers that mirror body fields
+into the HTTP layer for routing intermediaries:
+
+- [2mMcp-Method: <jsonrpc-method>[0m — REQUIRED on every JSON-RPC request,
+  matching the body [2mmethod[0m.
+- [2mMcp-Name: <name-shaped-identifier>[0m — REQUIRED on requests with a
+  name-shaped body field. Per SEP-2243 §"Standard Headers" this covers
+  [2mtools/call[0m ([2mparams.name[0m), [2mresources/read[0m ([2mparams.uri[0m), and
+  [2mprompts/get[0m ([2mparams.name[0m). SEP-2663 §"Streamable HTTP: Routing
+  Headers" extends the requirement to tasks-namespace methods:
+  [2mtasks/get[0m, [2mtasks/update[0m, and [2mtasks/cancel[0m MUST carry
+  [2mMcp-Name: <taskId>[0m matching [2mparams.taskId[0m.
+
+Per SEP-2243 §"Server Behavior", servers that process the request body
+MUST validate that header values match the body. Per its "Validation
+Failure Conditions", both missing required headers and mismatched
+values trigger rejection with JSON-RPC error code [2m-32020[0m
+(HeaderMismatch) and HTTP 400.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result.

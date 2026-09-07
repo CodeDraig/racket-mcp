@@ -1,0 +1,17 @@
+(node:906914) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-dispatch-and-envelope' against server: http://127.0.0.1:43035/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-20260907/server-tasks-dispatch-and-envelope-2026-09-07T23-09-18-761Z
+Checks:
+[90m2026-09-07T23:09:18.802Z[0m [sep-2663-tasks-result-removed-method-not-found  ] [32mSUCCESS[0m tasks/result is removed in v2 and MUST reject with -32601
+[90m2026-09-07T23:09:18.807Z[0m [tasks-removed-tasks-list                        ] [32mSUCCESS[0m tasks/list is removed in v2 and MUST reject with -32601
+[90m2026-09-07T23:09:18.977Z[0m [tasks-server-directed-creation-no-hint          ] [32mSUCCESS[0m tools/call with no client `task` hint param MUST still produce CreateTaskResult for task-supporting tools
+[90m2026-09-07T23:09:18.987Z[0m [sep-2663-legacy-task-param-ignored              ] [32mSUCCESS[0m tools/call with legacy `task` param against a sync tool MUST NOT error and MUST NOT be promoted to a task
+[90m2026-09-07T23:09:19.068Z[0m [tasks-immediate-result-shortcut                 ] [32mSUCCESS[0m For a fast operation, a task-supporting tool MAY skip task creation and return a sync ToolResult; either path is valid
+[90m2026-09-07T23:09:19.651Z[0m [tasks-result-type-complete-on-non-task-responses] [32mSUCCESS[0m Sync tools/call, tasks/get, tasks/update ack, and tasks/cancel ack MUST all carry resultType:"complete"
+[90m2026-09-07T23:09:19.877Z[0m [sep-2663-durable-create-strong-consistency      ] [32mSUCCESS[0m tasks/get issued immediately after CreateTaskResult arrives MUST resolve (server MUST NOT return CreateTaskResult before the task is durably created)
+[90m2026-09-07T23:09:19.881Z[0m [sep-2663-tasks-get-invalid-task-id-32602        ] [32mSUCCESS[0m tasks/get for a taskId the server does not recognize MUST return -32602
+[90m2026-09-07T23:09:19.881Z[0m [wire-schema-valid                               ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings

@@ -1,0 +1,10 @@
+(node:908091) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-mrtr-composition' against server: http://127.0.0.1:43035/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-20260907/server-tasks-mrtr-composition-2026-09-07T23-09-21-159Z
+Checks:
+[90m2026-09-07T23:09:21.441Z[0m [sep-2663-mrtr-synchronous-before-task-creation] [32mSUCCESS[0m MRTR loop gathers input then escalates to a task on the final round (SEP-2322 + SEP-2663 451f5e1).
+[90m2026-09-07T23:09:21.442Z[0m [wire-schema-valid                             ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 2/2, 0 failed, 0 warnings

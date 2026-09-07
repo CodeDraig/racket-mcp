@@ -1,0 +1,13 @@
+(node:964477) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-capability-negotiation' against server: http://127.0.0.1:46505/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-final-20260907/server-tasks-capability-negotiation-2026-09-07T23-11-16-418Z
+Checks:
+[90m2026-09-07T23:11:16.477Z[0m [tasks-extension-advertised               ] [32mSUCCESS[0m Server advertises io.modelcontextprotocol/tasks under capabilities.extensions (and not capabilities.tasks)
+[90m2026-09-07T23:11:16.489Z[0m [sep-2663-tasks-methods-non-declaring     ] [32mSUCCESS[0m tasks/get, tasks/update, tasks/cancel return -32021 when the client did not negotiate the tasks extension (SEP-2575 Missing Required Capabilities)
+[90m2026-09-07T23:11:16.517Z[0m [sep-2663-server-rejects-undeclared-client] [32mSUCCESS[0m tools/call from a session without the extension MUST fall through to sync (no CreateTaskResult, even for task-supporting tools)
+[90m2026-09-07T23:11:16.695Z[0m [tasks-per-request-meta-opt-in            ] [32mSUCCESS[0m tools/call with extension declared in _meta.io.modelcontextprotocol/clientCapabilities produces a CreateTaskResult even when the session did not negotiate the extension
+[90m2026-09-07T23:11:16.695Z[0m [wire-schema-valid                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 5/5, 0 failed, 0 warnings

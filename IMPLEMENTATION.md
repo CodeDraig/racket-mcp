@@ -4049,3 +4049,38 @@ racket-mcp, with no warning or undefined-tag matches. git diff --check passed.
 Verification is Linux/Racket 9.2. This closes the reproduced consumed-input race;
 arbitrary cross-stream ordering, independent Tasks interoperability and the full
 SDK release gates remain open.
+
+## Independent bridged Tasks conformance (2026-09-07)
+
+Added dev/conformance-upstream-tasks.rkt, exposing the existing Tasks fixture
+through an HTTP local bridge and a native stdio peer with separate ephemeral
+stores/principals. It uses ordinary public adapter/runtime APIs. The pinned
+independent harness's 191 source files matched its executed working copy by
+SHA-256. Ten Tasks scenarios were explicitly selected with --force.
+
+The first run reproduced a capability error defect: the peer returned -32021,
+but the upstream adapter converted it to -32603. Capability errors now preserve
+their code and data, including requiredCapabilities. Recorded keyed durable
+rejections remain recorded and do not automatically replay. A new ordinary and
+durable adapter regression plus upstream/bridge suites passed 134 focused checks.
+
+The final independent run has 43 SUCCESS, 1 FAILURE and 1 SKIPPED. Lifecycle,
+capability negotiation, wire fields, request-state removal, MRTR input,
+dispatch/envelopes, required-task capability error and MRTR-before-task composition
+pass. The remaining failure is the already recorded Tasks Mcp-Name specification
+discrepancy. The notification scenario explicitly skips itself pending its
+subscriptions/listen rewrite; the pinned Go SDK also has no native Tasks filter
+or notification handler. Neither is counted as independent task-notification
+coverage. Both harness runs and a reproduction README are retained under
+test-artifacts/upstream-tasks-conformance[-final]-20260907. The development server
+was stopped after the run.
+
+The first full native run reported three HTTP child-startup errors in the effect
+crash suite (3/4,928 failures). An unchanged isolated crash/process rerun passed
+54 checks, and a fresh unchanged full raco test tests passed all 4,928 checks.
+The startup failures did not reproduce; their cause is not established. Initial,
+isolated and final logs are retained with the conformance artifacts. No deadline
+was increased. Compilation, all 1,301 core schema cases, Scribble, thirteen Go
+probes, rebuilt distribution and isolated package dependency checks passed.
+git diff --check passed. Verification is Linux/Racket 9.2; independent task
+notifications, the header discrepancy and the full release gates remain open.

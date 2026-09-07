@@ -1006,6 +1006,12 @@ and matching request capabilities; it must not advertise capabilities the local
 client cannot fulfill. The bridge checks local Tasks support before publishing
 or adopting a task handle.
 
+An upstream missing-client-capability error retains code @tt{-32021} and its
+error data through the adapter, so the caller can inspect the required capability.
+It is not converted to a generic internal error. A keyed durable invocation that
+recorded this rejection returns the recorded rejection on retry; it does not
+automatically replay the upstream call after capabilities change.
+
 The local task record is persisted before its receipt is returned. Repeated
 keyed initial calls return the original receipt. Polling, input updates, and
 cancellation resolve the originating tool through the mounted interface and

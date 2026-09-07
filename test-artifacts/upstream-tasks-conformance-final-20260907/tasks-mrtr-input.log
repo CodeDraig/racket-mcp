@@ -1,0 +1,12 @@
+(node:967200) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-mrtr-input' against server: http://127.0.0.1:46505/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/upstream-tasks-conformance-final-20260907/server-tasks-mrtr-input-2026-09-07T23-11-22-150Z
+Checks:
+[90m2026-09-07T23:11:22.477Z[0m [sep-2663-tasks-get-status-input-required] [32mSUCCESS[0m tasks/get on an input_required task MUST surface a non-empty inputRequests map
+[90m2026-09-07T23:11:22.823Z[0m [tasks-mrtr-tasks-update-resumes         ] [32mSUCCESS[0m tasks/update with matching inputResponses MUST be acked with {resultType:"complete"} and resume the task to a terminal state
+[90m2026-09-07T23:11:23.333Z[0m [tasks-mrtr-partial-fulfillment          ] [32mSUCCESS[0m tasks/update with a subset of keys MUST keep the task in input_required with only the unanswered key remaining
+[90m2026-09-07T23:11:23.334Z[0m [wire-schema-valid                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/4, 0 failed, 0 warnings
