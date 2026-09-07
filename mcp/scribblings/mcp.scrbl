@@ -1640,6 +1640,19 @@ preference for quick HTTP JSON responses. @tt{#:state} supplies an explicit SQLi
 in another session permits continuation tests across runtime/store reopenings;
 it does not simulate killing a separate process.
 
+@tt{scenario-request} takes the same arguments as @tt{scenario-call} and returns
+an SDK @tt{request-handle} immediately. Import @tt{mcp/stdio} for the common
+handle accessors and @tt{request-cancel!}. Synchronizing the handle returns its
+JSON-RPC outcome or exception value; @tt{scenario-call} waits and raises exception
+values. The handle's notification channel supports authored progress and
+subscription assertions while other requests are running. Request deadlines use
+real elapsed time, independently of the scenario clock. Cancellation retains the
+first terminal outcome, signals cooperative cancellation, and bounds worker
+cleanup. Session exit cancels outstanding requests before destroying their event
+machinery, so escaped handles remain synchronizable. Local dispatch uses a bounded
+256-message notification queue; overflow terminates the request with
+@tt{exn:fail:notification-overflow}. Wire transports retain their own SDK limits.
+
 @tt{scenario-call} takes the session, a method string and an optional JSON params
 object. @tt{#:capabilities} can override the session's capabilities for that call.
 Each call gets a fresh request ID and returns its JSON-RPC outcome. Local calls
@@ -1667,8 +1680,9 @@ Call timeouts and session teardown are tested with uncooperative handlers.
 Longer HTTP requests now switch from the JSON preference to SSE, allowing stream
 closure to cancel work before session teardown. The regression probe at
 @tt{dev/check-http-json-disconnect.rkt} passes for this adaptive behavior.
-Asynchronous scenario steps, notification assertions, injected network loss,
-process restarts and the complete fault grammar remain unfinished.
+Asynchronous requests, notification assertions and explicit cancellation are
+available through the session API. Injected network loss, process restarts and
+the complete fault grammar remain unfinished.
 
 
 @section[#:tag "http-adaptive"]{Adaptive HTTP responses and worker lifetime}

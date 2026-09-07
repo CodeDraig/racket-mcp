@@ -3440,3 +3440,39 @@ working-tree changes during verification were documentation/evidence only. Linux
 x86_64 is now verified on both 9.2 and 9.3. macOS and Windows still require native
 execution; the Actions budget blocker is unchanged. No broad conformance or full
 SDK completion claim follows from this platform result.
+
+## Asynchronous scenario requests and cancellation (2026-09-07)
+
+Added scenario-request through mcp and mcp/scenario. It returns the existing
+event-compatible request-handle for local, stdio and HTTP sessions; authored tests
+can assert notifications, issue concurrent calls and cancel an active request.
+scenario-call now waits on that same path, raises exception outcomes and cancels
+its outstanding request if the caller exits the wait. No request is replayed.
+
+Local requests own a worker custodian, a bounded 256-message notification queue,
+a cooperative cancellation signal and a session-owned deadline/cleanup supervisor.
+Cancellation signals before publishing the terminal handle outcome, preventing
+a readiness race from skipping cooperative cleanup. First completion wins; later
+cancellation cannot replace a result. Unexpected worker termination settles the
+handle. Session teardown marks the session closed under its request-registration
+lock, then settles outstanding handles before shutting down their event machinery.
+
+Focused scenario-request/session tests passed 113 checks, covering local, stdio,
+HTTP JSON preference and HTTP SSE: progress routing, concurrent calls, repeated
+synchronization, cancellation, retained results, interrupted synchronous callers,
+escaped handles and worker teardown. Local fixtures additionally verify cooperative
+cleanup and bounded notification overflow. The first fixture needed its progress
+API import; switching versions required rebuilding the language reader. HTTP peer
+closure can require two one-second keep-alive writes plus cleanup grace; the
+regression uses a three-second cleanup bound below its five-second request deadline.
+Full verification follows. Injected network loss, actual process restart controls,
+uncertain-effect scenario forms and the complete authored fault grammar remain open.
+
+Final verification passed sh scripts/check.sh: compilation, 4,110 native checks,
+all 1,301 pinned core schema cases and Scribble. All seven official Go probes
+passed. The rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs
+racket-mcp passed without warning or undefined-tag matches. git diff --check
+passed. This evidence paragraph postdates packaging and changes no executable or
+manual content. These changes were verified on Linux/Racket 9.2; the preceding
+9.3 evidence applies to its recorded earlier revision. Full scenario fault controls
+and the other SDK release gates remain open.

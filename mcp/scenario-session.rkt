@@ -3,20 +3,37 @@
          "stdio.rkt" "http.rkt" "json.rkt" "interaction.rkt" "subscription.rkt")
 (provide call-with-scenario-session scenario-session? scenario-session-runtime
          scenario-session-store scenario-session-clock scenario-session-transport
-         scenario-session-principal scenario-call scenario-interact)
-(struct scenario-session (runtime store clock transport principal capabilities call [active? #:mutable]))
+         scenario-session-principal scenario-request scenario-call scenario-interact)
+(struct scenario-session (runtime store clock transport principal capabilities request owner pending lock [active? #:mutable]))
 
+(define (scenario-request session method [params (hasheq)]
+                          #:capabilities [capabilities (scenario-session-capabilities session)])
+  (call-with-semaphore (scenario-session-lock session)
+    (lambda ()
+      (unless (scenario-session-active? session) (error 'scenario-request "scenario session has closed"))
+      (parameterize ([current-custodian (scenario-session-owner session)])
+        (define handle ((scenario-session-request session) method params capabilities))
+        (hash-set! (scenario-session-pending session) handle #t)
+        (thread (lambda ()
+                  (sync handle)
+                  (call-with-semaphore (scenario-session-lock session)
+                    (lambda () (hash-remove! (scenario-session-pending session) handle)))))
+        handle))))
 (define (scenario-call session method [params (hasheq)]
                        #:capabilities [capabilities (scenario-session-capabilities session)])
-  (unless (scenario-session-active? session) (error 'scenario-call "scenario session has closed"))
-  ((scenario-session-call session) method params capabilities))
+  (define handle (scenario-request session method params #:capabilities capabilities))
+  (dynamic-wind void
+    (lambda ()
+      (define result (sync handle))
+      (if (exn? result) (raise result) result))
+    (lambda () (unless (sync/timeout 0 handle) (request-cancel! handle)))))
 (define (scenario-interact session method params #:elicit elicit #:navigate navigate
                            #:max-rounds [rounds 100]
                            #:wait [wait (lambda (ms) (sync (alarm-evt (+ (current-inexact-milliseconds) ms))))])
   (run-interaction (lambda (method params) (scenario-call session method params)) method params
                    #:elicit elicit #:navigate navigate #:max-rounds rounds #:wait wait))
 
-(define (make-local-call rt principal timeout)
+(define (make-local-request rt principal timeout)
   (define ids (box 0))
   (define (next-id)
     (let loop ()
@@ -24,38 +41,56 @@
       (if (box-cas! ids old (add1 old)) (add1 old) (loop))))
   (lambda (method params caps)
     (define id (next-id))
-    ;; Freeze JSON arguments as the wire clients do, and apply the same envelope,
-    ;; metadata, schema and authorization checks through dispatch-message.
     (define message (string->json (json->string
       (hasheq 'jsonrpc "2.0" 'id id 'method method
               'params (hash-set params '_meta (request-meta #:capabilities caps #:extra (hash-ref params '_meta (hasheq))))))))
     (define owner (make-custodian))
-    (define result (make-async-channel 1))
+    (define ready (make-semaphore 0))
+    (define result (box #f))
+    (define lock (make-semaphore 1))
+    (define notices (make-async-channel 256))
     (define cancelled (make-semaphore 0))
-    (define worker #f)
-    (dynamic-wind void
+    (define (finish! value [cancel? #f])
+      (call-with-semaphore lock
+        (lambda ()
+          (cond [(sync/timeout 0 (semaphore-peek-evt ready)) #f]
+                [else
+                 (when cancel? (semaphore-post cancelled))
+                 (set-box! result value) (semaphore-post ready) #t]))))
+    (define (cancel! reason)
+      (finish! reason #t))
+    (define handle
+      (request-handle id ready result
+        (lambda () (cancel! (exn:fail:request-cancelled "Scenario request cancelled" (current-continuation-marks) id)))
+        notices))
+    (define worker
+      (parameterize ([current-custodian owner])
+        (thread
+          (lambda ()
+            (parameterize ([current-output-port (current-error-port)]
+                           [current-cancellation-event (semaphore-peek-evt cancelled)]
+                           [current-cancelled? (lambda () (and (sync/timeout 0 (semaphore-peek-evt cancelled)) #t))])
+              (with-handlers ([(lambda (_) #t)
+                              (lambda (failure)
+                                (finish! (if (exn? failure) failure
+                                  (exn:fail (format "Scenario worker raised: ~e" failure) (current-continuation-marks)))))])
+                (finish!
+                  (dispatch-message rt message #:principal principal
+                    #:notify (lambda (notice)
+                               (unless (sync/timeout 0 (async-channel-put-evt notices notice))
+                                 (cancel! (exn:fail:notification-overflow
+                                           "Scenario notification queue overflow" (current-continuation-marks) id))))))))))))
+    ;; The supervisor belongs to the session, outside the request's custodian.
+    (thread
       (lambda ()
-        (set! worker
-          (parameterize ([current-custodian owner])
-            (thread
-              (lambda ()
-                (parameterize ([current-output-port (current-error-port)]
-                               [current-cancellation-event (semaphore-peek-evt cancelled)]
-                               [current-cancelled? (lambda () (and (sync/timeout 0 (semaphore-peek-evt cancelled)) #t))])
-                  (async-channel-put result
-                    (with-handlers ([(lambda (_) #t) (lambda (failure) (cons #f failure))])
-                      (cons #t (dispatch-message rt message #:principal principal)))))))))
-        (define outcome
-          (sync/timeout timeout result
-            (wrap-evt worker
-              (lambda (_) (or (sync/timeout 0 result)
-                              (cons #f (exn:fail "Scenario request worker terminated" (current-continuation-marks))))))))
-        (unless outcome
-          (semaphore-post cancelled)
-          (sync/timeout 0.2 worker)
-          (raise (exn:fail:request-timeout "Scenario request timed out" (current-continuation-marks) id timeout)))
-        (if (car outcome) (cdr outcome) (raise (cdr outcome))))
-      (lambda () (custodian-shutdown-all owner)))))
+        (define done (sync/timeout timeout handle worker))
+        (cond [(not done)
+               (cancel! (exn:fail:request-timeout "Scenario request timed out" (current-continuation-marks) id timeout))]
+              [(eq? done worker)
+               (finish! (exn:fail "Scenario request worker terminated" (current-continuation-marks)))])
+        (when (sync/timeout 0 (semaphore-peek-evt cancelled)) (sync/timeout 0.2 worker))
+        (custodian-shutdown-all owner)))
+    handle))
 
 (define (call-with-scenario-session interface proc
           #:transport [transport 'local] #:clock [clock (make-manual-clock)]
@@ -83,7 +118,7 @@
         (set! rt (make-runtime interface #:store store #:clock clock #:authorize authorize #:adapters adapters))
         (define call
           (case transport
-            [(local) (make-local-call rt principal timeout)]
+            [(local) (make-local-request rt principal timeout)]
             [(stdio)
              (define-values (server-in client-out) (make-pipe 1048576))
              (define-values (client-in server-out) (make-pipe 1048576))
@@ -92,7 +127,7 @@
              (define client (make-stdio-client client-in client-out #:timeout timeout))
              (set! stop (lambda () (client-close! client) (sync/timeout 1 server)
                                     (close-input-port server-in) (close-output-port server-out)))
-             (lambda (method params caps) (client-call client method params #:capabilities caps #:timeout timeout))]
+             (lambda (method params caps) (client-request client method params #:capabilities caps #:timeout timeout))]
             [(http)
              (define confirmation (make-async-channel))
              (set! stop (serve-http rt #:port 0 #:confirmation confirmation #:sse? sse? #:keepalive-seconds (min 1 (/ timeout 2)) #:authenticate (lambda (_) principal)))
@@ -100,11 +135,17 @@
              (when (exn? port) (raise port))
              (unless (exact-positive-integer? port) (error 'scenario "HTTP server did not start"))
              (define client (make-http-client (format "http://127.0.0.1:~a/mcp" port) #:timeout timeout #:header-timeout timeout))
-             (lambda (method params caps) (http-client-call client method params #:capabilities caps #:timeout timeout))]))
-        (set! session (scenario-session rt store clock transport principal caps call #t))
+             (lambda (method params caps) (http-client-request client method params #:capabilities caps #:timeout timeout))]))
+        (set! session (scenario-session rt store clock transport principal caps call owner (make-hasheq) (make-semaphore 1) #t))
         (proc session)))
     (lambda ()
-      (when session (set-scenario-session-active?! session #f))
+      (when session
+        (define pending
+          (call-with-semaphore (scenario-session-lock session)
+            (lambda ()
+              (set-scenario-session-active?! session #f)
+              (hash-keys (scenario-session-pending session)))))
+        (for ([handle (in-list pending)]) (request-cancel! handle)))
       (dynamic-wind void stop
         (lambda ()
           (when rt (custodian-shutdown-all (runtime-custodian rt)))
