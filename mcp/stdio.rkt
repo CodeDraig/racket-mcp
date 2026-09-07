@@ -12,7 +12,20 @@
   (define running (make-hash))
   (define guard (make-semaphore 1))
   (define owner (make-custodian))
-  (define (send message) (when message (call-with-semaphore lock (lambda () (write-json message out) (newline out) (flush-output out)))))
+  (define serving-thread (current-thread))
+  (define accepting? #t)
+  (define output-failure (box #f))
+  (define (send message)
+    (when message
+      (call-with-semaphore lock
+        (lambda ()
+          (unless (unbox output-failure)
+            (with-handlers ([(lambda (_) #t)
+                            (lambda (failure)
+                              (set-box! output-failure (cons #t failure))
+                              (cond [(eq? (current-thread) serving-thread) (raise failure)]
+                                    [accepting? (break-thread serving-thread)]))])
+              (write-json message out) (newline out) (flush-output out)))))))
   (define (reject id code message)
     (send (hash-set (hasheq 'jsonrpc "2.0" 'error (hasheq 'code code 'message message)) 'id id)))
   (define (cancel! id)
@@ -21,6 +34,8 @@
       (semaphore-post (vector-ref entry 1))
       (parameterize ([current-custodian owner])
         (thread (lambda () (sync (alarm-evt (+ (current-inexact-milliseconds) 200))) (custodian-shutdown-all (vector-ref entry 0)))))))
+  (with-handlers ([exn:break? (lambda (failure)
+                              (raise (if (unbox output-failure) (cdr (unbox output-failure)) failure)))])
   (dynamic-wind void
     (lambda ()
       (let loop ()
@@ -72,6 +87,8 @@
           (loop)))
       (void))
     (lambda ()
+      (parameterize-break #f
+      (set! accepting? #f)
       (close-subscriptions! (runtime-subscriptions rt))
       (define active (call-with-semaphore guard (lambda () (hash-values running))))
       (for ([entry (in-list active)]) (semaphore-post (vector-ref entry 1)))
@@ -81,6 +98,7 @@
       (for ([entry (in-list active)] #:when (thread? (vector-ref entry 2)))
         (sync deadline (thread-dead-evt (vector-ref entry 2))))
       (custodian-shutdown-all owner))))
+    (when (unbox output-failure) (raise (cdr (unbox output-failure))))))
 (struct exn:fail:request-timeout exn:fail (request-id seconds) #:transparent)
 (struct exn:fail:request-cancelled exn:fail (request-id) #:transparent)
 (struct exn:fail:notification-overflow exn:fail (request-id) #:transparent)

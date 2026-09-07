@@ -3,8 +3,28 @@
          "stdio.rkt" "http.rkt" "json.rkt" "interaction.rkt" "subscription.rkt")
 (provide call-with-scenario-session scenario-session? scenario-session-runtime
          scenario-session-store scenario-session-clock scenario-session-transport
-         scenario-session-principal scenario-request scenario-call scenario-interact)
-(struct scenario-session (runtime store clock transport principal capabilities timeout request owner pending lock [active? #:mutable]))
+         scenario-session-principal scenario-session-connected? scenario-disconnect! scenario-reconnect! scenario-request scenario-call scenario-interact)
+(struct scenario-session (runtime store clock transport principal capabilities timeout [request #:mutable] owner pending lock [active? #:mutable] [connected? #:mutable] connect disconnect))
+
+(define (scenario-disconnect! session)
+  (call-with-semaphore (scenario-session-lock session)
+    (lambda ()
+      (unless (scenario-session-active? session) (error 'scenario-disconnect! "scenario session has closed"))
+      (when (eq? (scenario-session-transport session) 'local)
+        (error 'scenario-disconnect! "local scenarios have no transport connection"))
+      (when (scenario-session-connected? session)
+        (set-scenario-session-connected?! session #f)
+        ((scenario-session-disconnect session))))))
+(define (scenario-reconnect! session)
+  (call-with-semaphore (scenario-session-lock session)
+    (lambda ()
+      (unless (scenario-session-active? session) (error 'scenario-reconnect! "scenario session has closed"))
+      (unless (scenario-session-connected? session)
+        (parameterize ([current-custodian (scenario-session-owner session)]
+                       [current-mcp-clock (scenario-session-clock session)])
+          (define request ((scenario-session-connect session)))
+          (set-scenario-session-request! session request)
+          (set-scenario-session-connected?! session #t))))))
 
 (define (scenario-request session method [params (hasheq)]
                           #:capabilities [capabilities (scenario-session-capabilities session)]
@@ -15,6 +35,7 @@
   (call-with-semaphore (scenario-session-lock session)
     (lambda ()
       (unless (scenario-session-active? session) (error 'scenario-request "scenario session has closed"))
+      (unless (scenario-session-connected? session) (error 'scenario-request "scenario transport is disconnected"))
       (parameterize ([current-custodian (scenario-session-owner session)])
         (define handle ((scenario-session-request session) method params capabilities timeout))
         (hash-set! (scenario-session-pending session) handle #t)
@@ -116,23 +137,39 @@
   (define store #f)
   (define rt #f)
   (define stop void)
+  (define drop void)
   (define session #f)
   (dynamic-wind void
     (lambda ()
       (parameterize ([current-custodian owner] [current-mcp-clock clock])
         (set! store (if state (open-sqlite-store state) (open-memory-store)))
         (set! rt (make-runtime interface #:store store #:clock clock #:authorize authorize #:adapters adapters))
-        (define call
+        (define (connect)
+          (stop)
           (case transport
             [(local) (make-local-request rt principal)]
             [(stdio)
              (define-values (server-in client-out) (make-pipe 1048576))
              (define-values (client-in server-out) (make-pipe 1048576))
+             (define injected-loss? #f)
+             (define server-owner (make-custodian))
              (define server
-               (thread (lambda () (serve-stdio rt #:input server-in #:output server-out #:principal principal))))
+               (parameterize ([current-custodian server-owner])
+                 (thread (lambda ()
+                           (with-handlers ([exn:fail? (lambda (failure) (unless injected-loss? (raise failure)))])
+                             (serve-stdio rt #:input server-in #:output server-out #:principal principal))))))
              (define client (make-stdio-client client-in client-out #:timeout timeout))
-             (set! stop (lambda () (client-close! client) (sync/timeout 1 server)
-                                    (close-input-port server-in) (close-output-port server-out)))
+             (set! drop
+               (lambda ()
+                 ;; Actual EOF in both directions; the client observes transport
+                 ;; failure rather than a locally synthesized cancellation.
+                 (set! injected-loss? #t)
+                 (close-output-port server-out)
+                 (close-output-port client-out)
+                 (sync/timeout 0.2 server)
+                 (custodian-shutdown-all server-owner)))
+             (set! stop (lambda () (client-close! client) (drop)
+                                    (close-input-port server-in)))
              (lambda (method params caps timeout) (client-request client method params #:capabilities caps #:timeout timeout))]
             [(http)
              (define confirmation (make-async-channel))
@@ -140,9 +177,11 @@
              (define port (sync/timeout timeout confirmation))
              (when (exn? port) (raise port))
              (unless (exact-positive-integer? port) (error 'scenario "HTTP server did not start"))
+             (set! drop stop)
              (define client (make-http-client (format "http://127.0.0.1:~a/mcp" port) #:timeout timeout #:header-timeout timeout))
              (lambda (method params caps timeout) (http-client-request client method params #:capabilities caps #:timeout timeout))]))
-        (set! session (scenario-session rt store clock transport principal caps timeout call owner (make-hasheq) (make-semaphore 1) #t))
+        (set! session (scenario-session rt store clock transport principal caps timeout #f owner (make-hasheq) (make-semaphore 1) #t #f connect (lambda () (drop))))
+        (scenario-reconnect! session)
         (proc session)))
     (lambda ()
       (when session
@@ -150,6 +189,7 @@
           (call-with-semaphore (scenario-session-lock session)
             (lambda ()
               (set-scenario-session-active?! session #f)
+              (set-scenario-session-connected?! session #f)
               (hash-keys (scenario-session-pending session)))))
         (for ([handle (in-list pending)]) (request-cancel! handle)))
       (dynamic-wind void stop

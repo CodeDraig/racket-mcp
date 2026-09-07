@@ -1686,8 +1686,8 @@ Longer HTTP requests now switch from the JSON preference to SSE, allowing stream
 closure to cancel work before session teardown. The regression probe at
 @tt{dev/check-http-json-disconnect.rkt} passes for this adaptive behavior.
 Asynchronous requests, notification assertions and explicit cancellation are
-available through the session API. Injected network loss, process restarts and
-the complete fault grammar remain unfinished.
+available through the session API. Explicit transport loss is available through the controls below; actual process
+restarts and the complete fault grammar remain unfinished.
 
 
 @section[#:tag "http-adaptive"]{Adaptive HTTP responses and worker lifetime}
@@ -1973,3 +1973,34 @@ protected-resource metadata URL, without a subscription acknowledgement. Local
 and stdio dispatch use the same scope calculation. Authorization callbacks and
 task ownership are still checked separately; knowing the required scopes does not
 grant access to another principal's task.
+
+
+@section[#:tag "scenario-disconnect"]{Transport loss in scenarios}
+
+@tt{scenario-disconnect!} closes the current session's stdio pipes or HTTP
+listener and active connections. Outstanding requests and subscriptions observe
+the SDK client's transport-failure outcome, distinct from a locally requested
+cancellation. Calls issued while disconnected fail immediately.
+@tt{scenario-session-connected?} reports whether the session can issue requests.
+
+@tt{scenario-reconnect!} starts a fresh transport against the same runtime, store,
+clock, principal and adapters. It does not replay requests, reopen subscriptions,
+or change an already completed handle. Request IDs may restart on the fresh
+connection. Applications explicitly re-listen and refresh as needed. Repeated
+disconnect/reconnect calls in the corresponding state are harmless; either control
+rejects a session that has exited. Local sessions reject disconnect because they
+have no wire connection.
+
+Runtime-owned task workers survive this fault and can be polled after reconnect.
+This control stops the session's server transport, not the application runtime or
+process; it does not simulate SQLite reopen, process termination, packet loss or
+loss of one selected HTTP request while keeping others connected. Session exit
+still shuts down the runtime and its owned store normally. The executable
+@tt{examples/disconnect-scenario.rkt} runs with
+@tt{raco mcp scenario examples/disconnect-scenario.rkt}.
+
+A stdio output failure is now reported once by the serving call. It interrupts a
+reader blocked on input, gives request workers bounded cleanup, and preserves the
+original raised value. Background workers do not retry writes to the failed
+output or emit uncaught secondary diagnostics. Scenario-injected pipe loss captures
+that expected serving failure; clients still observe actual EOF.

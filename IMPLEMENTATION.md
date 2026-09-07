@@ -3580,3 +3580,40 @@ rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
 passed without warning or undefined-tag matches. git diff --check passed. This
 evidence paragraph postdates packaging and changes no executable/manual content.
 These changes are verified on Linux/Racket 9.2; full SDK release gates remain open.
+
+## Scenario transport loss and reconnection (2026-09-07)
+
+Added scenario-disconnect!, scenario-reconnect! and scenario-session-connected?.
+The controls close actual stdio pipes or the HTTP listener/connections and create
+fresh transports against the retained runtime/store. Registration and lifecycle
+changes share the session lock. Disconnected calls fail immediately; no invocation
+or subscription is replayed, and old terminal handles remain unchanged. Local
+sessions explicitly reject this wire fault. Runtime-owned task workers survive.
+The control stops a server transport, not an application process or selected packet.
+
+The expanded fault fixture exposed uncaught secondary stdio writes after output
+closure. serve-stdio now records the first output failure, interrupts its reader,
+performs bounded worker cleanup and raises the original value on the serving
+thread. Later writes do not retry a failed output. Cleanup defers breaks so a
+failure arriving during shutdown cannot skip resource release. The scenario
+captures expected serving failure during its explicitly injected pipe loss.
+
+Focused output-failure, disconnect, existing scenario, stdio lifecycle and
+cancellation suites passed 286 checks. New disconnect cases cover stdio/HTTP JSON
+preference/HTTP SSE, ordinary request loss, active subscription loss, explicit
+re-listening, no replay, unchanged old handles, repeated controls, closed sessions,
+retained runtime/store identity and a task completing after reconnect. Direct
+stdio probes keep input open and prove output failure stops the reader, reaps an
+uncooperative worker, preserves exception/symbol/false raised values, attempts one
+write and produces no uncaught worker diagnostics. The new #lang example provides
+an authored cancellation-distinct transport-loss scenario. Full verification follows;
+actual process-restart controls and the complete fault grammar remain open.
+
+Final sh scripts/check.sh passed compilation, 4,471 native checks, all 1,301
+pinned core schema cases and Scribble. The executable disconnect scenario passed
+through the CLI, and all nine official Go probes passed. The rebuilt distribution
+and isolated raco setup --check-pkg-deps --pkgs racket-mcp passed without warning
+or undefined-tag matches. git diff --check passed. This final evidence paragraph
+postdates packaging and changes no executable/manual content. These changes were
+verified on Linux/Racket 9.2; process-restart scenario controls and the remaining
+SDK release gates are still open.

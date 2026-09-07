@@ -1,0 +1,46 @@
+#lang racket/base
+(require rackunit racket/async-channel racket/port mcp mcp/stdio)
+(for ([failure (in-list (list (exn:fail "broken output" (current-continuation-marks)) 'broken-output #f))])
+  (define entered (make-async-channel))
+  (define results (make-async-channel))
+  (define diagnostic (open-output-string))
+  (define writes 0)
+  (define out
+    (make-output-port 'broken always-evt
+      (lambda (_bytes _start _end _non-block? _breakable?)
+        (set! writes (add1 writes))
+        (raise failure)) void))
+  (define-values (in peer) (make-pipe))
+  (define rt (make-runtime (make-interface #:tools
+    (list (make-tool "blocked" '() (lambda (_) (async-channel-put entered (current-thread)) (sync never-evt)))
+          (make-tool "echo" '() (lambda (_) (text-result "trigger write")))))))
+  (define server
+    (parameterize ([current-error-port diagnostic])
+      (thread (lambda ()
+        (with-handlers ([(lambda (_) #t) (lambda (raised) (async-channel-put results (cons 'failed raised)))])
+          (serve-stdio rt #:input in #:output out)
+          (async-channel-put results 'returned))))))
+  (dynamic-wind void
+    (lambda ()
+      (define (send id name)
+        (write-json (hasheq 'jsonrpc "2.0" 'id id 'method "tools/call"
+                           'params (hasheq 'name name '_meta (request-meta))) peer)
+        (newline peer) (flush-output peer))
+      (send 1 "blocked")
+      (define worker (sync/timeout 2 entered))
+      (check-true (thread? worker))
+      (send 2 "echo")
+      (define outcome (sync/timeout 2 results))
+      (check-true (pair? outcome))
+      (check-eq? (car outcome) 'failed)
+      (check-eq? (cdr outcome) failure)
+      (check-not-false (sync/timeout 2 server))
+      (check-not-false (sync/timeout 2 worker))
+      ;; Reader termination must not depend on receiving EOF from its caller.
+      (check-false (port-closed? peer))
+      (check-equal? writes 1)
+      (check-equal? (get-output-string diagnostic) ""))
+    (lambda ()
+      (kill-thread server)
+      (custodian-shutdown-all (runtime-custodian rt))
+      (close-output-port peer) (close-input-port in) (close-output-port out))))
