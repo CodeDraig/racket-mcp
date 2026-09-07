@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
-                     (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request! recover-upstream-task!)))
+                     (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request! recover-upstream-task! retry-upstream-task!)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
 
@@ -923,9 +923,9 @@ is lost or its worker is terminated, the next local operation records a failed
 task with an explicit recovery-required diagnostic. It never automatically sends
 the mutation again. An acknowledged cancellation is followed by polling the
 peer's actual status, preserving a completion/cancellation race. The local @racket[recover-upstream-task!] API records an independently observed
-upstream task outcome and creates a replacement handle. Explicit authorization
-to repeat an uncertain upstream mutation remains unfinished; native-workflow
-recovery APIs do not revive an upstream task.
+upstream task outcome and creates a replacement handle. The separate
+@racket[retry-upstream-task!] API explicitly authorizes a resend of an uncertain
+mutation. Native-workflow recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
 translated completed results. This currently reports changes observed through
@@ -934,7 +934,7 @@ subscription. Full upstream notification forwarding, broader fault-injection
 coverage and independent task-bridge interoperability remain release gates.
 
 
-@declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task)]
+@declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task mcp/upstream)]
 @defproc[(recover-upstream-task! [bridge upstream-bridge?] [store any/c]
                                 [snapshot hash?] [task-id string?]
                                 [#:principal principal string?] [#:credential-id credential string?]
@@ -961,6 +961,44 @@ interface to apply normal authorization, presentation and output contracts.
 This call performs no upstream requests and never retries a mutation. The supplied
 observation is the operator's responsibility; it is not an exactly-once guarantee.
 A normal upstream failure without an uncertain local mutation is not eligible.
+}
+
+
+@defproc[(retry-upstream-task! [bridge upstream-bridge?] [store any/c]
+                              [snapshot hash?] [request procedure?] [task-id string?]
+                              [#:principal principal string?] [#:credential-id credential string?]
+                              [#:authorize authorize procedure? void]) hash?]{
+Local operator action authorizing one retry of an uncertain task update or
+cancellation. The application must authorize this action; the zero-argument
+callback runs outside storage transactions on every call. The original failed
+task is never revived. Ownership, credential, pinned snapshot/version, expiry,
+and active-worker checks use the same path as observed-outcome repair.
+
+A replacement handle and retry authorization commit before dispatch. The supplied
+request procedure accepts method and parameter objects and owns the separately
+configured upstream connection, credentials, and request metadata. Before an
+actual resend, the SDK verifies the peer against the pinned snapshot. It then
+records an outbound intent and resends the exact stored mutation parameters.
+There is no inference that an earlier lost response meant the mutation failed.
+
+Repeated and concurrent calls for the same original task reuse one replacement
+receipt and do not authorize another resend. If verification fails or execution
+stops before dispatch, the recorded authorization remains pending; another
+operator call can finish it. Ordinary task polling only reports that pending
+state and does not dispatch the mutation. Ordinary update/cancel calls cannot
+bypass pending operator dispatch.
+
+Once an outbound intent exists, another interrupted/lost outcome fails the new
+task rather than replaying it. The retry call may raise; repeating it with the
+same original task ID retrieves the recorded replacement receipt without sending
+again. Journal links on the original task also expose its replacement for local
+inspection. A further retry requires a fresh explicit repair of that new failed
+handle. Successful dispatch returns the immutable creation receipt; poll that
+handle normally for the peer's eventual result.
+
+Observed-outcome repair and retry authorization are mutually exclusive decisions
+for one failed handle. A conflicting decision is rejected. Neither API provides
+an exactly-once guarantee or a wire recovery method.
 }
 
 @racket[define-mcp-extension] accepts @racket[#:declaration] or @racket[#:workflow]

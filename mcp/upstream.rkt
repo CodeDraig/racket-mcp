@@ -2,7 +2,7 @@
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
          "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
          "workflow.rkt" (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
-(provide capture-snapshot make-upstream-interface check-upstream-compatibility! recover-upstream-task! (struct-out upstream-template-adapter))
+(provide capture-snapshot make-upstream-interface check-upstream-compatibility! recover-upstream-task! retry-upstream-task! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)
@@ -36,6 +36,12 @@
     (define field (case method [(tools/list) 'tools] [(prompts/list) 'prompts] [(resources/list) 'resources] [else 'resourceTemplates]))
     (unless (equal? (hash-ref (hash-ref snapshot method) field) (hash-ref (hash-ref fresh method) field))
       (error 'upstream "pinned interface changed; refresh and review the snapshot"))) #t)
+(define (retry-upstream-task! bridge store snapshot request id #:principal principal #:credential-id credential
+                              #:authorize [authorize void])
+  (unless (and (procedure? request) (procedure-arity-includes? request 2))
+    (raise-argument-error 'retry-upstream-task! "request procedure accepting method and parameters" request))
+  (retry-upstream-task/core! bridge store snapshot request id principal credential authorize
+    (lambda () (check-upstream-compatibility! snapshot request))))
 (struct upstream-template-adapter (arguments matcher) #:transparent)
 (define (make-upstream-interface supplied-snapshot request #:templates [templates (hash)] #:bridge [bridge #f])
   (unless (or (not bridge) (upstream-bridge? bridge)) (raise-argument-error 'make-upstream-interface "upstream-bridge? or #f" bridge))
