@@ -3025,3 +3025,35 @@ as did isolated raco setup --check-pkg-deps --pkgs racket-mcp. Native/package lo
 contained no warning or undefined-tag matches. git diff --check passed. This final
 ledger paragraph postdates the package build and changes no executable content.
 Evidence remains Linux/Racket 9.2; the complete SDK release is still unfinished.
+
+## Serving startup resource ownership (2026-09-07)
+
+A bounded probe passed a raw interface with duplicate tool identities to
+serve-interface with an explicit SQLite path. Runtime construction rejected the
+interface, but two resources remained registered under the caller's custodian.
+The old cleanup scope began after storage and runtime construction.
+
+Serving now acquires storage inside its cleanup scope under a serving-owned
+custodian. Runtime and transport workers use a separate child custodian so they
+stop before storage transaction supervision and the database are closed. A final
+owner shutdown covers partially acquired resources. Breaks are disabled while
+installing the cleanup scope and the caller's break setting is restored during
+serving. Every cleanup step is attempted; an existing raised value or escape is
+preserved, while a cleanup failure after ordinary return is propagated.
+
+The new serve-lifetime suite passed 19 checks: failed runtime construction,
+invalid transport, stdio EOF with and without SQLite, arbitrary raised-value
+identity, startup interruption, and continuation escape. Each case checks resource
+registrations without GC and verifies that an existing caller-owned worker stays
+alive. The earlier focused storage/direct-entry/captured-restart run passed 53
+checks before the last six interruption/escape checks were added. Full validation
+results follow below. This closes the reproduced serving startup leak, not the
+remaining complete transport/durability/release matrix.
+
+Final verification passed sh scripts/check.sh: compilation, 3,413 native checks,
+all 1,301 pinned schema cases and Scribble. All seven official Go probes passed.
+The distribution rebuild and isolated raco setup --check-pkg-deps --pkgs
+racket-mcp passed, with no warning or undefined-tag matches in the native/package
+logs. git diff --check passed. This final evidence paragraph postdates the package
+build and changes no executable content. Verification remains Linux/Racket 9.2;
+the full SDK implementation goal remains incomplete.

@@ -1618,6 +1618,13 @@ durable example over stdio. The state path remains mandatory for durable
 workflows. Application definitions and imports are not instantiated a second
 time by the command handler.
 
+Serving owns its SQLite connection and runtime/transport workers from startup
+through shutdown. If runtime construction fails, startup is interrupted, or
+stdio reaches EOF, those resources are released without shutting down the
+caller's custodian. Runtime workers stop before the state store closes. Cleanup
+attempts each owned resource and preserves an existing failure or escape; a
+cleanup failure on ordinary return is raised to the caller.
+
 Captured loading cannot be retroactively applied to an already-instantiated
 module. Supplying @tt{--runtime-build-id} here produces a diagnostic directing the
 caller to @tt{raco mcp --runtime-build-id ID [options] serve MODULE}; it does not

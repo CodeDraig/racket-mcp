@@ -10,16 +10,40 @@
                  (ormap prompt-descriptor-workflow (interface-descriptor-prompts interface))
                  (ormap resource-descriptor-workflow (interface-descriptor-resources interface))) (not state))
     (error 'serve "durable workflows require an explicit --state file"))
-  (define store (and state (open-sqlite-store state)))
-  (define runtime (make-runtime interface #:store store))
-  (dynamic-wind void
-    (lambda ()
-      (case (string->symbol transport)
-        [(stdio) (serve-stdio runtime)]
-        [(http) (define stop (serve-http runtime #:port port))
-                (dynamic-wind void (lambda () (sync never-evt)) stop)]
-        [else (error 'serve "unknown transport ~a" transport)]))
-    (lambda () (custodian-shutdown-all (runtime-custodian runtime)) (when store (close-store! store)))))
+  (define serving-breaks? (break-enabled))
+  (parameterize-break #f
+    ;; Acquisition is part of the serving lifetime too. Keep store transaction
+    ;; supervision alive until runtime and transport workers have stopped.
+    (define owner (make-custodian))
+    (define workers #f)
+    (define store #f)
+    (define completed? #f)
+    (dynamic-wind void
+      (lambda ()
+        (parameterize-break serving-breaks?
+          (parameterize ([current-custodian owner])
+            (set! store (and state (open-sqlite-store state)))
+            (set! workers (make-custodian))
+            (parameterize ([current-custodian workers])
+              (define runtime (make-runtime interface #:store store))
+              (begin0
+                (case (string->symbol transport)
+                  [(stdio) (serve-stdio runtime)]
+                  [(http) (define stop (serve-http runtime #:port port))
+                          (dynamic-wind void (lambda () (sync never-evt)) stop)]
+                  [else (error 'serve "unknown transport ~a" transport)])
+                (set! completed? #t))))))
+      (lambda ()
+        (define failures '())
+        (define (attempt thunk)
+          (with-handlers ([(lambda (_) #t) (lambda (failure) (set! failures (cons failure failures)))])
+            (thunk)))
+        (when workers (attempt (lambda () (custodian-shutdown-all workers))))
+        (when store (attempt (lambda () (close-store! store))))
+        (attempt (lambda () (custodian-shutdown-all owner)))
+        ;; On unwinding, preserve the original raised value or control transfer.
+        ;; On ordinary return, expose a cleanup failure after attempting every step.
+        (when (and completed? (pair? failures)) (raise (last failures)))))))
 (define (read-serving-options program)
   (define transport "stdio") (define state #f) (define port 8000) (define runtime-build-id #f)
   (define args
