@@ -2763,3 +2763,44 @@ bridge, full failure matrices and other release gates remain open.
 Final documentation clarification passed a fresh Scribble render and a rebuilt
 isolated source distribution's dependency/documentation setup. git diff --check
 passed. This last evidence paragraph does not change executable package content.
+
+## Loaded executable capture foundation (2026-09-07)
+
+A private executable-capture module now records SHA-256 identities of compiled
+module objects actually passed to Racket evaluation. Source modules are compiled
+once and that same object is evaluated; compiled-file input is recorded directly.
+The returned report contains an exported value, an immutable observed identity
+map, and explicitly unobserved dependencies found through module->imports. It does
+not read source files during workflow resume and does not treat an already loaded
+module as if its current file represented the loaded executable. This primitive
+is not yet connected to workflow fingerprints or exposed as a public build API.
+The existing imported-helper restart compatibility defect remains open.
+
+The focused probe established equal identities for unchanged source in fresh
+namespaces and different helper identities after a helper-only edit. An existing
+namespace retains the old behavior and reports the helper/root as unobserved.
+Preloading only the helper also leaves that dependency explicitly unobserved.
+Compiled-file tests exposed Racket's place-local module cache: declarations can
+bypass the evaluation hook across fresh namespaces. The compiler can also inline
+a helper and remove its runtime import. Tests therefore inspect compiled helpers
+separately, clear the cache only in test setup where direct loader observation is
+required, and require cached roots to be either captured or reported unobserved.
+The implementation never clears the application module cache.
+
+An initial compiled-helper assertion failed because it assumed the runtime graph
+would retain an inlined helper. The corrected regression tests both source and
+compiled paths, deterministic repeated capture, existing namespace behavior and
+cache reporting. A duplicate equality assertion was removed before the final
+suite. A complete build loader must account for unobserved SDK/library modules,
+submodules, phases, later dynamic imports and captured namespace ownership before
+this report can establish a full executable fingerprint. Verification follows.
+
+Final validation: sh scripts/check.sh passed compilation, 3,269 native checks
+(including 22 new capture checks), all 1,301 pinned schema cases and Scribble.
+The rebuilt isolated distribution passed raco setup --check-pkg-deps --pkgs
+racket-mcp. git diff --check passed. The original separate-process SQLite helper
+probe was rerun and still exits 1 with the changed helper result, confirming that
+resume compatibility is not fixed by this private foundation alone. No protocol
+runtime changed, so the six prior Go probes were not repeated for this batch.
+Evidence remains Linux/Racket 9.2. The final ledger-only paragraph postdates the
+package build; executable content is unchanged by that paragraph.

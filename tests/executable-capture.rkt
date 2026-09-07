@@ -1,0 +1,66 @@
+#lang racket/base
+(require rackunit racket/file racket/path compiler/cm
+         mcp/private/executable-capture)
+(define directory (make-temporary-file "mcp-executable-capture-~a" 'directory))
+(define helper (build-path directory "helper.rkt"))
+(define root (build-path directory "root.rkt"))
+(define (write-module path text)
+  (call-with-output-file path #:exists 'truncate (lambda (out) (display text out))))
+(define (write-helper value)
+  (write-module helper (format "#lang racket/base\n(provide helper)\n(define (helper) ~s)\n" value)))
+(define (digest capture path)
+  (hash-ref (module-code-capture-observed capture) (format "~s" path) #f))
+(dynamic-wind void
+  (lambda ()
+    (write-helper "before")
+    (write-module root "#lang racket/base\n(require \"helper.rkt\")\n(provide read-value)\n(define (read-value) (helper))\n")
+    (define namespace (make-base-namespace))
+    (define first (capture-module-export root 'read-value #:namespace namespace))
+    (check-equal? ((module-code-capture-value first)) "before")
+    (check-true (string? (digest first root)))
+    (check-true (string? (digest first helper)))
+    (check-false (member (format "~s" helper) (module-code-capture-unobserved first)))
+    ;; Pre-attached standard-library modules are reported, not silently trusted.
+    (check-not-equal? (module-code-capture-unobserved first) '())
+    (define second (capture-module-export root 'read-value))
+    (check-equal? (digest first helper) (digest second helper))
+    (check-equal? (digest first root) (digest second root))
+    (write-helper "after")
+    ;; Existing namespace still runs the old helper despite the changed file.
+    (define existing (capture-module-export root 'read-value #:namespace namespace))
+    (check-equal? ((module-code-capture-value existing)) "before")
+    (check-false (digest existing helper))
+    (check-not-false (member (format "~s" helper) (module-code-capture-unobserved existing)))
+    (check-not-false (member (format "~s" root) (module-code-capture-unobserved existing)))
+    (define changed (capture-module-export root 'read-value))
+    (check-equal? ((module-code-capture-value changed)) "after")
+    (check-not-equal? (digest changed helper) (digest first helper))
+    ;; Preloading just the dependency must also remain visible in the report.
+    (define partial-namespace (make-base-namespace))
+    (parameterize ([current-namespace partial-namespace]) (dynamic-require helper #f))
+    (define partial (capture-module-export root 'read-value #:namespace partial-namespace))
+    (check-true (string? (digest partial root)))
+    (check-false (digest partial helper))
+    (check-not-false (member (format "~s" helper) (module-code-capture-unobserved partial)))
+    ;; Exercise the compiled-file loader as well as the source compiler.
+    (managed-compile-zo root)
+    (module-cache-clear!)
+    (define compiled (capture-module-export root 'read-value))
+    (check-equal? ((module-code-capture-value compiled)) "after")
+    (check-true (string? (digest compiled root)))
+    ;; The compiler may inline helper and remove its runtime import. Capture
+    ;; its compiled declaration separately rather than assuming a dependency.
+    (module-cache-clear!)
+    (define compiled-helper (capture-module-export helper 'helper))
+    (check-true (string? (digest compiled-helper helper)))
+    (check-equal? ((module-code-capture-value compiled-helper)) "after")
+    (module-cache-clear!)
+    (define compiled-again (capture-module-export root 'read-value))
+    (check-equal? (digest compiled root) (digest compiled-again root))
+    ;; A cached declaration can bypass evaluation, even in a fresh namespace.
+    ;; Whichever loader path Racket takes, it must not be silently absent.
+    (define cached (capture-module-export root 'read-value))
+    (check-not-false
+      (or (digest cached root)
+          (member (format "~s" root) (module-code-capture-unobserved cached)))))
+  (lambda () (delete-directory/files directory)))
