@@ -1153,3 +1153,19 @@ All node identifiers are generated. Declaration and stage names are escaped as
 quoted labels using Mermaid decimal entities. The diagram does not execute
 callbacks, render HTML supplied by declarations, or infer additional edges from
 separately defined helpers or dynamic composition expressions.
+
+@section{Generated interface documentation}
+
+@tt{raco mcp docs module.rkt} generates Markdown from the static manifest.
+@tt{manifest->markdown}, exported by @tt{mcp/cli}, accepts an already read manifest
+and an optional @tt{#:title}. The result includes known descriptions and metadata,
+argument requirements/defaults/codecs, input/output and reusable schemas, completion
+targets, resource references, workflow stages, adapter policies, and runtime
+requirements. Schema examples remain present in the emitted schema JSON.
+
+Dynamic descriptions, schemas, and other expressions are identified as dynamic
+and displayed without evaluation. Reading the manifest does not instantiate the
+application. Names and source references use code spans; descriptions are escaped
+as text; schema code fences expand when necessary to preserve literal backticks.
+Generated documentation describes what the static manifest establishes, including
+its documented limits on helper analysis and dynamic composition.

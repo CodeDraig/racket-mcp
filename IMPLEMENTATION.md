@@ -2229,3 +2229,31 @@ Final validation: sh scripts/check.sh passed compilation, 2,735 native checks,
 all 1,301 pinned core schema cases, and Scribble. All five Go SDK probes passed
 with sh scripts/check-interop.sh. git diff --check passed. Native verification
 remains Linux/Racket 9.2; the overall SDK release is incomplete.
+
+## Manifest-driven interface documentation (2026-09-07)
+
+raco mcp docs now renders known manifest data instead of declaring every field
+unavailable until runtime. manifest->markdown, exported by mcp/cli, accepts a
+manifest and optional title. It includes descriptions, sorted metadata, required/
+optional arguments, defaults/codecs, JSON schemas (including their authored
+examples), completion targets, lexical resource references, workflow stages and
+effect policies, and runtime requirements. Dynamic expressions are labelled and
+never evaluated. Generated code spans/fences preserve delimiter-bearing content;
+descriptions are escaped as text.
+
+The 27 focused checks cover throwing-parent inspection, required/optional/false
+values, dynamic expressions, resource references, completion, workflow details,
+stable output, hostile names/descriptions, code fences, and argument validation.
+An expected raw mime-type heading initially omitted Markdown's escaped hyphen;
+correcting that fixture produced the passing focused suite. Using the existing
+ignored parser cache, marked 16.4.2 plus jsdom 30.0.1 independently parsed both
+rich and hostile generated documents; heading counts, literal expressions and
+backticks, escaped metadata labels, and absence of script elements passed. This
+is parsed-document evidence, not browser visual review. No JavaScript dependency
+was added to the native SDK. Full authored scenario documentation and dynamic
+composition/complete API/release gates remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,762 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five Go SDK probes. git diff --check passed. These results cover
+Linux/Racket 9.2; the complete SDK release remains unfinished.

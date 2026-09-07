@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
-         "private/manifest-diagram.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
-(provide main serve-interface read-manifest manifest-diff manifest->mermaid)
+         "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
+(provide main serve-interface read-manifest manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
@@ -46,9 +46,7 @@
     [(serve) (serve-interface (dynamic-require (module-path path) 'mcp-interface) #:transport transport #:state state #:port port)]
     [(inspect) (pretty-write (read-manifest path))]
     [(diagram) (display (manifest->mermaid (read-manifest path)))]
-    [(docs) (printf "# Interface: ~a\n\n" (file-name-from-path path))
-            (for ([d (in-list (read-manifest path))])
-              (printf "## ~a `~a`\n\nSource: ~a:~a. Metadata requires runtime inspection.\n\n" (hash-ref d 'kind) (hash-ref d 'name) (hash-ref d 'source) (hash-ref d 'line)))]
+    [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)))]
     [(check) (parameterize ([current-namespace (make-base-namespace)])
                (expand (call-with-input-file path (lambda (in) (parameterize ([read-accept-reader #t]) (read-syntax path in))))))
              (displayln "Expansion checks passed.")]
