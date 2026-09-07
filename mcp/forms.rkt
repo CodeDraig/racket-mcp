@@ -3,6 +3,19 @@
          (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform completion scenario define-mcp-extension)
 (begin-for-syntax
+  ;; Inspect only reader literals and the lexically bound Racket quote form.
+  ;; Computed schemas retain ordinary expression evaluation at instantiation.
+  (define (check-literal-schema! value)
+    (define datum (syntax-e value))
+    (define literal
+      (syntax-parse value #:literals (quote)
+        [(quote datum) (cons #t (syntax->datum #'datum))]
+        [_ (and (or (boolean? datum) (hash? datum) (string? datum) (number? datum)
+                    (bytes? datum) (char? datum) (vector? datum))
+                (cons #t (syntax->datum value)))]))
+    (when literal
+      (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error 'schema (exn-message e) value))])
+        (check-schema! (cdr literal)))))
   (define-syntax-class arg
     #:attributes (id spec optional default)
     (pattern [id:id spec:expr] #:attr optional #'#f #:attr default #f)
@@ -16,6 +29,7 @@
     (pattern [id:id spec:expr #:codec codec:expr #:default default:expr] #:attr optional #'#t))
   (define (argument-code ids specs opts defaults [codecs (make-list (length ids) #f)])
     (for/list ([id ids] [spec specs] [opt opts] [default defaults] [codec codecs] [i (in-naturals)])
+      (check-literal-schema! spec)
       #`(#,(if codec #'prompt-argument #'argument) '#,id (checked-schema-expression #,spec) #,opt
                   #,(if default
                         #`(lambda (previous)
@@ -34,10 +48,7 @@
 (define-syntax (schema stx)
   (syntax-parse stx
     [(_ name:id value:expr)
-     (define datum (syntax->datum #'value))
-     (define literal (if (and (pair? datum) (eq? (car datum) 'quote) (= (length datum) 2)) (cadr datum) datum))
-     (when (or (boolean? literal) (hash? literal))
-       (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error #f (exn-message e) stx #'value))]) (check-schema! literal)))
+     (check-literal-schema! #'value)
      #`(begin (define-schema-value name (check-schema! (checked-schema-expression value)))
               (register-declaration #f #:declaration schema name #,stx))]))
 (define-syntax (tool stx)
@@ -49,6 +60,7 @@
         body:expr ...+)
      (define ids (syntax->list #'(a.id ...)))
      (check-binders (append ids (list #'outcome)) stx)
+     (check-literal-schema! #'output)
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      #`(begin (define-operation-value name
          (make-tool (symbol->string 'name) (list #,@args)
@@ -98,6 +110,7 @@
   (syntax-parse stx
     [(_ name:id [field:id spec:expr] ...)
      (check-binders (syntax->list #'(field ...)) stx)
+     (for-each check-literal-schema! (syntax->list #'(spec ...)))
      (define internal (car (generate-temporaries #'(name))))
      (with-syntax ([record internal] [constructor (format-id #'name "make-~a" #'name)]
                    [encoder (format-id #'name "~a->json" #'name)] [decoder (format-id #'name "json->~a" #'name)] [codec (format-id #'name "~a-codec" #'name)]
@@ -184,6 +197,7 @@
          #`(lambda (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
        (define first (expand-workflow-extension (car forms))) (define tail (cdr forms))
        (define (node id kind schema procedure [adapter #f] [policy #f])
+         (check-literal-schema! schema)
          (workflow-node id kind schema procedure adapter policy first))
        (define (continuation)
          (if (null? tail) '() (compile-sequence tail bound (string-append prefix "after/") wrap join)))
@@ -195,6 +209,7 @@
           (define keys (map (lambda (id) (stage-key prefix id)) names))
           (define group-id (string->symbol (string-append prefix "$inputs/" (symbol->string (car keys)))))
           (define specs (syntax->list #'(spec ...)))
+          (for-each check-literal-schema! specs)
           (define requests (syntax->list #'(request ...)))
           (cons (node group-id 'input-group
                       #`(object-schema (hasheq #,@(append-map (lambda (key spec) (list #`'#,key spec)) keys specs)))

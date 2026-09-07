@@ -1641,3 +1641,32 @@ declaration-manifest, and extension suites then passed 65 focused checks.
 This is completion-reference coverage, not complete cross-module analysis of
 references hidden in arbitrary Racket handlers. The broader compiler and release
 gates remain open. Native evidence remains Linux/Racket 9.2.
+
+## Declaration schema and argument contracts (2026-09-07)
+
+Literal schema checks now cover tool argument/output schemas, resource and prompt
+arguments, shape fields, and workflow checkpoint/input/grouped-input/effect
+representations, rather than only named schema declarations. The shared expansion
+helper inspects reader constants and lexically bound Racket quote forms; it never
+evaluates computed schema expressions. Malformed literals produce syntax errors
+attached to the actual schema source. Boolean schemas remain valid, and a host
+macro named quote retains its own expansion semantics.
+
+Tool, resource, and prompt constructors now share argument validation: descriptor
+lists, unique symbolic names, boolean optional flags, valid schemas, and unary
+optional defaults. make-resource previously omitted duplicate/schema checks.
+Resources now also reject empty wire names. make-interface validates arguments and
+tool input/output schemas in raw public descriptors, so make-runtime's interface
+validation rejects malformed schemas before recovery starts. These checks do not
+invoke defaults or handlers. Computed resource schemas still evaluate once in
+order, and defaults evaluate only when binding absent arguments.
+
+The new declaration-schemas suite contributes 49 checks, covering each source
+schema position, source locations, raw and dynamic constructors, evaluation
+order/count, boolean schemas, custom format annotations, and lexical quote
+shadowing. Initial test-fixture reader errors were corrected before validation.
+sh scripts/check.sh passed compilation, 1,644 native checks, all 1,301 pinned core
+schema cases, and Scribble without warnings. All five Go probes in
+sh scripts/check-interop.sh passed, as did git diff --check. Native evidence remains
+Linux/Racket 9.2. This improves constructor/schema equivalence; complete descriptor
+contract parity and the remaining compiler/integration/release gates remain open.

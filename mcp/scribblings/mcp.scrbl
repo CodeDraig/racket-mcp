@@ -882,3 +882,21 @@ For locally declared targets, expansion rejects targets other than prompts or
 
 These checks do not infer resource references hidden in arbitrary Racket handlers;
  complete cross-module interface-reference analysis remains a separate requirement.
+
+@section{Schema construction boundaries}
+
+Literal JSON schemas are checked during expansion wherever declarations accept
+ schemas: named schemas, shape fields, tool arguments and output contracts,
+ resource and prompt arguments, and workflow checkpoint, input, grouped input,
+ and effect representations. Errors retain the offending schema's source syntax.
+ Boolean schemas remain valid. Quoted data is inspected only when @racket[quote]
+ refers to Racket's quote form; user macros and computed expressions are not
+ evaluated to discover their values.
+
+The tool, resource, and prompt constructors share argument checks: unique symbolic
+ names, valid schemas, boolean optional flags, and defaults accepting the previously
+ bound arguments. An argument with a default must be optional. Schema expressions
+ evaluate once in declaration order; defaults remain deferred until an absent
+ argument is bound. Interface construction also validates argument and tool schemas
+ supplied through raw public descriptors, and runtime construction performs those
+ checks before recovery starts.
