@@ -1854,3 +1854,28 @@ all 1,301 pinned core schema cases, and Scribble. All five Go interoperability
 probes passed with sh scripts/check-interop.sh. git diff --check passed.
 Evidence remains Linux/Racket 9.2; remaining input/effect/codec callback ownership
 and the complete SDK release gates remain open.
+
+## Input construction without SQLite lock ownership (2026-09-07)
+
+Single and grouped elicitation constructors now execute outside the transaction
+under the workflow's exclusive instance claim. The runtime validates group
+identities and saves pending request data with a revision-checked transition
+before processing responses or publishing input_required. Cancellation is checked
+before this save. Retries read saved request data, including after an interruption
+between saving the request and returning it, instead of re-entering application
+construction. A crash before the save can still rerun replay-safe construction.
+
+The new input-stage-lock suite passed 48 checks covering single/group requests,
+normal execution, and cancellation. Blocking constructor callbacks expose no
+current storage transaction; concurrent task polling and cancellation complete.
+Cancelled construction leaves no pending request. Successful requests are saved,
+reused by a continuation, and completed through task updates without repeating the
+constructor. Existing input-group, continuation-round, and task suites passed 36
+checks, including partial responses and SQLite reopen. This does not establish
+every process-crash boundary or move effect and recovery codecs out of transactions.
+
+Final validation: sh scripts/check.sh passed compilation, 2,376 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. All five probes passed with
+sh scripts/check-interop.sh. git diff --check passed. Verification remains
+Linux/Racket 9.2; remaining codec/effect lock boundaries, the full crash matrix,
+and the overall release gates remain open.

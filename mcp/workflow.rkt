@@ -165,12 +165,16 @@
                  (define stage (list-ref (workflow-descriptor-stages workflow) position))
                  (define id (workflow-stage-id stage))
                  (define env (hash-ref state 'values))
-                 (case (workflow-stage-kind stage)
+                 (define pending-key (if (eq? (workflow-stage-kind stage) 'input-group) 'pending-group 'pending-input))
+                 (case (if (and (memq (workflow-stage-kind stage) '(input input-group))
+                                (not (hash-has-key? state pending-key)))
+                           'prepare-input (workflow-stage-kind stage))
+                   [(prepare-input) (list 'prepare-input stage env instance pending-key)]
                    [(jump branch complete checkpoint)
                     (list (workflow-stage-kind stage) stage env instance)]
                    [(input-group)
                     (define ids (stage-inputs stage))
-                    (define requests (hash-ref state 'pending-group (lambda () ((workflow-stage-procedure stage) (decoded-env env)))))
+                    (define requests (hash-ref state 'pending-group))
                     (unless (and (hash? requests) (= (hash-count requests) (length ids))
                                  (andmap (lambda (id) (hash-has-key? requests id)) ids))
                       (error 'run-workflow "input group requests do not match declared identities"))
@@ -197,12 +201,12 @@
                    [(input)
                     (define response (hash-ref responses id missing))
                     (cond [(missing? response)
-                           (define request (hash-ref state 'pending-input (lambda () ((workflow-stage-procedure stage) (decoded-env env)))))
+                           (define request (hash-ref state 'pending-input))
                            (update-instance! store instance (hash-set* state 'status "input_required" 'pending-input request))
                            (list 'return (hasheq 'resultType "input_required" 'requestState (continuation-token! store (stored-instance-handle instance) id)
                                                 'inputRequests (hasheq id (hasheq 'method "elicitation/create" 'params request))))]
                           [else
-                           (define request (hash-ref state 'pending-input (lambda () ((workflow-stage-procedure stage) (decoded-env env)))))
+                           (define request (hash-ref state 'pending-input))
                            (validate-input-response request response)
                            (advance! instance stage response) '(continue)])]
                    [(effect)
@@ -224,6 +228,19 @@
     (publish-workflow-changes!)
     (case (car action)
       [(return) (cadr action)] [(continue) (loop)]
+      [(prepare-input)
+       (match-define (list _ stage env snapshot pending-key) action)
+       (define requests ((workflow-stage-procedure stage) (decoded-env env)))
+       (when (eq? (workflow-stage-kind stage) 'input-group)
+         (define ids (stage-inputs stage))
+         (unless (and (hash? requests) (= (hash-count requests) (length ids))
+                      (andmap (lambda (id) (hash-has-key? requests id)) ids))
+           (error 'run-workflow "input group requests do not match declared identities")))
+       (store-transaction store
+         (lambda ()
+           (when (cancelled?) (error 'run-workflow "execution cancelled"))
+           (update-instance! store snapshot (hash-set (stored-instance-state snapshot) pending-key requests))))
+       (loop)]
       [(jump branch complete)
        (match-define (list kind stage env snapshot) action)
        ;; The worker claim protects this stage while host code runs without
