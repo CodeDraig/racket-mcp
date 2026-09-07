@@ -1415,6 +1415,24 @@ Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
 resource providers. Compiling source still executes trusted transformers.
 
+Workflow manifest entries also record @tt{client-capabilities}, with @tt{required}
+and @tt{optional} objects using the protocol capability names and an @tt{analysis}
+value of @tt{declared-workflow-stages}. Input stages require elicitation;
+@tt{#:execution task} requires the Tasks extension; @tt{task-optional} records it
+as optional because MRTR execution remains available. Task execution modes add
+@tt{task-workers} to @tt{runtime-requirements}. The checked execution identifier is
+known grammar data, so it does not by itself mark metadata dynamic.
+
+These fields describe the local declared workflow stages, including branches,
+and the runtime's capability preflight for those stages. They do not infer hidden
+input requests in arbitrary Racket helpers, upstream adapters, or dynamically
+composed interfaces. They are client requirements, not server discovery output.
+Generated Markdown documentation includes these requirements without evaluating
+handlers or input-request expressions. Manifest diffs classify a newly required
+elicitation or Tasks capability as a breaking contract change when both entries
+contain this analysis. Missing analysis in an older manifest requires review; it
+does not establish that the capability was previously unnecessary.
+
 @section{Interface and workflow diagrams}
 
 @tt{raco mcp diagram module.rkt} emits a Mermaid flowchart from the static manifest.

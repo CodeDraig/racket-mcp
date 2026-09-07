@@ -45,3 +45,15 @@
 
 (check-equal? (change (hash-remove tool 'arguments) required) "review-required")
 (check-equal? (change (hash-set tool 'arguments (list (arg 'id #t) (hash-remove (arg 'verbose #f) 'required))) required) "review-required")
+
+(define (client-needs required [optional (hasheq)])
+  (hash-set workflow 'client-capabilities
+    (hasheq 'analysis 'declared-workflow-stages 'required required 'optional optional)))
+(define task-capability (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
+(check-equal? (change (client-needs (hasheq)) (client-needs (hasheq 'elicitation (hasheq)))) "breaking-contract-change")
+(check-equal? (change (client-needs (hasheq) task-capability) (client-needs task-capability)) "breaking-contract-change")
+(check-equal? (change (client-needs (hasheq)) (client-needs (hasheq) task-capability)) "review-required")
+(check-equal? (change (client-needs task-capability) (client-needs (hasheq))) "review-required")
+;; Older manifests without this analysis do not prove that a requirement is new.
+(check-equal? (change workflow (client-needs task-capability)) "review-required")
+(check-equal? (change (client-needs task-capability) (client-needs task-capability)) "static-manifest-unchanged")

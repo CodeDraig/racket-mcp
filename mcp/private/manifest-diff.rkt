@@ -45,6 +45,23 @@
                [(not (equal? (hash-ref (contract old) 'workflow-stages) (hash-ref (contract new) 'workflow-stages))) "review-required"]
                [else "not-established-from-manifest"])]))
 (define (breaking-reasons before after)
+  (define (known-client-requirements entry)
+    (define information (hash-ref entry 'client-capabilities #f))
+    (and (hash? information)
+         (eq? (hash-ref information 'analysis #f) 'declared-workflow-stages)
+         (hash? (hash-ref information 'required #f))
+         (hash-ref information 'required)))
+  (define old-capabilities (known-client-requirements before))
+  (define new-capabilities (known-client-requirements after))
+  (define (present? object path)
+    (or (null? path)
+        (and (hash? object) (hash-has-key? object (car path))
+             (present? (hash-ref object (car path)) (cdr path)))))
+  (define capabilities
+    (if (and old-capabilities new-capabilities)
+        (for/list ([path '((elicitation) (extensions io.modelcontextprotocol/tasks))]
+                   #:when (and (present? new-capabilities path) (not (present? old-capabilities path))))
+          (format "Client capability ~a is newly required." path)) '()))
   (define arguments (hash-ref before 'arguments '()))
   (define required
     (if (and (hash-has-key? before 'arguments) (hash-has-key? after 'arguments))
@@ -56,7 +73,7 @@
           (format "Argument ~a is newly required." (hash-ref argument 'name))) '()))
   (define old-uri (hash-ref (hash-ref before 'metadata (hasheq)) 'uri (hasheq 'known? #f)))
   (define new-uri (hash-ref (hash-ref after 'metadata (hasheq)) 'uri (hasheq 'known? #f)))
-  (append required
+  (append required capabilities
           (if (and (eq? (hash-ref before 'kind) 'resource)
                    (hash-ref old-uri 'known? #f) (hash-ref new-uri 'known? #f)
                    (not (equal? (hash-ref old-uri 'value) (hash-ref new-uri 'value))))

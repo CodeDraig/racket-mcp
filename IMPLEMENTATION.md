@@ -3714,3 +3714,34 @@ git diff --check passed. This is Linux/Racket 9.2 evidence. The full suite, sche
 suite, package build and independent interoperability were not repeated for this
 fixture/test-only extension; their prior results remain tied to their recorded
 revision. The overall SDK goal remains open.
+
+
+## Static workflow capability requirements (2026-09-07)
+
+Workflow manifests now include client-capabilities with required/optional protocol
+capability objects and an explicit declared-workflow-stages analysis boundary.
+Input/input-group stages require elicitation; task execution requires Tasks;
+task-optional records optional Tasks with MRTR fallback. Task execution modes
+also identify task-workers in runtime-requirements. The compiler treats the
+validated execution identifier as known grammar data instead of a dynamic host
+expression. No stage, metadata expression or handler is evaluated to infer values.
+
+Generated Markdown displays the requirements. Manifest diffing establishes a
+breaking change when a known elicitation/Tasks requirement is newly added, but
+keeps older manifests with missing analysis and optional/removal changes under
+review. The existing throwing application fixture now covers both task modes;
+manifest inspection and generated docs work without instantiating it.
+
+Focused declaration/docs/task-boundary tests passed 79 checks. Diff/diagram/compiler
+regressions passed 64 checks. Full final-source verification follows. These fields
+cover local declared stages, not hidden helper effects, upstream requirements,
+dynamic interface composition or aggregate server capability advertisement.
+
+
+Final sh scripts/check.sh passed compilation, 4,547 native checks, all 1,301
+pinned core schema cases and Scribble. The rebuilt distribution and isolated
+raco setup --check-pkg-deps --pkgs racket-mcp passed without warning or undefined
+tag matches. git diff --check passed. This final evidence paragraph postdates
+packaging and changes no executable/manual content. Go and external conformance
+probes were not repeated for these compiler-manifest/tooling changes. Verification
+is Linux/Racket 9.2; all remaining SDK release gates stay open.

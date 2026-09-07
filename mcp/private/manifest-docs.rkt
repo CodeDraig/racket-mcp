@@ -69,6 +69,13 @@
     (define requirements (hash-ref entry 'runtime-requirements '()))
     (unless (null? requirements)
       (paragraph "Runtime requirements: ~a." (string-join (map code requirements) ", ")))
+    (when (hash-has-key? entry 'client-capabilities)
+      (define capabilities (hash-ref entry 'client-capabilities))
+      (paragraph "Client capabilities required by declared workflow stages: ~a."
+                 (code (representation (hash-ref capabilities 'required))))
+      (unless (zero? (hash-count (hash-ref capabilities 'optional)))
+        (paragraph "Optional client capabilities: ~a; execution has a fallback when absent."
+                   (code (representation (hash-ref capabilities 'optional))))))
     (define references (hash-ref entry 'resource-references '()))
     (unless (null? references)
       (paragraph "### Resource references")

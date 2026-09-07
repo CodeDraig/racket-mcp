@@ -23,3 +23,12 @@
 (resource (approval-resource [id String]) #:uri "approval:///{id}" #:workflow "1"
   (perform [saved String] #:adapter save #:policy idempotent id)
   saved)
+
+(workflow (forced-task) #:version "1" #:execution task
+  (text-result "done"))
+
+(workflow (optional-task) #:version "1" #:execution task-optional
+  (await-input [answer Any]
+    (hasheq 'mode "form" 'message "Proceed?" 'requestedSchema (object-schema (hasheq))))
+  (task-boundary launch)
+  (text-result "done"))

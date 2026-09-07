@@ -8,6 +8,9 @@
                    "### Input schema" "### Output schema" "```json\n"
                    "dynamic expression ` (begin (error" "**mime\\-type:** ` \"application/json\" `"
                    "Runtime requirements: ` workflow-storage `, ` adapters `."
+                   "Client capabilities required by declared workflow stages:"
+                   "Optional client capabilities:"
+                   "execution has a fallback when absent."
                    "### Workflow stages" "1. ` saved ` — effect; adapter ` save `; policy ` idempotent `")])
   (check-true (string-contains? text expected) expected))
 (check-false (string-contains? text "Metadata requires runtime inspection"))

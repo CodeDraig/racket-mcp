@@ -122,7 +122,11 @@
     (define kind (declaration-node-kind node))
     (define metadata
       (for/hasheq ([(keyword expression) (in-hash (declaration-node-clauses node))])
-        (values (string->symbol (keyword->string keyword)) (describe expression (eq? keyword '#:output)))))
+        (values (string->symbol (keyword->string keyword))
+                (if (and (eq? kind 'workflow) (eq? keyword '#:execution))
+                    ;; This is a checked grammar identifier, not a host expression.
+                    (hasheq 'known? #t 'value (syntax-e expression))
+                    (describe expression (eq? keyword '#:output))))))
     (define arguments
       (for/list ([argument (in-list (declaration-node-arguments node))])
         (define parts (syntax->list argument))
@@ -159,11 +163,22 @@
             [else result]))
     (define with-workflow
       (if (and (memq kind '(workflow resource prompt)) (declaration-node-value node))
+          (let* ([stages (declaration-node-value node)]
+                 [kinds (map (lambda (stage) (syntax-e (cadr (syntax->list stage)))) stages)]
+                 [execution-source (hash-ref (declaration-node-clauses node) '#:execution #f)]
+                 [execution (if execution-source (syntax-e execution-source) 'mrtr)]
+                 [task-capability (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq)))]
+                 [required (if (eq? execution 'task) task-capability (hasheq))])
           (hash-set* with-schema
                      'runtime-requirements
                      (append '(workflow-storage)
-                             (if (for/or ([stage (in-list (declaration-node-value node))])
-                                   (eq? (syntax-e (cadr (syntax->list stage))) 'effect)) '(adapters) '()))
+                             (if (memq 'effect kinds) '(adapters) '())
+                             (if (memq execution '(task task-optional)) '(task-workers) '()))
+                     'client-capabilities
+                     (hasheq 'required (if (ormap (lambda (kind) (memq kind '(input input-group))) kinds)
+                                          (hash-set required 'elicitation (hasheq)) required)
+                             'optional (if (eq? execution 'task-optional) task-capability (hasheq))
+                             'analysis 'declared-workflow-stages)
                      'workflow-stages
                      (for/list ([stage (in-list (declaration-node-value node))])
                        (define fields (syntax->list stage))
@@ -171,7 +186,7 @@
                                   'id (syntax-e (car fields)) 'kind (syntax-e (cadr fields))
                                   'schema (describe (caddr fields) #t)
                                   'adapter-or-targets (syntax->datum (list-ref fields 3))
-                                  'policy (syntax->datum (list-ref fields 4)))))
+                                  'policy (syntax->datum (list-ref fields 4))))))
           with-schema))
     (define dynamic?
       (let walk ([value with-workflow])
