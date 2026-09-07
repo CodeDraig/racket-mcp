@@ -1,12 +1,13 @@
 #lang racket/base
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
-         "upstream-bridge.rkt" "workflow.rkt" "authorization.rkt" "private/handler-info.rkt")
+         "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
+         "workflow.rkt" (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt")
 (provide capture-snapshot make-upstream-interface check-upstream-compatibility! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
 (define (result! outcome)
-  (when (hash-has-key? outcome 'error) (mcp-error -32603 "Upstream request failed" (hash-ref outcome 'error)))
-  (hash-ref outcome 'result outcome))
+  (when (and (not (hash-has-key? outcome 'resultType)) (hash-has-key? outcome 'error)) (mcp-error -32603 "Upstream request failed" (hash-ref outcome 'error)))
+  (if (hash-has-key? outcome 'resultType) outcome (hash-ref outcome 'result outcome)))
 (define (capture-snapshot request)
   (define discovery (result! (request "server/discover" (hasheq))))
   (define capabilities (hash-ref discovery 'capabilities (hasheq)))
@@ -40,29 +41,38 @@
   (unless (or (not bridge) (upstream-bridge? bridge)) (raise-argument-error 'make-upstream-interface "upstream-bridge? or #f" bridge))
   (define snapshot (string->json (json->string supplied-snapshot)))
   (define (durable-handler procedure) (if bridge (stateful-handler procedure) procedure))
+  (define tasks? (and bridge (hash-has-key?
+    (hash-ref (hash-ref (hash-ref snapshot 'server/discover) 'capabilities) 'extensions (hasheq))
+    'io.modelcontextprotocol/tasks)))
   (define verified (make-hash)) (define lock (make-semaphore 1))
-  (define (invoke method params)
+  (define (verify-for credential)
+    (call-with-semaphore lock
+      (lambda () (unless (hash-ref verified credential #f)
+                   (check-upstream-compatibility! snapshot request) (hash-set! verified credential #t)))))
+  (define (invoke method params [task-source #f])
     (define context (current-request-context))
     (define credential (and bridge ((upstream-bridge-credential-id bridge) (request-context-principal context))))
-    (define (verify)
-      (call-with-semaphore lock
-        (lambda () (unless (hash-ref verified credential #f)
-                     (check-upstream-compatibility! snapshot request) (hash-set! verified credential #t)))))
+    (define (verify) (verify-for credential))
     (define durable? (and bridge (member method '("tools/call" "resources/read" "prompts/get"))))
     (define result
       (result!
        (if durable?
+           (parameterize ([current-upstream-task-result
+                           (and task-source
+                             (lambda (parent capabilities)
+                               (adopt-upstream-task! bridge (current-workflow-store) snapshot parent task-source capabilities)))])
            (bridge-upstream-request bridge (current-workflow-store) snapshot request method params
                                     #:principal (principal-key (request-context-principal context)) #:credential-id credential
                                     #:state (current-workflow-state) #:responses (current-workflow-responses)
                                     #:capabilities (request-context-capabilities context) #:key (current-workflow-invocation-key)
-                                    #:cancelled? (request-context-cancelled? context) #:verify verify)
+                                    #:cancelled? (request-context-cancelled? context) #:verify verify))
            (begin (verify) (request method params)))))
     (unless (or (equal? (hash-ref result 'resultType "complete") "complete")
-                (and durable? (equal? (hash-ref result 'resultType #f) "input_required")))
-      (mcp-error -32603 "Upstream outcome requires a supported durable translation; Tasks translation remains unimplemented"))
+                (and durable? (equal? (hash-ref result 'resultType #f) "input_required"))
+                (and task-source (equal? (hash-ref result 'resultType #f) "task")))
+      (mcp-error -32603 "Upstream outcome requires a supported durable translation for this operation"))
     (hash-set result 'resultType (hash-ref result 'resultType "complete")))
-  (define (pending? result) (equal? (hash-ref result 'resultType #f) "input_required"))
+  (define (pending? result) (member (hash-ref result 'resultType #f) '("input_required" "task")))
   (define (build-resource wire uri arguments matcher)
     (make-resource (hash-ref wire 'name) uri
       (durable-handler (lambda supplied-values
@@ -153,10 +163,35 @@
     #:tools
     (for/list ([wire (in-list (hash-ref (hash-ref snapshot 'tools/list) 'tools))])
       (define schema (hash-ref wire 'inputSchema)) (check-schema! schema)
+      (define source (and tasks? (hasheq 'bridge (upstream-bridge-identity bridge) 'name (hash-ref wire 'name))))
+      (define (handler bound)
+        (define result (invoke "tools/call" (hasheq 'name (hash-ref wire 'name) 'arguments bound) source))
+        (if (pending? result) result (hash-set result 'content (map remap-content (hash-ref result 'content)))))
+      (define (translate-task-detail result)
+        (if (equal? (hash-ref result 'status #f) "completed")
+            (let ([value (hash-ref result 'result)])
+              (unless (and (equal? (hash-ref value 'resultType #f) "complete")
+                           (list? (hash-ref value 'content #f))
+                           (or (hash-ref value 'isError #f) (not (hash-has-key? wire 'outputSchema))
+                               (and (hash-has-key? value 'structuredContent)
+                                    (valid? (hash-ref wire 'outputSchema) (hash-ref value 'structuredContent)))))
+                (mcp-error -32603 "Upstream task result failed its tool contract"))
+              (hash-set result 'result (hash-set value 'content (map remap-content (hash-ref value 'content))))) result))
+      (define (task-dispatch method id params)
+        (define context (current-request-context))
+        (define principal (request-context-principal context))
+        (define credential ((upstream-bridge-credential-id bridge) principal))
+        (define notify (current-task-notify))
+        (define result
+          (parameterize ([current-task-notify (lambda (who detail) (notify who (translate-task-detail detail)))])
+            (upstream-task-request bridge (current-workflow-store) snapshot request source method id
+              #:principal (principal-key principal) #:credential-id credential
+              #:responses (hash-ref params 'inputResponses (hasheq)) #:capabilities (request-context-capabilities context)
+              #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context))))
+        (translate-task-detail result))
       (make-tool (hash-ref wire 'name) '()
-                 (durable-handler (lambda (bound)
-                   (define result (invoke "tools/call" (hasheq 'name (hash-ref wire 'name) 'arguments bound)))
-                   (if (pending? result) result (hash-set result 'content (map remap-content (hash-ref result 'content))))))
+                 (if tasks? (task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch)
+                     (durable-handler handler))
                  #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))
                  #:input-schema schema #:raw? #t))))

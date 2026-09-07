@@ -1,5 +1,5 @@
 #lang racket/base
-(provide (struct-out referenced-handler) (struct-out stateful-handler)
+(provide (struct-out referenced-handler) (struct-out stateful-handler) (struct-out task-handler)
          handler-resource-references handler-requires-state? prop:resource-references)
 ;; A lexical thunk resolves declaration bindings only after module definitions.
 ;; It never executes the application handler to discover dependencies.
@@ -9,6 +9,7 @@
 ;; Merely inspecting this wrapper never invokes application code.
 (struct stateful-handler (procedure)
   #:property prop:procedure (struct-field-index procedure))
+(struct task-handler stateful-handler (matches? dispatch))
 (define (handler-requires-state? handler)
   (or (stateful-handler? handler)
       (and (referenced-handler? handler)

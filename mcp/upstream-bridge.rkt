@@ -6,6 +6,9 @@
          (struct-out exn:fail:upstream-recovery))
 (struct upstream-bridge (identity version credential-id ttl max-rounds max-bytes) #:transparent)
 (struct exn:fail:upstream-recovery exn:fail (handle cause) #:transparent)
+(define current-upstream-task-result (make-parameter #f))
+(module* private #f
+  (provide current-upstream-task-result fingerprint freeze check-binding! upstream-bridge-identity upstream-bridge-max-rounds))
 (define (make-upstream-bridge #:identity identity #:version version #:credential-id credential-id
                               #:ttl [ttl 86400] #:max-rounds [rounds 100] #:max-bytes [bytes 1048576])
   (unless (and (string? identity) (positive? (string-length identity))
@@ -36,11 +39,11 @@
   instance)
 (define (normalize-outcome value)
   (unless (hash? value) (error 'upstream "expected an object outcome"))
-  (cond [(hash-has-key? value 'error)
+  (cond [(and (not (hash-has-key? value 'resultType)) (hash-has-key? value 'error))
          (unless (hash? (hash-ref value 'error)) (error 'upstream "malformed upstream error"))
          (hasheq 'error (hash-ref value 'error))]
         [else
-         (define result (hash-ref value 'result value))
+         (define result (if (hash-has-key? value 'resultType) value (hash-ref value 'result value)))
          (unless (hash? result) (error 'upstream "expected an object result"))
          (hasheq 'result (hash-set result 'resultType (hash-ref result 'resultType "complete")))]))
 ;; Called under a transaction after a known response, including operator recovery.
@@ -144,7 +147,13 @@
               (unless (equal? response (hash-ref (hash-ref state 'history) id))
                 (mcp-error -32602 "Conflicting upstream input response")))
             (case (string->symbol (hash-ref state 'status))
-              [(complete) (list 'return (local-outcome state capabilities))]
+              [(complete)
+               (define outcome (hash-ref state 'outcome))
+               (list 'return
+                 (if (and (current-upstream-task-result)
+                          (equal? (hash-ref (hash-ref outcome 'result (hasheq)) 'resultType #f) "task"))
+                     ((current-upstream-task-result) instance capabilities)
+                     (local-outcome state capabilities)))]
               [(in-flight) (uncertain instance)]
               [(received)
                (record-outcome! bridge store instance (hash-ref state 'observed-outcome))

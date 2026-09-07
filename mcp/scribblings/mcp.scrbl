@@ -842,9 +842,10 @@ it does not add full optional format assertions. The offline command
 @tt{python3 scripts/extract-elicitation-schema.py} refreshes the extraction after
 an explicit pin change; @tt{--check} verifies it during the regular test command.
 
-Upstream Tasks outcomes are retained for inspection and rejected without exposing
-the remote task handle as a local handle or replaying the request. Upstream
-notification forwarding is not implemented yet. The pinned MCP revision permits
+Upstream tool Tasks are translated when the pinned discovery advertises the
+Tasks extension and a bridge is configured, as described below. Other unsupported
+Tasks outcomes are retained for inspection and rejected without exposing remote
+handles as local handles. Upstream subscription forwarding is not implemented yet. The pinned MCP revision permits
 MRTR only for tools, resource reads, and prompts; completion MRTR is forbidden
 and rejected. Complete-result completion forwarding remains available.
 
@@ -887,6 +888,49 @@ records a terminal error. Terminal interactions cannot be changed by this API.
 No action is an exactly-once guarantee. Local @tt{list-instances} and
 @tt{instance-events} provide inspection of saved state and the recovery journal.
 }
+
+
+@subsubsection{Upstream tool Tasks}
+
+A bridged tool interface whose pinned discovery advertises
+@tt{io.modelcontextprotocol/tasks} can return a local task receipt. The runtime
+advertises the installed Tasks facility when storage is configured. The upstream
+request callback remains responsible for its connection, separate credentials,
+and matching request capabilities; it must not advertise capabilities the local
+client cannot fulfill. The bridge checks local Tasks support before publishing
+or adopting a task handle.
+
+The local task record is persisted before its receipt is returned. Repeated
+keyed initial calls return the original receipt. Polling, input updates, and
+cancellation resolve the originating tool through the mounted interface and
+recheck local ownership, operation authorization, credential identity, snapshot,
+version, and expiry before contacting the peer. Removing the tool prevents task
+access through that interface. Remote workers remain owned by the peer; local
+runtime startup does not execute them as Racket workflows.
+
+Task input IDs are opaque local identifiers. Partial answers accumulate before
+one upstream update; identical retries do not resend accepted updates and
+conflicting answers fail. Task details and completed tool results retain the
+local task ID and mounted resource links. Successful structured task results are
+checked against the tool's output schema. Recorded terminal tasks are immutable
+and repeated polls do not contact the peer. Initial local retention is bounded
+by the bridge expiry and the peer's declared finite TTL, rounded to the store's
+second resolution; a peer may still expire its own task independently.
+
+Read-only polling failures can be retried. Updates and cancellations persist an
+intent before sending, then a receipt before advancing. If a mutation's outcome
+is lost or its worker is terminated, the next local operation records a failed
+task with an explicit recovery-required diagnostic. It never automatically sends
+the mutation again. An acknowledged cancellation is followed by polling the
+peer's actual status, preserving a completion/cancellation race. The local API
+for authorizing repair and creating a replacement upstream task handle remains
+unfinished; native-workflow recovery APIs do not revive an upstream task.
+
+Subscribers to local task IDs receive committed observed changes, including
+translated completed results. This currently reports changes observed through
+local polling and control requests; it does not establish a background upstream
+subscription. Full upstream notification forwarding, broader fault-injection
+coverage and independent task-bridge interoperability remain release gates.
 
 @racket[define-mcp-extension] accepts @racket[#:declaration] or @racket[#:workflow]
 before a transformer expression. Omitting the kind means @racket[#:declaration].

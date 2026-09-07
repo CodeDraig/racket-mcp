@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/handler-info.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
@@ -57,11 +58,13 @@
     (when (and store recover?) (recover-runtime-tasks! rt #:restore-principal restore-principal)))
   rt)
 (define (task-operation? d instance)
+  (or (and (task-handler? (tool-descriptor-handler d))
+           ((task-handler-matches? (tool-descriptor-handler d)) instance))
   (and (tool-descriptor-workflow d)
        (equal? (stored-instance-operation instance)
                (string-append "task:" (workflow-descriptor-name (tool-descriptor-workflow d))))
        (let ([name (hash-ref (stored-instance-state instance) 'operationName #f)])
-         (or (not name) (equal? name (tool-descriptor-name d))))))
+         (or (not name) (equal? name (tool-descriptor-name d)))))))
 (define (resolve-task-operation tools instance)
   (define matches (filter (lambda (d) (task-operation? d instance)) tools))
   (when (> (length matches) 1)
@@ -159,7 +162,8 @@
   (define store (runtime-store rt))
   (if (not store) '()
       (for/list ([instance (in-list (list-instances store))]
-                 #:when (and (> (stored-instance-expires instance) (mcp-current-seconds))
+                 #:when (and (not (equal? (hash-ref (stored-instance-state instance) 'kind #f) "upstream-task"))
+                             (> (stored-instance-expires instance) (mcp-current-seconds))
                              (equal? (hash-ref (hash-ref (stored-instance-state instance) 'task (hasheq)) 'status #f) "working")))
         (define tool
           (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
@@ -304,7 +308,9 @@
            (if (null? xs) c (hash-set c k (hasheq)))))
        (define capabilities
          (let* ([c (if (pair? (interface-descriptor-completions iface)) (hash-set base-capabilities 'completions (hasheq)) base-capabilities)]
-                [c (if (and (runtime-store rt) (ormap tool-descriptor-workflow (interface-descriptor-tools iface)))
+                [c (if (and (runtime-store rt) (ormap (lambda (tool) (or (tool-descriptor-workflow tool)
+                                                                                       (task-handler? (tool-descriptor-handler tool))))
+                                                     (interface-descriptor-tools iface)))
                        (hash-set c 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))) c)]) c))
        (cache (hasheq 'resultType "complete" 'supportedVersions (list protocol-version) 'capabilities capabilities
                       'instructions (if server (server-descriptor-instructions server) "")
@@ -348,7 +354,9 @@
                           (invoke-handler)))
                                    (if (tool-descriptor-workflow d) (workflow-executable-fingerprint (tool-descriptor-workflow d) (current-workflow-adapters)) "render/1")))
        (unless (and (hash? result)
-                    (or (and task? (equal? (hash-ref result 'resultType #f) "task"))
+                    (or (and (or task? (task-handler? (tool-descriptor-handler d)))
+                             (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks)
+                             (equal? (hash-ref result 'resultType #f) "task"))
                         (and (equal? (hash-ref result 'resultType #f) "complete") (list? (hash-ref result 'content #f)))
                         (and (equal? (hash-ref result 'resultType #f) "input_required")
                              (string? (hash-ref result 'requestState #f)) (hash? (hash-ref result 'inputRequests #f)))))
@@ -406,6 +414,17 @@
          (hasheq 'requiredCapabilities (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))))
        (define task-id (hash-ref params 'taskId #f))
        (unless (string? task-id) (mcp-error -32602 "taskId must be a string"))
+       (define task-instance (load-instance (runtime-store rt) task-id))
+       (define task-tool (and task-instance (resolve-task-operation (interface-descriptor-tools iface) task-instance)))
+       (if (and task-tool (task-handler? (tool-descriptor-handler task-tool)))
+           (begin
+             ;; Validate ownership before authorization callbacks or upstream I/O.
+             (get-task (runtime-store rt) task-id (principal-key principal))
+             (unless ((runtime-authorize rt) principal "tools/call"
+                      (hasheq 'name (tool-descriptor-name task-tool)
+                              'arguments (hash-ref (hash-ref (stored-instance-arguments task-instance) 'params) 'arguments (hasheq))))
+               (mcp-error -32001 "Upstream task operation is not authorized"))
+             ((task-handler-dispatch (tool-descriptor-handler task-tool)) method task-id params))
        (case (string->symbol method)
          [(tasks/get) (get-task (runtime-store rt) task-id (principal-key principal))]
          [(tasks/cancel) (cancel-task! (runtime-store rt) task-id (principal-key principal))]
@@ -416,7 +435,7 @@
           (unless tool (mcp-error -32603 "Task executable is unavailable"))
           (unless ((runtime-authorize rt) principal "tools/call" (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance)))
             (mcp-error -32001 "Resumed operation is not authorized"))
-          (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq)) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))])]
+          (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq)) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]))]
       [(resources/list)
        (listing 'resources (for/list ([d (in-list (interface-descriptor-resources iface))] #:when (null? (resource-descriptor-arguments d)))
                               (hasheq 'name (resource-descriptor-name d) 'uri (resource-descriptor-uri d)
@@ -539,6 +558,8 @@
   (define instance (load-instance store id))
   (define tool (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
   (unless tool (mcp-error -32001 "Task operation is absent from this interface"))
+  (unless (tool-descriptor-workflow tool)
+    (mcp-error -32602 "Upstream task recovery requires a separately observed upstream outcome"))
   (when (and (ormap (lambda (stage) (memq (workflow-stage-kind stage) '(input input-group)))
                     (workflow-descriptor-stages (tool-descriptor-workflow tool)))
              (not (hash-has-key? caps 'elicitation)))
