@@ -2102,3 +2102,30 @@ all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
 passed all five official Go SDK probes. git diff --check passed. These results
 cover Linux/Racket 9.2; automatic reference inference and the other recorded
 release gates remain open.
+
+## Lexical ordinary-handler resource collection (2026-09-07)
+
+Ordinary tool, resource, and prompt handlers now collect resource-name bindings
+through syntax-spec's public get-racket-referenced-identifiers API. A private
+callable wrapper carries a generated lexical thunk; make-interface resolves it
+and combines the targets with explicit reference maps. No handler executes to
+discover targets. Tool/prompt bound-argument wrappers retain this metadata.
+References resolve after module definitions, including forward declarations,
+imports, and macro-generated references; host shadowing and quoted identifiers
+produce no edges. Views canonicalize inferred identities just like explicit maps.
+
+The initial probe imported a phase-1 helper at the wrong phase, then analyzed
+bodies without their lambda argument scope. Correcting the import and analyzing
+the complete lambda resolved both probe failures. Focused existing suites passed
+120 checks; inferred-references passed 15 checks, including handler execution
+count, forward/imported references, source removal, and live remapped dispatch.
+Workflow stages, static manifest edges, separately defined host helpers, and the
+higher-phase gate are not established by ordinary-handler collection.
+
+Final validation: sh scripts/check.sh passed compilation, 2,684 native checks,
+all 1,301 pinned core schema cases, and Scribble. All five official Go SDK probes
+passed via sh scripts/check-interop.sh. A separate local-resource-inside-handler
+probe failed with definition-context rejection both with this collector and with
+the previous host-interface handler grammar; local DSL declarations are not
+claimed as newly supported. Ordinary internal host definitions pass the focused
+shadowing checks. Native evidence remains Linux/Racket 9.2.

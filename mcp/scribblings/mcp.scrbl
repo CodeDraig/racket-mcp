@@ -1103,6 +1103,18 @@ runtime cycle checks.
 For example, after defining a tool @tt{open-document} and resource @tt{document},
 construct their interface with @tt{#:references (hasheq open-document (list document))}.
 A view excluding @tt{document} then fails while @tt{open-document} remains exposed.
-The map survives @tt{#lang mcp} mounts and runtime validation. This is the explicit
-construction API: automatic collection of resource references from handler syntax
-and complete static manifest reference coverage remain unfinished.
+The map survives @tt{#lang mcp} mounts and runtime validation.
+
+Ordinary @tt{tool}, @tt{resource}, and @tt{prompt} handlers additionally collect
+lexically bound resource references through syntax-spec's host-expression API.
+This includes references introduced by macros and imported through renamed
+bindings. Quoted names and shadowing host bindings do not create dependencies.
+The generated procedure carries a private thunk that resolves resource descriptors
+when the interface is built; discovery does not execute handlers. Explicit maps
+and collected references combine, so an explicit map cannot erase a known edge.
+
+Collection is conservative across branches and nested lambdas in the handler
+syntax. It does not inspect separately defined Racket helper procedures or infer
+references created from arbitrary runtime data. Supply explicit references for
+those relationships. Workflow-stage collection and complete static manifest
+reference coverage remain unfinished.

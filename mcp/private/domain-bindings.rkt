@@ -92,3 +92,8 @@
             [((binding-class-predicate resource-name) value) 'resource]
             [((binding-class-predicate workflow-value) value) 'workflow-value]
             [else #f]))))
+
+(provide (for-syntax resource-referenced-identifiers))
+(begin-for-syntax
+  (define (resource-referenced-identifiers body)
+    (get-racket-referenced-identifiers (resource-name) body)))

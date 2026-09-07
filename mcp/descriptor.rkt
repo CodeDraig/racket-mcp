@@ -1,5 +1,5 @@
 #lang racket/base
-(require "completion.rkt")
+(require "completion.rkt" "private/handler-info.rkt")
 (require racket/list racket/match "schema.rkt" "json.rkt" "uri-template.rkt" "header-schema.rkt" "rendering.rkt" "codec.rkt" "error.rkt" "presentation.rkt" "effect.rkt" (only-in "authorization.rkt" check-scopes!))
 (provide (struct-out server-descriptor) (struct-out argument) (struct-out prompt-argument) (struct-out tool-descriptor)
          (struct-out resource-descriptor) (struct-out prompt-descriptor)
@@ -158,8 +158,19 @@
       (unless (memq target declarations) (error 'make-interface "adapter binding references an absent declaration"))
       (values target (check-adapter-bindings bindings))))
   (unless (hash? references) (raise-argument-error 'make-interface "hash?" references))
+  (define collected-references
+    (for/fold ([collected (for/hasheq ([(source targets) (in-hash references)])
+                           (values source targets))])
+              ([source (in-list declarations)])
+      (define handler
+        (cond [(tool-descriptor? source) (tool-descriptor-handler source)]
+              [(resource-descriptor? source) (resource-descriptor-handler source)]
+              [else (prompt-descriptor-handler source)]))
+      (define inferred (handler-resource-references handler))
+      (if (null? inferred) collected
+          (hash-update collected source (lambda (targets) (append targets inferred)) '()))))
   (define checked-references
-    (for/hasheq ([(source targets) (in-hash references)])
+    (for/hasheq ([(source targets) (in-hash collected-references)])
       (unless (memq source declarations) (error 'make-interface "resource-reference source is an absent declaration"))
       (define source-name
         (cond [(tool-descriptor? source) (tool-descriptor-name source)]

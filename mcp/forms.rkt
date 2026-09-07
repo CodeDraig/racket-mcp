@@ -72,8 +72,7 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      #`(begin (define-operation-value name
          (make-tool (symbol->string 'name) (list #,@args)
-                    (lambda (bound)
-                      (apply (mcp-handler (a.id ...) body ...) (list #,@(for/list ([id ids]) #`(hash-ref bound '#,id)))))
+                    (mcp-bound-handler (a.id ...) body ...)
                     #:description description #:output (checked-schema-expression output) #:annotations annotations
                     #:changes (lambda (bound outcome)
                                 (let (#,@(for/list ([id ids]) #`[#,id (hash-ref bound '#,id)])) changes)))) (register-declaration name #:declaration tool name #,stx))]))
@@ -158,7 +157,7 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default) (attribute a.codec)))
      (define hidden (car (generate-temporaries #'(name))))
      #`(begin (define-operation-value #,hidden (make-prompt (symbol->string 'name) (list #,@args)
-                                (lambda (bound) (apply (mcp-handler (a.id ...) body ...) (list #,@(for/list ([id ids]) #`(hash-ref bound '#,id)))))
+                                (mcp-bound-handler (a.id ...) body ...)
                                 #:description description)) (define-syntax name (prompt-binding (quote-syntax #,hidden) 'name '(a.id ...)))
          (register-declaration name #:declaration prompt name #,stx))]))
 
