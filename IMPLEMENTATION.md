@@ -14,7 +14,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 3. Protocol SDK | Client/server stdio and HTTP JSON/SSE; discovery; header checks; subscription broker; authorization functions | Complete transport ownership, pagination policy, authorization flow integration, conformance coverage |
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
 | 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Upstream Tasks failure matrices and subscription forwarding, complete integration coverage |
-| 6. Developer experience | All named CLI commands have implementations; manifests, Scribble, examples | Complete manifests/diagrams/docs, scenario fault DSL, binding-aware extension API |
+| 6. Developer experience | All named CLI commands; manifests, Scribble, examples; local/wire sessions, asynchronous requests, cancellation, disconnect/reconnect and process kill/restart scenarios | Complete manifests/diagrams/docs, authored fault scheduling and acceptance matrix, binding-aware extension API |
 | 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
 
 ## Requirement-to-test ledger
@@ -58,7 +58,7 @@ complete coverage of its surrounding milestone.
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
 | Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`; upstream and upstream-bridge tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and observed task notifications now translate; observed-outcome task replacement is implemented; explicit mutation retry is implemented; upstream subscription forwarding and full task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
-| CLI and authored scenarios | `cli.rkt`; compiler tests, executable examples | Basic commands; scenarios run test submodules only; deterministic fault-injection scenario language missing |
+| CLI and authored scenarios | `cli.rkt`, `scenario-session.rkt`, `scenario-process.rkt`; scenario and process tests, executable examples | Local/stdio/HTTP sessions, asynchronous handles, cancellation, disconnect/reconnect and process kill/restart implemented; complete authored fault scheduling and acceptance matrix remain |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
 
 ## Initial independent validation (historical)
@@ -3646,3 +3646,41 @@ distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp passed
 without warning or undefined-tag matches. git diff --check passed. This final
 evidence paragraph postdates packaging and changes no executable/manual content.
 These changes are verified on Linux/Racket 9.2; the full SDK objective remains open.
+
+
+## Wire-level effect crash matrix (2026-09-07)
+
+Added an application-owned server fixture and twelve process-backed scenario cases:
+stdio and HTTP, each with transactional, idempotent and manual effects, hard-killed
+immediately before or after the application mutation. An initial elicitation round
+provides a persisted continuation before the interrupted request. A file signal
+marks the exact authored adapter boundary; the parent kills the actual process.
+The tests inspect SQLite application rows independently of workflow results.
+
+Transactional cases require rollback before restart and exactly one committed row
+after recovery. Idempotent cases use an application receipt table and require the
+same recorded key on both adapter attempts, with one committed mutation. Manual
+cases require a protocol error without another adapter invocation until explicit
+local recovery: observed outcome after a committed mutation, or authorized retry
+when inspection establishes no mutation. All cases restart again after completion
+and require the retained result, no additional adapter calls, one preceding
+checkpoint execution, and unchanged terminal outcomes for the interrupted handle.
+
+Initial runs exposed fixture mistakes (an unwired dynamic workflow handler and a
+missing authorization import), corrected before final verification. A subsequent
+run passed the idempotent/manual cases and rejected an overstrict transactional
+key assertion. Transactional rollback does not promise a persisted adapter key;
+that assertion now applies only to recorded external intents. Actual rollback,
+mutation counts and adapter attempt counts remain independently asserted.
+Final full-suite verification follows. These twelve cases do not establish the
+remaining effect-stage, task, nested-rendering or every-boundary crash matrices.
+
+
+Final sh scripts/check.sh passed compilation, 4,519 native checks (including the
+twelve new crash cases), all 1,301 pinned core schema cases and Scribble. The
+rebuilt distribution and isolated raco setup --check-pkg-deps --pkgs racket-mcp
+passed without warning or undefined-tag matches. git diff --check passed.
+This final evidence paragraph postdates packaging and changes no executable or
+manual content. Runtime code did not change; independent Go/conformance probes
+were not repeated for these test additions. Verification is Linux/Racket 9.2;
+the complete SDK objective remains open.
