@@ -1,0 +1,82 @@
+#lang racket/base
+(require rackunit racket/file racket/async-channel mcp mcp/upstream)
+(define caps (hasheq 'elicitation (hasheq) 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
+(define snapshot (hasheq 'server/discover (hasheq 'supportedVersions '("2026-07-28")
+  'capabilities (hasheq 'tools (hasheq) 'extensions (hash-ref caps 'extensions)))
+  'tools/list (hasheq 'tools (list (hasheq 'name "work" 'inputSchema (hasheq 'type "object"))))
+  'resources/list (hasheq 'resources '()) 'resources/templates/list (hasheq 'resourceTemplates '())
+  'prompts/list (hasheq 'prompts '())))
+(define base (hasheq 'taskId "remote" 'status "working" 'createdAt "2026-09-07T00:00:00Z"
+  'lastUpdatedAt "2026-09-07T00:00:00Z" 'ttlMs 60000))
+(define input (hash-set* base 'status "input_required" 'inputRequests
+  (hasheq 'answer (hasheq 'method "elicitation/create" 'params
+    (hasheq 'mode "form" 'message "Continue?" 'requestedSchema (object-schema (hasheq)))))))
+(define directory (make-temporary-file "mcp-stale-task-~a" 'directory))
+(define path (build-path directory "state.sqlite"))
+(define store (open-sqlite-store path))
+(define clock (make-manual-clock #:seconds 100))
+(define updates 0)
+(define polls 0)
+(define updating (make-semaphore 0))
+(define release-update (make-semaphore 0))
+(define (peer method params)
+  (cond [(hash-ref snapshot (string->symbol method) #f) => values]
+        [(equal? method "tools/call") (hash-set base 'resultType "task")]
+        [(equal? method "tasks/update")
+         (set! updates (add1 updates)) (semaphore-post updating) (semaphore-wait release-update)
+         (hasheq 'resultType "complete")]
+        [(equal? method "tasks/get") (set! polls (add1 polls)) (hash-set input 'resultType "complete")]
+        [else (error 'test "unexpected peer request")]))
+(define interface (make-upstream-interface snapshot peer #:bridge
+  (make-upstream-bridge #:identity "stale-input" #:version "1" #:credential-id (lambda (_) "credential"))))
+(define rt (make-runtime interface #:store store #:clock clock))
+(define (call method params)
+  (dispatch rt method (hash-set params '_meta (request-meta #:capabilities caps)) #:principal "owner"))
+(dynamic-wind void
+  (lambda ()
+    (define id (hash-ref (call "tools/call" (hasheq 'name "work")) 'taskId))
+    (define awaiting (runtime-observe-upstream-task! rt id input #:principal "owner" #:capabilities caps))
+    (define local-input (car (hash-keys (hash-ref awaiting 'inputRequests))))
+    (define update-result (make-async-channel))
+    (define observation-result (make-async-channel))
+    (define observer-started (make-semaphore 0))
+    (parameterize ([current-custodian (runtime-custodian rt)])
+      (thread (lambda () (async-channel-put update-result
+        (with-handlers ([exn? values])
+          (call "tasks/update" (hasheq 'taskId id 'inputResponses (hasheq local-input (hasheq 'action "decline")))))))))
+    (check-not-false (sync/timeout 2 updating))
+    (parameterize ([current-custodian (runtime-custodian rt)])
+      (thread (lambda ()
+        (semaphore-post observer-started)
+        (async-channel-put observation-result
+          (with-handlers ([exn? values])
+            (runtime-observe-upstream-task! rt id input #:principal "owner" #:capabilities caps))))))
+    (check-not-false (sync/timeout 2 observer-started))
+    (check-false (sync/timeout 0 observation-result))
+    (semaphore-post release-update)
+    (check-equal? (sync/timeout 2 update-result) (hasheq 'resultType "complete"))
+    (define rejected (sync/timeout 2 observation-result))
+    (check-true (exn:fail:mcp? rejected))
+    (check-regexp-match #rx"[Ss]uperseded" (exn-message rejected))
+    (check-equal? updates 1)
+    ;; The acknowledged command has consumed that input, including across reopen.
+    (custodian-shutdown-all (runtime-custodian rt)) (close-store! store)
+    (set! store (open-sqlite-store path))
+    (set! rt (make-runtime interface #:store store #:clock clock))
+    (define before (load-instance store id))
+    (check-equal? (hash-ref (hash-ref (stored-instance-state before) 'task) 'status) "working")
+    (check-exn #rx"[Ss]uperseded" (lambda ()
+      (runtime-observe-upstream-task! rt id input #:principal "owner" #:capabilities caps)))
+    (check-equal? (stored-instance-revision (load-instance store id)) (stored-instance-revision before))
+    (check-equal? (stored-instance-state (load-instance store id)) (stored-instance-state before))
+    (check-equal? updates 1)
+    (check-equal? polls 0)
+    ;; An explicit fresh poll may establish another round, even for a peer whose
+    ;; timestamp granularity and reused remote ID make the payload indistinguishable.
+    (define refreshed (call "tasks/get" (hasheq 'taskId id)))
+    (check-equal? (hash-ref refreshed 'status) "input_required")
+    (check-equal? polls 1)
+    (check-false (hash-has-key? (hash-ref refreshed 'inputRequests) local-input))
+    (check-equal? (runtime-observe-upstream-task! rt id input #:principal "owner" #:capabilities caps) refreshed)
+    (check-equal? updates 1))
+  (lambda () (custodian-shutdown-all (runtime-custodian rt)) (close-store! store) (delete-directory/files directory)))

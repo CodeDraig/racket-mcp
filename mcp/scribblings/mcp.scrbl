@@ -889,6 +889,16 @@ sequence number: applications must coordinate them and reconcile uncertain or
 stale observations. This runner does not retry task mutations or silently repair
 a recovery-required task.
 
+An acknowledged input update retains a fingerprint of the consumed remote input
+snapshot. A delayed notification matching that superseded snapshot fails the
+forwarder without reopening the input round. This check survives storage reopen
+and also applies when the notification waits behind an in-flight update. An
+explicit @tt{tasks/get} poll can establish a fresh round, including when a peer
+reuses identical input IDs and coarse timestamps; subsequent duplicate notices
+for that newly established round are accepted. This detects known consumed
+snapshots, not arbitrary timestamp ordering. Input updates consumed by older SDK
+versions without these fingerprints cannot be retroactively classified.
+
 @subsubsection{Durable upstream MRTR}
 @defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
 @defproc[(upstream-bridge? [value any/c]) boolean?]{

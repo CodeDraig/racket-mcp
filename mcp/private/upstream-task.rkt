@@ -32,6 +32,8 @@
   instance)
 (define (save! bridge store instance state)
   (update-instance! store instance (freeze bridge state)))
+(define (detail-fingerprint detail)
+  (bytes->hex-string (sha256-bytes (open-input-string (json->string (hash-remove detail '_meta))))))
 (define (upstream-task-remote-id bridge store snapshot id principal credential source)
   (hash-ref (stored-instance-state (owned bridge store snapshot id principal credential source)) 'remoteId))
 (define (adopt-upstream-task! bridge store snapshot parent source capabilities)
@@ -245,8 +247,15 @@
                       (set! changed (fail-uncertain! bridge store instance)) (list 'again)]
                      [else
                       (define task (hash-remove (hash-ref state 'task) 'inputRequests))
+                      (define previous (hash-ref state 'remoteDetail #f))
+                      (define retired (hash-ref state 'consumedInputDetails '()))
+                      (define consumed
+                        (if (and (equal? (hash-ref command 'method) "tasks/update") previous
+                                 (equal? (hash-ref previous 'status #f) "input_required"))
+                            (remove-duplicates (cons (detail-fingerprint previous) retired)) retired))
                       (set! changed (save! bridge store instance
                         (hash-set* state 'command #f 'lastCommand (hash-ref command 'method)
+                          'consumedInputDetails consumed
                           'remoteInputs #f 'remoteDetail #f 'mapping (hasheq) 'accepted (hasheq)
                           'task (hash-set* task 'status "working" 'lastUpdatedAt (timestamp)))))
                       (if (equal? method "tasks/get") (list 'again) (list 'return (hasheq 'resultType "complete")))])]
@@ -302,6 +311,12 @@
            (store-transaction store
              (lambda ()
                (define prior (latest))
+               (define state (stored-instance-state prior))
+               (define current (hash-ref state 'remoteDetail #f))
+               (when (and observation
+                          (member (detail-fingerprint remote) (hash-ref state 'consumedInputDetails '()))
+                          (not (and current (equal? (detail-fingerprint current) (detail-fingerprint remote)))))
+                 (mcp-error -32603 "Superseded upstream task input observation; explicitly refresh the task"))
                (define saved (record-detail! bridge store prior remote))
                (unless (= (stored-instance-revision prior) (stored-instance-revision saved)) (set! changed saved))
                saved)))

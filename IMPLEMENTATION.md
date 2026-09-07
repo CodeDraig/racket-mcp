@@ -4016,3 +4016,36 @@ checks were not repeated. The preceding 4,835 native/1,301 schema/13 Go results
 remain the broader runtime evidence. Verification is Linux/Racket 9.2; concurrent
 task-control ordering, independent Tasks interoperability and the full release
 gates remain open.
+
+## Reject consumed upstream task input snapshots (2026-09-07)
+
+A new regression reproduced a delayed notification reopening an input round after
+tasks/update had been acknowledged and SQLite reopened. The old path discarded
+the previous remote detail when applying the acknowledgement, so it assigned new
+local input IDs and advanced the stored revision for the obsolete notification.
+The initial probe failed its rejection, revision and state-preservation assertions.
+Its first compilation also exposed a mistaken fixture storage constructor name,
+which was corrected before reproducing the runtime defect.
+
+Applying an acknowledged input update now retains a SHA-256 fingerprint of the
+consumed remote detail, excluding transport metadata. Observations matching a
+consumed snapshot fail with an explicit refresh diagnostic unless an explicit
+poll has since established that same detail as current. The fingerprints persist
+across reopen and share the existing bridge state-size and input-round bounds.
+No timestamp ordering or automatic poll/retry is inferred. Older records without
+fingerprints cannot retrospectively identify previously consumed snapshots.
+
+The regression also holds an update in flight while starting an observation:
+the observer waits for the existing task worker claim, then rejects the obsolete
+input after acknowledgement. SQLite reopen preserves rejection without further
+revisions or upstream requests. An explicit fresh poll can establish another
+round even when remote input IDs and timestamps are reused, and its duplicate
+notification remains valid. Six focused suites passed 264 checks.
+
+Final sh scripts/check.sh passed compilation, 4,922 native checks, all 1,301 core
+schema cases and Scribble. All thirteen sh scripts/check-interop.sh probes passed.
+The rebuilt distribution passed isolated raco setup --check-pkg-deps --pkgs
+racket-mcp, with no warning or undefined-tag matches. git diff --check passed.
+Verification is Linux/Racket 9.2. This closes the reproduced consumed-input race;
+arbitrary cross-stream ordering, independent Tasks interoperability and the full
+SDK release gates remain open.
