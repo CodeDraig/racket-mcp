@@ -2398,3 +2398,49 @@ source distribution; isolated env -u PLTCOLLECTS raco setup --check-pkg-deps
 an overlong generated section filename; an explicit short Scribble tag fixed it
 before the passing build. git diff --check passed. Linux/Racket 9.2 remains the
 verified platform; the complete SDK release remains unfinished.
+
+## Shared logical time for authored interactions (2026-09-07)
+
+Scenario preparation found independent wall-clock reads across runtime policy,
+durable execution and storage. mcp/clock now provides current-mcp-clock,
+mcp-current-milliseconds/seconds, and an exact-capable thread-safe manual clock.
+make-runtime captures an explicit/default clock without changing the public raw
+runtime constructor arity. Dispatch, HTTP authentication, detached task workers,
+startup recovery, repaired-task retries and change publication select that clock.
+Default resource caches and pagination share it. Explicit existing per-helper
+clock/cache overrides remain supported in their original units.
+
+Workflow/render expiry, task timestamps/expiry, principal checks, journal entries
+and outbox retention now use logical time. OAuth helper defaults use the parameter;
+HTTP response dates and real scheduling/deadline alarms remain wall-clock based.
+This enables deterministic time advancement, not deterministic thread scheduling.
+The full scenario fault-injection grammar remains a required implementation item.
+
+The new clock suite passed 52 checks: exact subsecond time, invalid inputs,
+concurrent advances, caller/runtime isolation, nested resource render expiry,
+cache TTL and cursor expiry, task timestamps and completion, journal/outbox time,
+live protected HTTP authentication at the expiry boundary, store reopen, and
+startup recovery of a killed working task. An initial test had mismatched
+parentheses and used HTTP outcomes without unwrapping the JSON-RPC result; both
+were corrected before passing. The preceding focused suites passed 175 checks
+before the three startup-recovery assertions were added. A runnable authored
+cache-expiry example accompanies the public clock documentation.
+
+The example's first package check rejected a root-level RackUnit import as an
+undeclared runtime dependency. Moving it into a user module+ test exposed two
+existing scenario defects: #lang mcp generated a test-local mcp-interface that
+shadowed the parent before initialization, and the scenario CLI returned zero
+after RackUnit reported that error. The example now uses local-require inside
+the scenario body. Its final raco test run passes one authored test case (three
+assertions), and the CLI run emits no errors. General user-written module+
+behavior and failure exit propagation remain explicit scenario gates, not
+claimed fixed by the example adjustment.
+
+Final validation: sh scripts/check.sh passed compilation, 3,009 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five official Go probes. The corrected example passed raco make,
+raco test and the scenario command separately after the test-import adjustment.
+python3 scripts/package.py rebuilt the final clean distribution; isolated
+env -u PLTCOLLECTS raco setup --check-pkg-deps --pkgs racket-mcp passed, including
+documentation. git diff --check passed. Verification remains Linux/Racket 9.2;
+full scenario, compiler and release gates remain open.

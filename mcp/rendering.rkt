@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/string "storage.rkt" "json.rkt" "error.rkt" "private/embedded-content.rkt" "private/render-provenance.rkt")
+(require "clock.rkt" racket/list racket/string "storage.rkt" "json.rkt" "error.rkt" "private/embedded-content.rkt" "private/render-provenance.rkt")
 (provide current-render-capture deferred-embedding render-layout render-continuation? layout-embeddings? next-embedding-index)
 
 (define current-render-capture (make-parameter #f))
@@ -43,7 +43,7 @@
                          (hash-set! nodes id marker) marker))
           (when (> (hash-count nodes) 1024) (error 'render-layout "embedding count limit exceeded"))
           (create-instance! store principal (string-append "render:" operation) arguments "render/3" fingerprint
-                            (+ (current-seconds) ttl)
+                            (+ (mcp-current-seconds) ttl)
                             (hasheq 'kind "render" 'layout layout 'history (hasheq)
                                     'children (for/list ([id (in-list (sort (hash-keys nodes) <))])
                                                 (hash-set* (hash-ref nodes id) 'status "pending" 'round 0))) #:key key))))
@@ -52,7 +52,7 @@
                (equal? (stored-instance-arguments instance) arguments)
                (equal? (stored-instance-fingerprint instance) fingerprint)
                (equal? (hash-ref (stored-instance-state instance) 'kind #f) "render")
-               (> (stored-instance-expires instance) (current-seconds)))
+               (> (stored-instance-expires instance) (mcp-current-seconds)))
     (mcp-error -32602 "Rendering continuation does not match this execution"))
   (unless (equal? (stored-instance-version instance) "render/3")
     (mcp-error -32602 "Rendering continuation version is incompatible"

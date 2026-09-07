@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
+(require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
          current-workflow-change-publisher current-workflow-store current-workflow-adapters current-workflow-state current-workflow-responses current-workflow-invocation-key
@@ -88,7 +88,7 @@
       (string-append (workflow-descriptor-fingerprint workflow) ":adapters:" (json->string versions))))
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
-                      #:clock [clock current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
+                      #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
   (define executable-fingerprint (workflow-executable-fingerprint workflow adapters))
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'run-workflow "workflow execution must own its storage transaction boundaries"))

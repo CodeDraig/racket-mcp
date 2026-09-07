@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/string "authorization.rkt" "oauth-http.rkt")
+(require "clock.rkt" racket/list racket/string "authorization.rkt" "oauth-http.rkt")
 (provide make-oauth-authorizer oauth-authorizer? oauth-authorizer-resource authorize-resource!)
 (struct oauth-authorizer (lock run resource))
 (define (make-oauth-authorizer #:resource resource #:redirect-uri redirect #:browse browse
@@ -9,7 +9,7 @@
                                #:pre-registered [registrations (hash)]
                                #:client-metadata [document #f] #:client-metadata-url [document-url #f]
                                #:request-registration [request-registration #f]
-                               #:select-issuer [select-issuer car] #:clock [clock current-seconds])
+                               #:select-issuer [select-issuer car] #:clock [clock mcp-current-seconds])
   (define-values (native-fetch native-exchange) (make-oauth-http-adapters))
   (define fetch (or supplied-fetch native-fetch))
   (define exchange (or supplied-exchange native-exchange))

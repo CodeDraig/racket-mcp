@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "private/failure.rkt")
+(require "clock.rkt" racket/list "private/failure.rkt")
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
@@ -16,14 +16,14 @@
           (when (= (stored-instance-revision current) (stored-instance-revision instance))
             ((current-task-notify) (stored-instance-principal instance) (hash-ref (stored-instance-state instance) 'task))))))))
 (define (timestamp)
-  (define d (seconds->date (current-seconds) #f))
+  (define d (seconds->date (mcp-current-seconds) #f))
   (format "~a-~a-~aT~a:~a:~aZ" (~r (date-year d) #:min-width 4 #:pad-string "0")
           (~r (date-month d) #:min-width 2 #:pad-string "0") (~r (date-day d) #:min-width 2 #:pad-string "0")
           (~r (date-hour d) #:min-width 2 #:pad-string "0") (~r (date-minute d) #:min-width 2 #:pad-string "0") (~r (date-second d) #:min-width 2 #:pad-string "0")))
 (define (owned store id principal)
   (define instance (or (load-instance store id) (mcp-error -32602 "Unknown task")))
   (unless (and (equal? (stored-instance-principal instance) principal) (hash-has-key? (stored-instance-state instance) 'task)) (mcp-error -32602 "Unknown or foreign task"))
-  (when (<= (stored-instance-expires instance) (current-seconds)) (mcp-error -32602 "Task has expired")) instance)
+  (when (<= (stored-instance-expires instance) (mcp-current-seconds)) (mcp-error -32602 "Task has expired")) instance)
 (define (get-task store id principal)
   (hash-set (hash-ref (stored-instance-state (owned store id principal)) 'task) 'resultType "complete"))
 (define (terminal? task) (member (hash-ref task 'status) '("completed" "failed" "cancelled")))
@@ -90,7 +90,7 @@
                              (hash-set* (hash-remove task 'inputRequests) 'status "completed" 'lastUpdatedAt (timestamp) 'result result)))))))))))))
 (define (start-workflow-task workflow store arguments principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)]
                              #:operation-name [operation-name #f])
-  (define expiry (+ (current-seconds) 86400))
+  (define expiry (+ (mcp-current-seconds) 86400))
   (define instance
     (store-transaction store
       (lambda ()
@@ -140,7 +140,7 @@
                  (equal? (stored-instance-operation flow) (workflow-descriptor-name workflow))
                  (equal? (stored-instance-version flow) (workflow-descriptor-version workflow))
                  (equal? (stored-instance-fingerprint flow) (workflow-executable-fingerprint workflow adapters))
-                 (> (stored-instance-expires flow) (current-seconds)))
+                 (> (stored-instance-expires flow) (mcp-current-seconds)))
       (error 'retry-recovered-task! "incompatible, foreign, changed, or expired workflow")))
   (check-executable! (load-instance store flow-id) original)
   (define (existing-replacement)
@@ -192,7 +192,7 @@
                                    'responses (hash-ref old-state 'responses (hasheq))
                                    'task (hasheq 'taskId (stored-instance-handle next) 'status "working"
                                                  'createdAt time 'lastUpdatedAt time
-                                                 'ttlMs (* 1000 (- expiry (current-seconds))) 'pollIntervalMs 100))))
+                                                 'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))))
                        (record-event! store id (hasheq 'kind "task-replacement" 'taskId (stored-instance-handle updated)
                                                        'workflowRevision (stored-instance-revision flow)))
                        (record-event! store (stored-instance-handle updated) (hasheq 'kind "replaces-task" 'taskId id))

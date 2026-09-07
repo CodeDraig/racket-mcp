@@ -1,6 +1,6 @@
 #lang racket/base
-(require "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
-(provide runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
+(require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
+(provide runtime-clock runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
 (define protocol-version "2026-07-28")
 (struct resource-snapshot (result reads keys expires) #:transparent)
@@ -9,6 +9,12 @@
   (struct-copy resource-snapshot snapshot [result (hash-set (resource-snapshot-result snapshot) 'ttlMs ttl)]))
 (define current-embedding-stack (make-parameter '()))
 (struct runtime (interface authorize store adapters custodian subscriptions cache cache-context cache-namespace pagination required-scopes) #:transparent)
+(struct clocked-runtime runtime (clock))
+(define (runtime-clock rt)
+  (if (clocked-runtime? rt) (clocked-runtime-clock rt) (current-mcp-clock)))
+(define-syntax-rule (define/clock (name rt . arguments) body ...)
+  (define (name rt . arguments)
+    (parameterize ([current-mcp-clock (runtime-clock rt)]) body ...)))
 (define (default-cache-context principal)
   (cond [(verified-principal? principal)
          (json->string (hasheq 'subject (verified-principal-subject principal) 'issuer (verified-principal-issuer principal)
@@ -17,11 +23,13 @@
         [(string? principal) (string->immutable-string principal)]
         [else principal]))
 (define (make-runtime interface #:authorize [authorize (lambda (principal method params) #t)] #:store [store #f] #:adapters [adapters (hasheq)]
-                      #:recover-tasks? [recover? #t] #:restore-principal [restore-principal values] #:cache [cache (make-resource-cache)] #:cache-context [cache-context default-cache-context]
+                      #:clock [clock (current-mcp-clock)] #:recover-tasks? [recover? #t] #:restore-principal [restore-principal values] #:cache [cache (make-resource-cache #:clock clock)] #:cache-context [cache-context default-cache-context]
                       #:page-size [page-size 100] #:cursor-ttl [cursor-ttl 60]
                       #:cursor-limit [cursor-limit 1024] #:cursor-bytes [cursor-bytes 16777216]
-                      #:cursor-clock [cursor-clock current-seconds]
+                      #:cursor-clock [cursor-clock (lambda () (parameterize ([current-mcp-clock clock]) (mcp-current-seconds)))]
                       #:required-scopes [required-scopes (lambda (method params) '())])
+  (unless (and (procedure? clock) (procedure-arity-includes? clock 0))
+    (raise-argument-error 'make-runtime "clock procedure accepting zero arguments" clock))
   ;; Public raw descriptors must pass the same interface checks before recovery
   ;; can execute application work. Preserve the supplied descriptor's identity.
   (void (make-interface #:server (interface-descriptor-server interface)
@@ -39,9 +47,9 @@
   (define (scope-authorize principal method params)
     (define needed (scopes method params))
     (and (or (null? needed) (scopes-allow? principal needed)) (authorize principal method params)))
-  (define rt (runtime interface scope-authorize store (for/hasheq ([(name adapter) (in-hash adapters)]) (values name adapter)) (make-custodian) (make-subscription-hub) cache cache-context (gensym 'runtime-cache)
+  (define rt (clocked-runtime interface scope-authorize store (for/hasheq ([(name adapter) (in-hash adapters)]) (values name adapter)) (make-custodian) (make-subscription-hub) cache cache-context (gensym 'runtime-cache)
                               (make-pagination #:page-size page-size #:ttl cursor-ttl #:limit cursor-limit
-                                               #:max-bytes cursor-bytes #:clock cursor-clock) scopes))
+                                               #:max-bytes cursor-bytes #:clock cursor-clock) scopes clock))
   (with-handlers ([(lambda (_) #t) (lambda (e) (custodian-shutdown-all (runtime-custodian rt)) (raise e))])
     (when (and store recover?) (recover-runtime-tasks! rt #:restore-principal restore-principal)))
   rt)
@@ -98,9 +106,9 @@
   (unless (and (list? keys) (json-value? keys)) (error 'freshness "dependency keys must be a JSON list"))
   keys)
 (define (resource-notification-authorized? rt principal uri)
-  (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (current-seconds)))
+  (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (mcp-current-seconds)))
        ((runtime-authorize rt) principal "resources/read" (hasheq 'uri uri '_meta (request-meta)))))
-(define (runtime-report-change! rt principal keys)
+(define/clock (runtime-report-change! rt principal keys)
   (change-keys! keys)
   (define owner (principal-key principal))
   ;; Invalidation precedes publication, including changes arriving externally.
@@ -128,17 +136,17 @@
                      #:principal principal #:principal-key principal-key
                      #:authorized? (lambda (reader) (resource-notification-authorized? rt reader uri))))
   (remove-duplicates (append cached affected)))
-(define (runtime-drain-changes! rt)
+(define/clock (runtime-drain-changes! rt)
   (unless (runtime-store rt) (error 'freshness "outbox storage is not configured"))
   (drain-change-outbox! (runtime-store rt)
                        (lambda (_id principal keys) (runtime-report-change! rt principal keys))))
 ;; Resolve persisted identity through application policy; credentials are never
 ;; serialized. Each worker reauthorizes after acquiring its instance lock.
-(define (recover-runtime-tasks! rt #:restore-principal [restore-principal values])
+(define/clock (recover-runtime-tasks! rt #:restore-principal [restore-principal values])
   (define store (runtime-store rt))
   (if (not store) '()
       (for/list ([instance (in-list (list-instances store))]
-                 #:when (and (> (stored-instance-expires instance) (current-seconds))
+                 #:when (and (> (stored-instance-expires instance) (mcp-current-seconds))
                              (equal? (hash-ref (hash-ref (stored-instance-state instance) 'task (hasheq)) 'status #f) "working")))
         (define tool
           (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
@@ -153,7 +161,7 @@
                         (define principal (restore-principal identity))
                         (unless (and principal (equal? (principal-key principal) identity)
                                      (or (not (verified-principal? principal))
-                                         (> (verified-principal-expiry principal) (current-seconds)))
+                                         (> (verified-principal-expiry principal) (mcp-current-seconds)))
                                      ((runtime-authorize rt) principal "tools/call"
                                       (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance))))
                           (error 'recover-runtime-tasks! "task principal is no longer authorized"))
@@ -165,7 +173,7 @@
     (publish-change! (runtime-subscriptions rt) "notifications/tasks" task
                      #:principal principal #:principal-key principal-key
                      #:authorized? (lambda (reader)
-                       (and (or (not (verified-principal? reader)) (> (verified-principal-expiry reader) (current-seconds)))
+                       (and (or (not (verified-principal? reader)) (> (verified-principal-expiry reader) (mcp-current-seconds)))
                             ((runtime-authorize rt) reader "tasks/get" (hasheq 'taskId (hash-ref task 'taskId))))))))
 (define (request-meta #:capabilities [caps (hasheq)] #:extra [extra (hasheq)])
   (hash-set* extra 'io.modelcontextprotocol/protocolVersion protocol-version
@@ -188,7 +196,7 @@
   (define base (hasheq 'name (tool-descriptor-name d) 'description (tool-descriptor-description d)
                        'inputSchema (tool-descriptor-input-schema d) 'annotations (tool-descriptor-annotations d)))
   (if (tool-descriptor-output-schema d) (hash-set base 'outputSchema (tool-descriptor-output-schema d)) base))
-(define (dispatch rt method params #:principal [principal 'local] #:id [id #f] #:notify [notify void])
+(define/clock (dispatch rt method params #:principal [principal 'local] #:id [id #f] #:notify [notify void])
   (define meta (validate-request-meta params))
   (call-with-progress-scope (hash-ref meta 'progressToken missing) notify
     (lambda () (dispatch/core rt method params #:principal principal #:id id #:notify notify))))
@@ -196,7 +204,7 @@
   (define meta (validate-request-meta params))
   (define caps (hash-ref meta 'io.modelcontextprotocol/clientCapabilities missing))
   (unless (hash? caps) (mcp-error -32602 "clientCapabilities must be an object"))
-  (when (and (verified-principal? principal) (<= (verified-principal-expiry principal) (current-seconds)))
+  (when (and (verified-principal? principal) (<= (verified-principal-expiry principal) (mcp-current-seconds)))
     (mcp-error -32001 "Principal has expired"))
   (unless ((runtime-authorize rt) principal method params) (mcp-error -32001 "Operation is not authorized"))
   (define iface (runtime-interface rt))
@@ -438,7 +446,7 @@
          (define expires
            (apply min (+ now (if bypass? 0 (resource-descriptor-ttl-ms d)))
                   (if (verified-principal? principal)
-                      (+ now (max 0 (* 1000 (- (verified-principal-expiry principal) (current-seconds))))) +inf.0)
+                      (+ now (max 0 (* 1000 (- (verified-principal-expiry principal) (mcp-current-seconds))))) +inf.0)
                   (map resource-snapshot-expires (unbox children))))
          (define limited-ttl (max 0 (inexact->exact (floor (- expires now)))))
          (resource-snapshot
@@ -505,7 +513,7 @@
         (hasheq 'jsonrpc "2.0" 'id id 'result (dispatch rt (hash-ref message 'method) (hash-ref message 'params (hasheq)) #:principal principal #:id id #:notify notify)))))
 
 ;; An explicit local action after recovery, never an automatic wire retry.
-(define (retry-runtime-task! rt id #:principal principal #:capabilities supplied-caps)
+(define/clock (retry-runtime-task! rt id #:principal principal #:capabilities supplied-caps)
   (define caps (string->json (json->string supplied-caps)))
   (define store (runtime-store rt))
   (unless store (mcp-error -32601 "Tasks are not configured"))
@@ -524,7 +532,7 @@
     (mcp-error -32021 "Client elicitation capability is required"
       (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
   (define (authorize)
-    (unless (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (current-seconds)))
+    (unless (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (mcp-current-seconds)))
                  ((runtime-authorize rt) principal "tasks/get" (hasheq 'taskId id))
                  ((runtime-authorize rt) principal "tools/call"
                    (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance))))

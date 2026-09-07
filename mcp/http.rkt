@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/string racket/list racket/port racket/async-channel net/base64 net/url
+(require "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
          web-server/http web-server/web-server web-server/servlet-dispatch web-server/safety-limits
          "subscription.rkt" "authorization.rkt" "private/http-wire.rkt" "private/sse.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "json.rkt" "runtime.rkt" "descriptor.rkt" "stdio.rkt" "header-schema.rkt")
 (provide serve-http make-http-handler encode-header-value decode-header-value request-headers
@@ -91,6 +91,7 @@
   (unless (and (real? keepalive) (< 0 keepalive +inf.0)) (raise-argument-error 'make-http-handler "positive finite real?" keepalive))
   (unless (exact-positive-integer? response-limit) (raise-argument-error 'make-http-handler "exact-positive-integer?" response-limit))
   (lambda (req)
+    (parameterize ([current-mcp-clock (runtime-clock rt)])
     (define id missing)
     (define headers (request-headers/raw req))
     (define (get-header key)
@@ -122,7 +123,7 @@
                              (member (verified-principal-issuer principal) (hash-ref metadata 'authorization_servers))
                              (member (hash-ref metadata 'resource)
                                      (let ([aud (verified-principal-audience principal)]) (if (list? aud) aud (list aud))))
-                             (> (verified-principal-expiry principal) (current-seconds))))))
+                             (> (verified-principal-expiry principal) (mcp-current-seconds))))))
              (cond [(not accepted?) (json-response 401 #f (list (challenge)))]
                    [else
                     (unless (regexp-match? #px"^application/json(?:;|$)" (or (get-header "Content-Type") "")) (mcp-error -32600 "Expected application/json"))
@@ -166,7 +167,7 @@
                             #:mime-type #"text/event-stream" #:headers (list (header #"Cache-Control" #"no-cache") (header #"X-Accel-Buffering" #"no")))]
                           [else (define result (dispatch-message rt message #:principal principal))
                                 (define code (hash-ref (hash-ref result 'error (hasheq)) 'code #f))
-                                (json-response (cond [(equal? code -32001) 403] [(equal? code -32601) 404] [(member code '(-32602 -32600 -32020 -32021 -32022)) 400] [else 200]) result)])])]))))
+                                (json-response (cond [(equal? code -32001) 403] [(equal? code -32601) 404] [(member code '(-32602 -32600 -32020 -32021 -32022)) 400] [else 200]) result)])])])))))
 (define header-value/raw header-value)
 (define (serve-http rt #:port [port 8000] #:host [host "127.0.0.1"] #:origins [origins #f]
                     #:authenticate [authenticate #f] #:sse? [sse? #f] #:confirmation [confirmation #f]

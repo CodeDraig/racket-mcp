@@ -1252,3 +1252,46 @@ values use the calling custodian and do not provide the factory stores' independ
 supervisor lifetime. Store opening, simultaneous store shutdown, and process
 termination are separate lifecycle boundaries; the worker-termination tests do
 not establish every possible crash/commit race.
+
+@section[#:tag "runtime-clock"]{Controlling logical time}
+
+@tt{mcp/clock}, also exported by @tt{mcp}, provides a shared logical clock for
+reproducible interactions. @tt{current-mcp-clock} is a parameter whose value is
+a zero-argument procedure returning finite real Unix milliseconds. Its default
+is Racket's wall clock. @tt{mcp-current-milliseconds} reads that clock;
+@tt{mcp-current-seconds} floors it to an exact integer Unix second.
+
+@tt{make-runtime} accepts @tt{#:clock}; the default captures the current clock
+procedure when the runtime is constructed. @tt{runtime-clock} returns it.
+Dispatch and HTTP authentication use that runtime's clock even when the caller
+has a different parameterization. Detached task workers inherit it. Runtime task
+recovery, explicit repaired-task retries, and change publication also select it.
+Default caches and pagination use the same source. Explicit @tt{#:cache} and
+@tt{#:cursor-clock} arguments retain their independently supplied clocks.
+
+Workflow and rendering expiry, task timestamps and expiry, journal timestamps,
+outbox retention, and principal expiry checks use logical time. Standalone
+storage/workflow/task and OAuth helper calls use the current parameter, unless
+an existing explicit @tt{#:clock} argument overrides that helper. Those older
+helper arguments continue to use seconds; cache and runtime clocks use milliseconds.
+A raw @tt{runtime} constructor does not capture a clock: use @tt{make-runtime}
+when clock ownership is required.
+
+@racketblock[
+(define clock (make-manual-clock #:seconds 100))
+(define rt (make-runtime an-interface #:clock clock))
+(manual-clock-advance! clock 1/2)
+]
+
+@tt{make-manual-clock} returns a callable, thread-safe clock initially at the
+supplied finite Unix seconds (default zero). @tt{manual-clock-advance!} adds
+finite nonnegative seconds and returns the new millisecond value. Exact rational
+inputs retain exactness; negative advances, infinities, and NaN are rejected.
+The clock is application configuration, not serialized workflow state. Supply
+the intended clock explicitly when reopening a store or restarting a runtime.
+
+The executable @tt{examples/clock-scenario.rkt} demonstrates authored cache
+expiry with @tt{raco mcp scenario examples/clock-scenario.rkt}. Advancing logical
+time does not sleep or schedule threads. Transport deadlines, cleanup grace
+periods, and task-worker polling still use real alarm events. The complete
+scenario fault language and deterministic scheduling controls remain unfinished.

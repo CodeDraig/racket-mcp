@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/transaction.rkt" db racket/random racket/list racket/file "json.rkt" "private/worker-lock.rkt" "private/render-provenance.rkt")
+(require "clock.rkt" "private/transaction.rkt" db racket/random racket/list racket/file "json.rkt" "private/worker-lock.rkt" "private/render-provenance.rkt")
 (provide open-sqlite-store open-memory-store close-store! store-transaction
          (struct-out state-store) (struct-out stored-instance)
          create-instance! load-instance list-instances update-instance! record-event! instance-events
@@ -128,6 +128,6 @@
       (unless (= 1 (query-value (state-store-connection store) "SELECT changes()")) (error 'update-instance! "concurrent state transition"))
       (load-instance store (stored-instance-handle instance)))))
 (define (record-event! store handle event)
-  (store-transaction store (lambda () (query-exec (state-store-connection store) "INSERT INTO journal(handle,event,recorded,event_marks) VALUES (?,?,?,?)" handle (json->string event) (current-seconds) (json->string (render-provenance event))))))
+  (store-transaction store (lambda () (query-exec (state-store-connection store) "INSERT INTO journal(handle,event,recorded,event_marks) VALUES (?,?,?,?)" handle (json->string event) (mcp-current-seconds) (json->string (render-provenance event))))))
 (define (instance-events store handle)
   (store-transaction store (lambda () (for/list ([row (in-list (query-rows (state-store-connection store) "SELECT event,event_marks FROM journal WHERE handle=? ORDER BY sequence" handle))]) (decode-stored-json (vector-ref row 0) (vector-ref row 1))))))

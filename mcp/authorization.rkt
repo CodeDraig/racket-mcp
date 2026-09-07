@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/string racket/random net/base64 net/url net/uri-codec web-server/http "json.rkt" "private/authenticate.rkt" "private/oauth-metadata.rkt")
+(require "clock.rkt" racket/list racket/string racket/random net/base64 net/url net/uri-codec web-server/http "json.rkt" "private/authenticate.rkt" "private/oauth-metadata.rkt")
 (provide (all-from-out "private/authenticate.rkt" "private/oauth-metadata.rkt") (struct-out verified-principal) (struct-out oauth-registration) (struct-out oauth-pending)
          (struct-out oauth-credential) protected-resource-metadata bearer-challenge make-bearer-authenticator
          check-scopes! protected-resource-metadata-url scopes-allow? principal-key begin-authorization finish-authorization refresh-credential discover-authorization discover-authorization-for-resource authorization-metadata-urls
@@ -50,7 +50,7 @@
                  (if (null? scopes) "" (string-append ", scope=\"" (string-join scopes " ") "\""))))
 (define (scopes-allow? principal required)
   (and (verified-principal? principal) (for/and ([scope (in-list required)]) (member scope (verified-principal-scopes principal))) #t))
-(define (make-bearer-authenticator verify #:issuer issuer #:audience audience #:clock [clock current-seconds])
+(define (make-bearer-authenticator verify #:issuer issuer #:audience audience #:clock [clock mcp-current-seconds])
   (lambda (headers)
     (define values (for/list ([h (in-list headers)] #:when (bytes-ci-equal? (header-field h) #"authorization")) (bytes->string/utf-8 (header-value h))))
     (and (= (length values) 1)
@@ -250,7 +250,7 @@
   (oauth-credential (oauth-registration-issuer registration) (oauth-registration-resource registration)
                     (hash-ref token 'access_token) refresh
                     (+ (clock) (hash-ref token 'expires_in 0)) scopes))
-(define (finish-authorization pending response exchange #:clock [clock current-seconds])
+(define (finish-authorization pending response exchange #:clock [clock mcp-current-seconds])
   (unless (equal? (hash-ref response 'state #f) (oauth-pending-state pending)) (error 'finish-authorization "OAuth state mismatch"))
   (define registration (oauth-pending-registration pending))
   (unless (equal? (hash-ref response 'iss #f) (oauth-registration-issuer registration)) (error 'finish-authorization "OAuth response issuer mismatch"))
@@ -262,7 +262,7 @@
                                   'client_id (oauth-registration-client-id registration) 'redirect_uri (oauth-registration-redirect-uri registration)
                                   'resource (oauth-registration-resource registration) 'code_verifier (oauth-pending-verifier pending))))
   (token->credential registration token clock))
-(define (refresh-credential registration credential metadata exchange #:clock [clock current-seconds])
+(define (refresh-credential registration credential metadata exchange #:clock [clock mcp-current-seconds])
   (unless (and (equal? (oauth-registration-issuer registration) (oauth-credential-issuer credential))
                (equal? (oauth-registration-resource registration) (oauth-credential-resource credential))
                (equal? (hash-ref metadata 'issuer #f) (oauth-credential-issuer credential))) (error 'refresh-credential "credential issuer/resource mismatch"))

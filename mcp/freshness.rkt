@@ -1,12 +1,12 @@
 #lang racket/base
-(require racket/list racket/set "storage.rkt" "json.rkt")
+(require "clock.rkt" racket/list racket/set "storage.rkt" "json.rkt")
 (provide cache-clock (struct-out cache-partition) make-resource-cache cache-ref! invalidate-keys! (struct-out committed-result)
          record-committed-change! drain-change-outbox!)
 (struct cache-partition (owner authority) #:transparent)
 (struct cache-entry (value expires dependencies) #:transparent)
 (struct resource-cache (lock entries clock generation limit) #:mutable #:transparent)
 (struct committed-result (result keys) #:transparent)
-(define (make-resource-cache #:clock [clock current-inexact-milliseconds] #:limit [limit 1024])
+(define (make-resource-cache #:clock [clock (current-mcp-clock)] #:limit [limit 1024])
   (unless (exact-positive-integer? limit) (raise-argument-error 'make-resource-cache "exact-positive-integer?" limit))
   (resource-cache (make-semaphore 1) (make-hash) clock 0 limit))
 (define (cache-clock cache) ((resource-cache-clock cache)))
@@ -58,7 +58,7 @@
 ;; Its delivery cursor is durable. A callback must tolerate duplicate delivery
 ;; after a crash between publication and cursor advancement.
 (define (record-committed-change! store principal keys)
-  (create-instance! store principal "change-outbox" (hasheq 'keys keys) "1" "outbox-v1" (+ (current-seconds) 31536000)
+  (create-instance! store principal "change-outbox" (hasheq 'keys keys) "1" "outbox-v1" (+ (mcp-current-seconds) 31536000)
                     (hasheq 'status "pending")))
 (define (drain-change-outbox! store deliver)
   (for ([instance (in-list (list-instances store #:operation "change-outbox"))])
