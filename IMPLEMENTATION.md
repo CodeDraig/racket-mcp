@@ -1798,3 +1798,32 @@ metadata. The final run passed that regression. All five Go probes passed; git
 diff --check passed. Scribble was rebuilt after clarifying the low-level callback's
 raise-on-denial contract. Evidence remains Linux/Racket 9.2, not full independent
 Tasks conformance or every-boundary process-crash verification.
+
+## Task replacement across process termination (2026-09-07)
+
+Added task-recovery-process.rkt and its separate executable worker. The parent
+kills a live child after four signalled boundaries: repair before replacement
+allocation, committed replacement before its worker starts, an external manual
+effect before recording its result, and terminal replacement completion. Each
+case reopens the SQLite store in a fresh process through the public runtime APIs.
+The worker uses authorization and adapter callbacks to stop at these boundaries;
+no production-only fault hooks were added.
+
+The focused suite passed 60 checks. Restart preserves replacement identity and
+terminal outcomes; repeating replacement retrieves the recorded handle. Killing
+an in-flight manual effect leaves it uncertain, and startup recovery fails that
+task without another adapter invocation. Recording an observed outcome then
+creates a third task. Both earlier failed tasks retain their result and revision.
+The effect log verifies that explicitly authorized retry uses the original key,
+while outcome repair does not execute the effect again. Reports are sorted by
+handle so assertions do not depend on SQLite row order.
+
+These cases extend actual process-crash coverage for task replacement. They do
+not establish every workflow, input, nested rendering, transaction, expiry, or
+concurrent recovery boundary. The overall release remains incomplete.
+
+Final validation: sh scripts/check.sh passed compilation, 2,244 native checks,
+all 1,301 pinned JSON Schema core cases, and Scribble. git diff --check passed.
+No runtime implementation changed in this batch; the five Go probes were not
+rerun, and their preceding results remain historical evidence. Native verification
+is Linux/Racket 9.2; other platforms and the full release gates remain open.

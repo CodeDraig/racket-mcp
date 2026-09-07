@@ -980,5 +980,12 @@ callbacks. The authorization callback raises an exception to deny execution.
 Applications using that API directly supply their own authorization;
 @tt{retry-runtime-task!} applies runtime policy. Only failures carrying the recorded
 recovery metadata are eligible; old development records are not inferred from an
-error message. Complete process-crash coverage of every allocation/recovery boundary
-remains a separate verification gate.
+error message.
+
+Process-termination tests cover repair before allocation, a committed replacement
+before worker execution, an interrupted replacement effect, and terminal completion.
+Restart preserves committed handles and outcomes. An interrupted manual effect
+fails for explicit recovery without invoking the adapter again; repairing that
+replacement creates a third task while both failed task results remain unchanged.
+These tests do not establish the complete crash/concurrency matrix for every
+workflow, input, and storage transition.
