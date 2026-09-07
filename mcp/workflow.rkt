@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
+(require "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
          current-workflow-change-publisher current-workflow-store current-workflow-adapters current-workflow-state current-workflow-responses current-workflow-invocation-key
@@ -73,7 +73,7 @@
     (record-event! store handle (hasheq 'kind "changes-recorded" 'stage (symbol->string stage) 'outbox (stored-instance-handle outbox)))))
 (define (publish-workflow-changes!)
   ;; Publication is a retryable outbox delivery, not part of the effect outcome.
-  (with-handlers ([exn:fail? (lambda (e) (fprintf (current-error-port) "MCP change publication deferred: ~a\n" (exn-message e)))])
+  (with-handlers ([non-break-failure? (lambda (e) (fprintf (current-error-port) "MCP change publication deferred: ~a\n" (failure-message e)))])
     ((current-workflow-change-publisher))))
 (define (workflow-executable-fingerprint workflow adapters)
   (define names (sort (remove-duplicates

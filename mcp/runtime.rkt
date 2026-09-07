@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
+(require "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
 (provide runtime-report-change! runtime-drain-changes! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
 (define protocol-version "2026-07-28")
@@ -42,7 +42,7 @@
   (define rt (runtime interface scope-authorize store (for/hasheq ([(name adapter) (in-hash adapters)]) (values name adapter)) (make-custodian) (make-subscription-hub) cache cache-context (gensym 'runtime-cache)
                               (make-pagination #:page-size page-size #:ttl cursor-ttl #:limit cursor-limit
                                                #:max-bytes cursor-bytes #:clock cursor-clock) scopes))
-  (with-handlers ([exn? (lambda (e) (custodian-shutdown-all (runtime-custodian rt)) (raise e))])
+  (with-handlers ([(lambda (_) #t) (lambda (e) (custodian-shutdown-all (runtime-custodian rt)) (raise e))])
     (when (and store recover?) (recover-runtime-tasks! rt #:restore-principal restore-principal)))
   rt)
 (define (task-operation? d instance)
@@ -499,7 +499,7 @@
                           'message (if (exn:fail:mcp? e) (exn-message e) "Internal error")))
     (define body (hasheq 'jsonrpc "2.0" 'error (if (and (exn:fail:mcp? e) (exn:fail:mcp-data e)) (hash-set detail 'data (exn:fail:mcp-data e)) detail)))
     (if (or (missing? id) (not (request-id? id))) body (hash-set body 'id id)))
-  (with-handlers ([exn:fail? error-response])
+  (with-handlers ([non-break-failure? error-response])
     (check-client-message message)
     (if (missing? id) #f
         (hasheq 'jsonrpc "2.0" 'id id 'result (dispatch rt (hash-ref message 'method) (hash-ref message 'params (hasheq)) #:principal principal #:id id #:notify notify)))))

@@ -2328,3 +2328,35 @@ Final validation: sh scripts/check.sh passed compilation, 2,824 native checks,
 all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
 passed all five Go SDK probes. git diff --check passed. Evidence remains
 Linux/Racket 9.2; the complete SDK release gates are still open.
+
+## Arbitrary raised values at protocol, task, and transaction boundaries (2026-09-07)
+
+A probe confirmed that a raised symbol escaped dispatch-message instead of
+producing a terminal response. A private non-break failure predicate now handles
+arbitrary raised values at the wire boundary and task worker boundary. Protocol
+errors remain generic and do not expose payloads; task failures become terminal
+and manual effect intents remain recovery-required. Notification and post-commit
+publication failures are deferred even for non-exception payloads, without
+calling their custom printers. Runtime construction cleanup also rethrows any
+raised value after shutting down its allocated custodian. Break exceptions retain
+their prior propagation/control meaning.
+
+The regression exposed a storage defect: db's call-with-transaction catches exn?
+only, so a non-exception notification failure left an open transaction. The
+source confirmed that handler boundary. store-transaction now privately wraps
+non-exception values across the database helper to trigger rollback, then raises
+the original object. Nested store transactions preserve their shared boundary.
+
+The raised-value, workflow-freshness and stdio-cancellation suites passed 116
+checks after recompiling stale dependent storage exports. New cases cover false,
+symbol, vector, an unprintable structure, base exn, and break identity; terminal
+wire responses and same-connection slot reuse; task failure and manual recovery
+without replay; deferred outbox publication; memory/file transaction rollback,
+original payload identity, subsequent commit, and reopen persistence. Forced
+thread/process termination and the full lifecycle/release matrix remain separate
+open gates.
+
+Final validation: sh scripts/check.sh passed compilation, 2,888 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five Go SDK probes. git diff --check passed. Verification remains
+Linux/Racket 9.2; remaining lifecycle and full SDK release gates stay open.

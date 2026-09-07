@@ -1,12 +1,12 @@
 #lang racket/base
-(require racket/list)
+(require racket/list "private/failure.rkt")
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
 (define current-task-notify (make-parameter (lambda (principal task) (void))))
 (define (notify-task store instance)
   (when (stored-instance? instance)
-    (with-handlers ([exn:fail? (lambda (e) (eprintf "Task notification delivery failed: ~a\n" (exn-message e)))])
+    (with-handlers ([non-break-failure? (lambda (e) (eprintf "Task notification delivery failed: ~a\n" (failure-message e)))])
       (store-transaction store
         (lambda ()
           ;; If another transition won before publication, omit this obsolete
@@ -73,7 +73,7 @@
     (thread
      (lambda ()
        (claim (lambda ()
-       (with-handlers ([exn:fail? (lambda (e)
+       (with-handlers ([non-break-failure? (lambda (e)
                                    (change! store id principal
                                      (lambda (state task) (task-failure-state workflow store state task e))))])
          (define state (stored-instance-state (owned store id principal)))

@@ -1212,3 +1212,22 @@ boolean input schemas are normalized over JSON objects: @tt{#t} accepts any
 object, and @tt{#f} accepts none. Supplied object schemas must declare
 @tt{type: "object"} at the root, as MCP requires. Interface construction also
 checks normalized schema fields and header annotations for raw descriptors.
+
+@section{Raised values at failure boundaries}
+
+Racket handlers may raise values other than exceptions. @tt{dispatch-message}
+converts non-break failures into internal-error responses, preserving explicit
+MCP errors. It does not serialize the raised value into the protocol response.
+Task workers record such failures as terminal failures; uncertain manual effects
+retain their recovery-required state. Retrying a failed task does not execute
+that effect again.
+
+Notification and post-commit outbox callback failures remain deferred delivery
+failures. Diagnostics do not invoke custom printers on non-exception payloads.
+Break exceptions retain their existing control-flow meaning.
+
+@tt{store-transaction} wraps non-exception raised values only while crossing
+Racket's database transaction helper, whose rollback handler accepts exceptions.
+After rollback it re-raises the original value. Nested store transactions share
+that boundary. This covers raised-value rollback; it is not a claim that every
+process termination or arbitrary continuation escape has been verified.
