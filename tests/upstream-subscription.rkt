@@ -61,7 +61,8 @@
 
 ;; Deterministic protocol-ordering and failure fixtures use ordinary request handles.
 (define resource (make-resource "document" "remote:///doc" (lambda () "data")))
-(define remote (make-runtime (make-interface #:resources (list resource))))
+(define remote (make-runtime (make-interface #:resources
+  (list resource (make-resource "other" "remote:///other" (lambda () "other"))))))
 (define snapshot (capture-snapshot (lambda (m p) (dispatch remote m (hash-set p '_meta (request-meta))))))
 (define source (make-upstream-interface snapshot (lambda (_m _p) (error 'test "unexpected resource read"))))
 (define local (make-runtime source))
@@ -71,7 +72,7 @@
 (define ack (notice "notifications/subscriptions/acknowledged" (hasheq 'notifications (hasheq 'resourceSubscriptions '("remote:///doc")))))
 (define update (notice "notifications/resources/updated" (hasheq 'uri "remote:///doc")))
 (define complete (hasheq 'jsonrpc "2.0" 'id id 'result (params (hasheq 'resultType "complete"))))
-(define (exercise messages outcome proc #:timeout [timeout 1])
+(define (exercise messages outcome proc #:timeout [timeout 1] #:uris [uris '("remote:///doc")])
   (define cancellations 0)
   (define ready (make-semaphore 0))
   (define result (box outcome))
@@ -88,7 +89,7 @@
     (if (equal? method "subscriptions/listen") peer
         (request-handle 1 (make-semaphore 1)
           (box (hasheq 'result (hash-ref snapshot (string->symbol method)))) void (make-async-channel))))
-  (define returned (call-with-upstream-resource-subscription local source snapshot request '("remote:///doc") proc
+  (define returned (call-with-upstream-resource-subscription local source snapshot request uris proc
                      #:principal "owner" #:timeout timeout))
   (check-true (> cancellations 0))
   returned)
@@ -117,6 +118,39 @@
     (check-equal? cancelled 1)
     ;; Queued acknowledgement/change precede an already-ready terminal result.
     (check-equal? (exercise (list ack update) complete (lambda (s) (sync/timeout 2 s))) complete)
+    ;; Acceptance is a subset, not an echo of everything originally requested.
+    (define requested '("remote:///doc" "remote:///other"))
+    (check-equal?
+      (exercise (list ack update) complete
+        (lambda (s)
+          (check-equal? (upstream-resource-subscription-accepted s) '("remote:///doc"))
+          (sync/timeout 2 s)) #:uris requested)
+      complete)
+    (define unaccepted (notice "notifications/resources/updated" (hasheq 'uri "remote:///other")))
+    (define other-keys (upstream-resource-change-keys source "remote:///other"))
+    (define loads 0)
+    (define (cached-other)
+      (cache-ref! (runtime-cache local) "owner" "other-probe" other-keys 60000
+        (lambda () (set! loads (add1 loads)) "retained")))
+    (check-equal? (cached-other) "retained")
+    (define rejected (exercise (list ack unaccepted) #f (lambda (s) (sync/timeout 2 s)) #:uris requested))
+    (check-true (exn:fail? rejected))
+    (check-regexp-match #rx"unaccepted resource change" (exn-message rejected))
+    (check-equal? (cached-other) "retained")
+    (check-equal? loads 1)
+    ;; The probe actually participates in the same invalidation path.
+    (check-equal? (runtime-report-change! local "owner" other-keys) '("other-probe"))
+    (check-equal? (cached-other) "retained")
+    (check-equal? loads 2)
+    (for ([filter (list (hasheq) (hasheq 'resourceSubscriptions '()))])
+      (define empty-ack (notice "notifications/subscriptions/acknowledged" (hasheq 'notifications filter)))
+      (check-equal?
+        (exercise (list empty-ack) complete
+          (lambda (s)
+            (check-equal? (upstream-resource-subscription-accepted s) '())
+            (sync/timeout 2 s)) #:uris requested)
+        complete)
+      (check-true (exn:fail? (exercise (list empty-ack update) #f (lambda (s) (sync/timeout 2 s)) #:uris requested))))
     (for ([bad (list update
                     (notice "notifications/subscriptions/acknowledged" (hasheq 'notifications (hasheq)) 999)
                     (notice "notifications/subscriptions/acknowledged" (hasheq 'notifications (hasheq 'resourceSubscriptions '("foreign:///doc")))) )])

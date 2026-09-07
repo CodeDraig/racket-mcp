@@ -3834,3 +3834,22 @@ packaging and changes no executable/manual content. The new forwarding path has
 native local/stdio/HTTP coverage; independent Go/conformance probes were not
 repeated and do not yet establish this runner's interoperability. Verification
 is Linux/Racket 9.2; the complete SDK goal remains open.
+
+
+## Partial upstream resource subscription acceptance (2026-09-07)
+
+Expanded the forwarding fixture to two resources and independently authored
+partial/empty acknowledgement filters. The runner must expose only accepted URIs,
+process accepted updates before completion, and reject an update for a URI that
+was requested but not accepted. Both an empty filter object and an empty resource
+list can complete successfully; neither permits subsequent resource updates.
+
+A cache probe bound to the rejected URI's actual upstream dependency keys must
+remain loaded once after rejection. An explicit valid runtime change report then
+invalidates that same entry and causes a second load, proving the negative control
+participates in the real invalidation path.
+
+Final raco make and the upstream-subscription, upstream-freshness and subscription
+suites passed 145 checks. git diff --check passed. Only tests and this ledger changed;
+full/schema/package/interoperability runs were not repeated. Evidence remains
+Linux/Racket 9.2, and the complete SDK objective remains open.
