@@ -54,6 +54,20 @@ JSON. HTTP binds to 127.0.0.1 by default. No initialization handshake or MCP
 session identifier is used. Application definitions retain normal Racket module
 instantiation semantics; importing a descriptor does not start a transport.
 
+For captured workflow loading, supply an immutable identity for your SDK and
+Racket runtime distribution:
+
+```sh
+raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serve application.rkt
+```
+
+The library equivalent is `(load-interface path #:runtime-build-id id)`, available
+from `mcp` and `mcp/loader`. It returns native SDK descriptors and rejects changed
+captured helpers on resume. The ID is supplied by the application owner; automatic
+runtime provenance and conversion of the default/direct loading path remain open.
+The manual's “Loading interfaces with executable identity” section explains the
+contract, cache limitations, and prepared dynamic imports.
+
 ## Implemented paths
 
 - Tool, resource, prompt, shape, schema, completion, and staged workflow

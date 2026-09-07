@@ -2898,3 +2898,64 @@ all six official Go probes. The isolated source distribution passed raco setup
 paragraph postdates the package check and changes no executable content. Evidence
 remains Linux/Racket 9.2; public/default loading and the full SDK release gates
 remain open.
+
+## Public captured interface loading (2026-09-07)
+
+mcp/loader now exports load-interface, also re-exported by mcp. It requires an
+explicit nonempty #:runtime-build-id describing the caller's immutable loaded
+SDK, language/compiler dependencies and Racket executable/distribution. This is
+caller-supplied provenance, not an automatically measured identity. The loader
+shares the native SDK/language/reader instances with its fresh application
+namespace, preserving descriptor types and dynamic SDK parameters. Bootstrap
+collection and attachment hold the source namespace's reentrant registry lock.
+Only the explicit SDK bootstrap closure and modules Racket reports as predefined
+can use that ID; uncaptured application code is rejected. Fragments are accepted;
+a non-interface mcp-interface export is rejected.
+
+raco mcp serve opts into this path with --runtime-build-id. The default path and
+generated direct entry point are not converted yet. Automatic immutable runtime
+provenance, complete plain-handler rendering fingerprints, cache/namespace/phase
+coverage and the rest of the release gate remain open. The existing uncaptured
+helper probe still represents a limitation of that old path. This public path
+requires an honest caller-supplied runtime identity and never guesses application
+code identity from a file observed after loading.
+
+Strict bootstrap checks exposed a dependency resolution defect: reflected import
+indices with no base were resolving relative to the loader's directory. The new
+private module-imports helper rebases fresh index chains against their declaring
+module, without mutating reflected index caches. Both bootstrap and capture use
+it. Four focused checks cover distinct owners, self indices and nested relative
+imports. The Racket reader is an explicit bootstrap dependency, and predefined
+modules are identified with module-predefined?, not by name patterns or by trusting
+all unresolved declarations.
+
+Public loader tests passed 24 checks over native local dispatch, stdio, HTTP JSON
+and HTTP SSE. Tool, resource and prompt workflows resume through the ordinary
+policy path; principal and clock parameters are shared, and application top-level
+instantiation runs once. A separate CLI/SQLite process test passed 18 checks:
+changed runtime IDs and helper-only edits reject pending continuations, unchanged
+code resumes, and fresh invocations run the changed helper. Completion-file checks
+establish that rejected continuations did not execute completion code. On the wire,
+the existing dispatcher reports the recovery exception through its -32603 channel.
+The first transport fixture used unsupported http-json/http-sse symbols; it was
+corrected to http plus #:sse? before the passing run.
+
+The independent Go harness now also exercises dev/captured-greeter.rkt, which uses
+the public loader with an explicit fixture runtime identity. That is a seventh
+probe; it is not a production provenance provider. README and Scribble document
+the new API, serving option, caller responsibility and remaining default-path gap.
+Full verification results follow below.
+
+Final native verification passed compilation, 3,369 checks and all 1,301 pinned
+schema cases. All seven official Go probes passed. The initial documentation
+render exposed undefined loader/predicate references; a first exporting-library
+change incorrectly placed multiple declarations in one section. Distinct module
+sections with source binding declarations fixed the references. A fresh Scribble
+render then completed without warnings or undefined tags. The isolated package
+is rebuilt and checked with that corrected manual before commit; executable SDK
+code is unchanged since the native and Go runs. Verification remains Linux/Racket
+9.2, and default/direct loading and the other SDK release gates remain open.
+
+The final isolated dependency/documentation setup passed with no warning or
+undefined-tag matches in its log. git diff --check passed. This evidence-only
+paragraph postdates the package build and changes no executable content.

@@ -1,12 +1,12 @@
 #lang racket/base
-(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt")
+(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt")
 (provide (struct-out module-code-capture) capture-module-export seal-module-code-capture!)
 
 ;; A capture is evidence about declarations actually evaluated under this loader,
 ;; not a hash of files that might differ from already loaded code. Unobserved
 ;; dependencies remain explicit; callers must not treat a partial capture as a
 ;; complete executable build fingerprint.
-(struct module-code-capture (value observed unobserved build namespace resolver) #:transparent)
+(struct module-code-capture (value observed unobserved build namespace resolver predefined) #:transparent)
 (define-namespace-anchor home)
 (define-runtime-module-path-index build-module "executable-build.rkt")
 (define (identity-name identity)
@@ -26,9 +26,7 @@
   (define original-resolver (current-module-name-resolver))
   (define (module-dependencies identity)
     (if (module-declared? identity #f)
-        (for*/list ([phase-imports (in-list (module->imports identity))]
-                    [dependency (in-list (cdr phase-imports))])
-          (module-path-index-resolve dependency))
+        (resolved-module-imports identity)
         '()))
   (define original-eval (current-eval))
   (define (capture-eval expression)
@@ -55,10 +53,12 @@
     (define root (module-path-index-resolve (module-path-index-join path #f)))
     (define visited (make-hash))
     (define missing (make-hash))
+    (define predefined (make-hash))
     (define (visit identity)
       (define name (identity-name identity))
       (unless (hash-ref visited name #f)
         (hash-set! visited name #t)
+        (when (module-predefined? identity) (hash-set! predefined name #t))
         (unless (hash-has-key? observed name) (hash-set! missing name #t))
         (for ([dependency (in-list (hash-ref imports name (lambda () (module-dependencies identity))))])
           (visit dependency))))
@@ -66,7 +66,8 @@
     (for ([identity (in-hash-values identities)]) (visit identity))
     (module-code-capture value
       (for/hash ([(name digest) (in-hash observed)]) (values name digest))
-      (sort (hash-keys missing) string<?) build namespace original-resolver)))
+      (sort (hash-keys missing) string<?) build namespace original-resolver
+      (sort (hash-keys predefined) string<?))))
 
 ;; Dependencies are explicit caller-supplied executable identities, not files
 ;; silently hashed after loading. No unobserved identity is trusted by default.

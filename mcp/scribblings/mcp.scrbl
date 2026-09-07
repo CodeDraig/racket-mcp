@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require (for-label racket/base (only-in mcp tool schema shape resource text-result structured-result error-result)))
+@(require (for-label racket/base (only-in mcp tool schema shape resource text-result structured-result error-result load-interface interface-descriptor?)))
 @title{MCP for Racket: Development API}
 @author{Racket MCP contributors}
 
@@ -1535,3 +1535,66 @@ JSON feed published by atomic replacement. Supply its source name, feed path and
 explicit SDK SQLite state path. It reads the feed and prints pending outbox
 deliveries; requiring the module does neither. A production database adapter can
 use the same API with its own durable change log and paginated reader.
+
+@section[#:tag "captured-loading"]{Loading interfaces with executable identity}
+
+@defmodule[mcp/loader #:use-sources (mcp/loader)]
+
+@defproc[(load-interface [path (or/c path-string? module-path?)]
+                         [#:runtime-build-id runtime-build-id string?])
+         interface-descriptor?]{
+Loads the module's @racket[mcp-interface] in a fresh namespace, shares the current
+SDK's descriptor types and runtime parameters, and seals captured workflows to
+an executable identity. Available from @tt{mcp} and @tt{mcp/loader}. Filesystem
+paths are resolved against the caller's current directory. Fragments without a
+server declaration can be loaded, but serving still requires a server.
+
+The nonempty @tt{runtime-build-id} is the caller's immutable identity for the
+already-loaded SDK, its language/compiler dependencies, and the running Racket
+executable/distribution, including predefined modules. Use the same identity only
+for the same runtime build. The SDK cannot verify that this supplied identifier
+truthfully describes already-loaded code. It is never used as a substitute for
+uncaptured application code. A package version reused across changed development
+builds does not meet this contract.
+
+Application module code is captured as it is evaluated, including helpers loaded
+during instantiation. Unobserved application declarations cause an error; Racket's
+compiled-module cache can require using a fresh loading process. No resume-time
+file hashing substitutes for the loaded executable. User-written definitions and
+imports execute with normal module-instantiation semantics. Constructing the
+interface does not itself start a transport, open workflow storage, or invoke
+handlers.
+
+A workflow retains its captured namespace. Ordinary dynamic imports during its
+execution must refer to modules already loaded and included in the sealed build.
+Prepare those imports during application loading. Changing a captured helper or
+the runtime build ID rejects incompatible saved execution. Replacing a source
+file after loading does not replace the code retained by that loaded workflow.
+This is not a sandbox for trusted Racket code that deliberately changes its own
+resolver or namespace.
+}
+
+The serving command opts into this loader with an explicit runtime identity:
+@verbatim{raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serve application.rkt}
+
+The returned descriptor works with ordinary @tt{make-runtime}, local dispatch,
+stdio and HTTP APIs. Captured tool, resource and prompt workflows use the same
+validation and authorization paths. A changed build currently reaches stdio
+clients through the runtime's ordinary internal-error channel; local workflow
+calls retain the recovery diagnostic.
+
+Automatic runtime build provenance is not implemented yet. Serving without this
+option, including a generated direct executable entry point, still uses the
+existing loading path and retains its imported-helper compatibility limitation.
+Full plain-handler rendering fingerprints and other release gates also remain
+open. Inspection commands continue to use the generated manifest rather than
+this instantiating loader.
+
+@subsection{Recognizing interface descriptors}
+
+@defmodule[mcp/descriptor #:use-sources (mcp/descriptor)]
+@defproc[(interface-descriptor? [value any/c]) boolean?]{
+Recognizes an SDK interface descriptor, including descriptors returned by
+@racket[load-interface]. The predicate does not instantiate application modules
+or invoke handlers.
+}
