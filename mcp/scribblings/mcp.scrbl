@@ -1116,5 +1116,9 @@ and collected references combine, so an explicit map cannot erase a known edge.
 Collection is conservative across branches and nested lambdas in the handler
 syntax. It does not inspect separately defined Racket helper procedures or infer
 references created from arbitrary runtime data. Supply explicit references for
-those relationships. Workflow-stage collection and complete static manifest
-reference coverage remain unfinished.
+those relationships. Generated workflow-stage procedures use the same collection
+boundary. The workflow descriptor contributes references from every stage,
+including branches that may not execute, to its enclosing tool, resource, or
+prompt. Reading those references does not open storage, run a stage, or request
+input. Ordinary data-API workflows can declare relationships through the explicit
+interface map. Complete static manifest reference coverage remains unfinished.

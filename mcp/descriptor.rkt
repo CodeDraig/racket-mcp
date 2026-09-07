@@ -166,7 +166,12 @@
         (cond [(tool-descriptor? source) (tool-descriptor-handler source)]
               [(resource-descriptor? source) (resource-descriptor-handler source)]
               [else (prompt-descriptor-handler source)]))
-      (define inferred (handler-resource-references handler))
+      (define workflow
+        (cond [(tool-descriptor? source) (tool-descriptor-workflow source)]
+              [(resource-descriptor? source) (resource-descriptor-workflow source)]
+              [else (prompt-descriptor-workflow source)]))
+      (define inferred (append (handler-resource-references handler)
+                               (handler-resource-references workflow)))
       (if (null? inferred) collected
           (hash-update collected source (lambda (targets) (append targets inferred)) '()))))
   (define checked-references

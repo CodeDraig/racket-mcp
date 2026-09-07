@@ -212,7 +212,7 @@
      (define (compile-sequence forms bound prefix wrap [join #f])
        (when (null? forms) (raise-syntax-error #f "workflow requires a completion expression" stx))
        (define (proc expression)
-         #`(lambda (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
+         #`(mcp-handler (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
        (define first (expand-workflow-extension (car forms))) (define tail (cdr forms))
        (define (node id kind schema procedure [adapter #f] [policy #f])
          (check-literal-schema! schema)

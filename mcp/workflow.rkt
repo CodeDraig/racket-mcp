@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
+(require "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
          current-workflow-change-publisher current-workflow-store current-workflow-adapters current-workflow-state current-workflow-responses current-workflow-invocation-key
@@ -7,7 +7,12 @@
 ;; Stage procedures receive persistent JSON environments. Their result is saved
 ;; before the next stage runs. Only named adapters may cross effect boundaries.
 (struct workflow-stage (id kind schema procedure adapter policy) #:transparent)
-(struct workflow-descriptor (name version fingerprint stages key changes) #:transparent)
+(struct workflow-descriptor (name version fingerprint stages key changes)
+  #:transparent
+  #:property prop:resource-references
+  (lambda (workflow)
+    (append-map (lambda (stage) (handler-resource-references (workflow-stage-procedure stage)))
+                (workflow-descriptor-stages workflow))))
 (struct exn:fail:recovery exn:fail (handle stage) #:transparent)
 (define current-workflow-change-publisher (make-parameter void))
 (define current-workflow-store (make-parameter #f))

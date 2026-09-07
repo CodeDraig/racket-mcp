@@ -2129,3 +2129,29 @@ probe failed with definition-context rejection both with this collector and with
 the previous host-interface handler grammar; local DSL declarations are not
 claimed as newly supported. Ordinary internal host definitions pass the focused
 shadowing checks. Native evidence remains Linux/Racket 9.2.
+
+## Workflow-stage resource-reference collection (2026-09-07)
+
+Generated workflow stage procedures now use the same lexical reference collector
+as ordinary handlers. A private structure property lets workflow descriptors
+contribute the union of stage references without introducing a descriptor/workflow
+module cycle or changing public descriptor constructor arities. Interface
+construction combines workflow, ordinary-handler, and explicit references before
+identity validation. Discovery resolves only generated binding thunks; it does not
+execute stages or acquire storage. Existing emitted-stage fingerprints naturally
+change with the generated handler representation, retaining the code compatibility
+check rather than silently treating previously compiled stages as identical.
+
+The focused domain-workflow/control-flow/workflow/ordinary-reference suites passed
+52 checks. The new workflow-references suite passed 14 checks covering checkpoint,
+input, effect-input, branch and completion references; prompt/resource workflows;
+workflow argument shadowing; removal rejection; zero execution during construction;
+and live remapped link output. An initial fixture used a non-stage set! in a
+workflow begin; moving the counter into the final host expression corrected the
+fixture before passing validation. Static manifest edges, imported helper body
+analysis, the higher-phase gate, and full release verification remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,698 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five official Go SDK probes. git diff --check passed. These are
+Linux/Racket 9.2 results; the overall SDK release remains incomplete.
