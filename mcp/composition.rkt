@@ -8,6 +8,10 @@
                   #:resources (append-map interface-descriptor-resources interfaces)
                   #:prompts (append-map interface-descriptor-prompts interfaces)
                   #:completions (append-map interface-descriptor-completions interfaces)
+                  #:references
+                  (for*/fold ([references (hasheq)]) ([interface (in-list interfaces)]
+                    [(source targets) (in-hash (interface-resource-references interface))])
+                    (hash-set references source (append (hash-ref references source '()) targets)))
                   #:adapter-bindings
                   (for*/hasheq ([interface (in-list interfaces)] [(target bindings) (in-hash (interface-adapter-bindings interface))])
                     (values target bindings))
@@ -46,6 +50,9 @@
       transformed))
   (make-interface #:server (interface-descriptor-server iface)
     #:tools tools
+    #:references (for/hasheq ([(original transformed) (in-hash targets)]
+                              #:when (hash-has-key? (interface-resource-references iface) original))
+                   (values transformed (hash-ref (interface-resource-references iface) original)))
     #:adapter-bindings (for/hasheq ([(original transformed) (in-hash targets)])
       (values transformed
         (for/fold ([bindings (hash-ref (interface-adapter-bindings iface) original (hasheq))])

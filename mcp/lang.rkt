@@ -39,6 +39,7 @@
         (define #,interface-id (make-interface #:server (and (pair? collected-servers) (car collected-servers))
                                               #:requirements (interface-requirements (apply mount-interfaces mounted))
                                               #:adapter-bindings (interface-adapter-bindings (apply mount-interfaces mounted))
+                                              #:references (interface-resource-references (apply mount-interfaces mounted))
                                               #:tools (append (reverse (filter tool-descriptor? declarations)) (apply append (map interface-descriptor-tools mounted)))
                                               #:resources (append (reverse (filter resource-descriptor? declarations)) (apply append (map interface-descriptor-resources mounted)))
                                               #:prompts (append (reverse (filter prompt-descriptor? declarations)) (apply append (map interface-descriptor-prompts mounted)))

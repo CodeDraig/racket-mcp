@@ -4,7 +4,7 @@
 (provide (struct-out server-descriptor) (struct-out argument) (struct-out prompt-argument) (struct-out tool-descriptor)
          (struct-out resource-descriptor) (struct-out prompt-descriptor)
          (struct-out interface-descriptor) (struct-out resource-ref) (struct-out request-context)
-         interface-requirements interface-adapter-bindings make-interface make-tool make-resource make-prompt bind-arguments encode-prompt-arguments prompt-codec-fingerprint
+         interface-requirements interface-adapter-bindings interface-resource-references make-interface make-tool make-resource make-prompt bind-arguments encode-prompt-arguments prompt-codec-fingerprint
          text-content text-result structured-result error-result resource-link
          current-request-context current-interface current-resource-resolver resource-uri link embed)
 (struct server-descriptor (name version instructions) #:transparent)
@@ -20,11 +20,13 @@
     (resource-ref self args)))
 (struct prompt-descriptor (name description arguments handler workflow) #:transparent)
 (struct interface-descriptor (server tools resources prompts completions) #:transparent)
-(struct scoped-interface interface-descriptor (requirements adapters) #:transparent)
+(struct scoped-interface interface-descriptor (requirements adapters references) #:transparent)
 (define (interface-requirements interface)
   (if (scoped-interface? interface) (scoped-interface-requirements interface) (hasheq)))
 (define (interface-adapter-bindings interface)
   (if (scoped-interface? interface) (scoped-interface-adapters interface) (hasheq)))
+(define (interface-resource-references interface)
+  (if (scoped-interface? interface) (scoped-interface-references interface) (hasheq)))
 (struct resource-ref (declaration arguments) #:transparent)
 (struct request-context (principal capabilities request-id cancelled? notify) #:transparent)
 (define current-request-context (make-parameter #f))
@@ -103,7 +105,7 @@
     (define wire (if (prompt-argument? a) (encode-string-value (prompt-argument-codec a) value) value))
     (unless (string? wire) (error 'encode-prompt-arguments "non-string argument requires a codec"))
     (values name wire)))
-(define (make-interface #:server [server #f] #:tools [tools '()] #:resources [resources '()] #:prompts [prompts '()] #:completions [completions '()] #:requirements [requirements (hasheq)] #:adapter-bindings [adapters (hasheq)])
+(define (make-interface #:server [server #f] #:tools [tools '()] #:resources [resources '()] #:prompts [prompts '()] #:completions [completions '()] #:requirements [requirements (hasheq)] #:adapter-bindings [adapters (hasheq)] #:references [references (hasheq)])
   (for ([descriptors (in-list (list tools resources prompts))]
         [arguments-of (in-list (list tool-descriptor-arguments resource-descriptor-arguments prompt-descriptor-arguments))])
     (for ([descriptor (in-list descriptors)])
@@ -155,7 +157,27 @@
     (for/hasheq ([(target bindings) (in-hash adapters)])
       (unless (memq target declarations) (error 'make-interface "adapter binding references an absent declaration"))
       (values target (check-adapter-bindings bindings))))
-  (scoped-interface server tools resources prompts completions checked checked-adapters))
+  (unless (hash? references) (raise-argument-error 'make-interface "hash?" references))
+  (define checked-references
+    (for/hasheq ([(source targets) (in-hash references)])
+      (unless (memq source declarations) (error 'make-interface "resource-reference source is an absent declaration"))
+      (define source-name
+        (cond [(tool-descriptor? source) (tool-descriptor-name source)]
+              [(resource-descriptor? source) (resource-descriptor-name source)]
+              [else (prompt-descriptor-name source)]))
+      (unless (and (list? targets) (andmap resource-descriptor? targets))
+        (error 'make-interface "resource references must be a list of resource descriptors"))
+      (define resolved
+        (for/list ([target (in-list targets)])
+          (define candidates
+            (filter (lambda (resource) (eq? (resource-descriptor-identity resource) (resource-descriptor-identity target))) resources))
+          (when (null? candidates)
+            (error 'make-interface "declaration ~a references an absent resource: ~a" source-name (resource-descriptor-name target)))
+          (unless (null? (cdr candidates))
+            (error 'make-interface "declaration ~a references an ambiguous mounted resource: ~a" source-name (resource-descriptor-name target)))
+          (car candidates)))
+      (values source (remove-duplicates resolved eq?))))
+  (scoped-interface server tools resources prompts completions checked checked-adapters checked-references))
 (define (bind-arguments arguments input)
   (unless (hash? input) (error 'bind-arguments "arguments must be an object"))
   (for/fold ([bound (hasheq)]) ([a (in-list arguments)])

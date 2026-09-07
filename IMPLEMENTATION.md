@@ -2073,3 +2073,32 @@ metadata lookup at shifted phases remains covered independently. Documentation
 now distinguishes that passing behavior from this unresolved declaration/reference
 failure. Other planned implementation work can continue; the SDK goal is neither
 complete nor blocked on user input.
+
+## Interface resource-reference validation and composition (2026-09-07)
+
+make-interface now accepts an explicit #:references map from published source
+descriptors to referenced resources; interface-resource-references exposes the
+normalized immutable map. Target resolution uses resource declaration identity,
+not names or URI spelling. Missing sources/targets, invalid target values, and
+ambiguous mounted identities fail construction. Duplicate targets normalize once.
+Mounts merge maps, views remap surviving sources and target identities, #lang mcp
+retains mounted maps, and make-runtime includes them in its validation path.
+
+The new interface-references suite passed 23 checks: tools/resources/prompts,
+mutable input-map isolation, removal diagnosis, omission of both endpoints,
+namespace/URI transformation, canonical target resolution, live link dispatch
+without resource reads, same-name impostors, sibling URI ambiguity, cyclic links,
+and module mounts. Existing domain and scoped-view checks passed 41 checks.
+A reader typo in the new fixture was corrected before the passing run. Diagnostics
+were then expanded to name the source and missing/ambiguous target.
+
+This is the runtime/ordinary-data reference contract. It does not infer handler
+references, and automatic compiler collection and static manifest graph emission
+remain required. The higher-phase declaration gate and the broader SDK release
+requirements remain open.
+
+Final validation: sh scripts/check.sh passed compilation, 2,669 native checks,
+all 1,301 pinned core schema cases, and Scribble. sh scripts/check-interop.sh
+passed all five official Go SDK probes. git diff --check passed. These results
+cover Linux/Racket 9.2; automatic reference inference and the other recorded
+release gates remain open.

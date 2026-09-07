@@ -30,7 +30,8 @@
                         #:prompts (interface-descriptor-prompts interface)
                         #:completions (interface-descriptor-completions interface)
                         #:requirements (interface-requirements interface)
-                        #:adapter-bindings (interface-adapter-bindings interface)))
+                        #:adapter-bindings (interface-adapter-bindings interface)
+                        #:references (interface-resource-references interface)))
   (define (scopes method params)
     (remove-duplicates
       (append (check-scopes! (required-scopes method params))

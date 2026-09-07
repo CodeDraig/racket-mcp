@@ -1082,3 +1082,27 @@ binding metadata at shifted phases, have passing tests. They do not establish
 higher-phase declaration/reference support. This is an unresolved acceptance gate,
 not an exception to the requested language scope. Run the probe with the repository
 Racket environment to verify a future correction.
+
+@section{Interface resource-reference maps}
+
+@tt{make-interface} accepts @tt{#:references}, a hash from tool, resource, or prompt
+source descriptors to lists of resource descriptors they reference.
+@tt{interface-resource-references} returns the normalized immutable map. Sources
+must belong to the interface. Each target must resolve to exactly one published
+resource with the same declaration identity; matching a wire name or URI alone
+cannot satisfy the reference. Duplicate targets are removed.
+
+Mounts combine these maps. Views remap surviving source descriptors and resolve
+their target identities against the transformed resources. Removing a referenced
+resource while retaining its source fails during interface construction, before
+handlers run. Removing both source and target is allowed. Multiple mounted URI
+views of the same referenced identity are rejected as ambiguous. Cyclic references
+are allowed because links can be cyclic; recursive embedding retains its own
+runtime cycle checks.
+
+For example, after defining a tool @tt{open-document} and resource @tt{document},
+construct their interface with @tt{#:references (hasheq open-document (list document))}.
+A view excluding @tt{document} then fails while @tt{open-document} remains exposed.
+The map survives @tt{#lang mcp} mounts and runtime validation. This is the explicit
+construction API: automatic collection of resource references from handler syntax
+and complete static manifest reference coverage remain unfinished.
