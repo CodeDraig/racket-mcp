@@ -1,0 +1,5 @@
+{
+  "command": ".cache/racket-9.3/bin/racket dev/subscription-server.rkt http",
+  "exit_code": 1,
+  "output": "loading code: version mismatch\n  expected: \"9.3\"\n  found: \"9.2\"\n  in: /srv/data/code/racket-mcp/dev/compiled/subscription-server_rkt.zo\n  possible solution: running `racket -y`, `raco make`, or `raco setup`\n"
+}

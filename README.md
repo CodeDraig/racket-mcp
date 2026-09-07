@@ -49,6 +49,11 @@ suites, documentation, and package dependency checks. It saves command logs and
 `report.json` in `.cache/ci/results`. For an already bootstrapped local checkout,
 use `python3 scripts/ci.py --skip-bootstrap --package-home .racket`.
 
+The shell check scripts use `.racket` by default. Set `MCP_RACKET_USER_HOME` to
+an explicit project-local package home when checking another Racket installation;
+for example, use the same home passed to `scripts/ci.py --package-home` when
+running `scripts/check-interop.sh` with that Racket's `bin` directory on `PATH`.
+
 The GitHub Actions matrix targets x64 Linux, macOS, and Windows with Racket 9.2
 and 9.3 (the current stable release when configured). Action revisions and Racket
 versions are pinned in `.github/workflows/native.yml`. CI runs are evidence for
@@ -56,9 +61,13 @@ their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
-Local Linux x86_64 verification passed on Racket 9.2 and 9.3, including native
-tests, pinned core schema cases, documentation and package checks. Racket 9.3
-also passed fresh dependency bootstrap and all seven Go interoperability probes.
+Local Linux x86_64 verification passed on Racket 9.2 and 9.3, including 4,928 native
+checks, 1,301 pinned core schema cases, documentation and package checks. The
+current Racket 9.3 refresh also passed fresh dependency bootstrap and all thirteen
+Go interoperability probes. Its initial run exposed an omitted development
+fixture retaining 9.2 bytecode; validation scripts now compile every top-level
+development fixture before testing. See `test-artifacts/linux-9.3-current-20260907`
+for the failure, fix and final evidence.
 The first hosted matrix run was prevented from starting by an Actions budget;
 macOS and Windows remain unverified. See `test-artifacts/native-platform-2026-09-07`
 and the implementation ledger for the version-specific evidence.

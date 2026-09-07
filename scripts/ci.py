@@ -58,10 +58,8 @@ def main():
             run("install-sdk", ["raco", "pkg", "install", "--scope", "user", "--skip-installed",
                 "--batch", "--no-setup", "--name", "racket-mcp", "--link",
                 str(ROOT / ".cache/distribution/racket-mcp")], installed=True)
-        sources = [str(path.relative_to(ROOT)) for folder in ("mcp", "examples", "tests")
+        sources = [str(path.relative_to(ROOT)) for folder in ("mcp", "examples", "tests", "dev")
                    for path in sorted((ROOT / folder).glob("*.rkt"))]
-        sources += [f"dev/{name}.rkt" for name in ("conformance-server", "conformance-tasks", "conformance-client",
-                    "cancellation-server", "cancellation-client", "pagination-server")]
         run("compile", ["raco", "make", *sources])
         run("native-tests", ["raco", "test", "tests"])
         run("schema-suite", ["racket", "tests/schema-suite.rkt"])

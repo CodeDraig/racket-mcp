@@ -4084,3 +4084,27 @@ was increased. Compilation, all 1,301 core schema cases, Scribble, thirteen Go
 probes, rebuilt distribution and isolated package dependency checks passed.
 git diff --check passed. Verification is Linux/Racket 9.2; independent task
 notifications, the header discrepancy and the full release gates remain open.
+
+## Current-source Linux/Racket 9.3 refresh (2026-09-07)
+
+Refreshed verification after the upstream task observation/subscription, consumed
+input and capability-error changes. A fresh project-local package home installed
+the pinned language dependency and SDK. The first native run failed in the process
+scenario: a direct launch proved that dev/subscription-server.rkt retained 9.2
+bytecode while running under 9.3. That development fixture was absent from the
+portable compile list. Both scripts/ci.py and scripts/check.sh now compile every
+top-level dev Racket module, avoiding the incomplete hand-maintained fixture list.
+No startup or request deadline changed.
+
+The corrected portable run passed compilation, all 4,928 native checks, all 1,301
+core schema cases, Scribble, distribution construction and installed-package
+dependency checks. All thirteen Go probes then passed under Racket 9.3. Added
+MCP_RACKET_USER_HOME as an explicit shell-script package-home override so the Go
+checks could reuse the fresh CI home; smoke checks verified the override and the
+unchanged .racket default. Runtime Racket sources did not change in this refresh.
+
+Reports, bootstrap and final logs, the direct mismatch observation and reproduction
+commands are retained under test-artifacts/linux-9.3-current-20260907. The older
+9.3 evidence remains intact. git diff --check passed. These results establish
+Linux x86_64/Racket 9.3 verification for the current runtime; they do not establish
+macOS/Windows coverage or close the remaining full SDK release gates.

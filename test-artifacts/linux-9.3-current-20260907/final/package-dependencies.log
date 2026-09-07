@@ -1,0 +1,48 @@
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: collects paths:
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/collects
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: main pkgs: /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup: pkgs paths:
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/pkgs
+raco setup: links files:
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/links.rktd
+raco setup: --- updating info-domain tables ---                    [19:44:02]
+raco setup: updating: /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [19:44:02]
+raco setup: --- installing foreign libraries ---                   [19:44:02]
+raco setup: --- installing shared files ---                        [19:44:02]
+raco setup: --- compiling collections ---                          [19:44:02]
+raco setup: --- parallel build using 8 jobs ---                    [19:44:03]
+raco setup: 7 making: <pkgs>/eli-tester/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger
+raco setup: 5 making: <pkgs>/racket-mcp/examples
+raco setup: 4 making: <pkgs>/racket-mcp/mcp
+raco setup: 3 making: <pkgs>/racket-mcp/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/check-requires
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/helper
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/tests
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/lang
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/private
+raco setup: 5 making: <pkgs>/racket-mcp/examples/extensions
+raco setup: --- creating launchers ---                             [19:44:33]
+raco setup: --- installing man pages ---                           [19:44:33]
+raco setup: --- building documentation ---                         [19:44:33]
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/family.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: running: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: skipping: <pkgs>/syntax-spec-v3/scribblings/main.scrbl
+raco setup: rendering: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: --- installing collections ---                         [19:44:52]
+raco setup: --- post-installing collections ---                    [19:44:52]
+raco setup: --- checking package dependencies ---                  [19:44:52]
