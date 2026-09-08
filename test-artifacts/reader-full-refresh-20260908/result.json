@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "ed75ea847a1d97b4a834af82bf4d77cca0ff8e2a",
+  "platform": "Linux x86_64",
+  "racket": "9.3",
+  "exitCode": 0,
+  "nativeTests": 6199,
+  "schemaCoreCases": 1301,
+  "regexCases": 86,
+  "scribble": "passed",
+  "command": "env PATH=\"$PWD/.cache/racket-9.3/bin:$PATH\" MCP_RACKET_USER_HOME=\"$PWD/.cache/ci/package-home-9.3-current\" sh scripts/check.sh",
+  "limitation": "Does not establish native macOS/Windows or full independent conformance."
+}

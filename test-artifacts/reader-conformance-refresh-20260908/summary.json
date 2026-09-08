@@ -1,0 +1,308 @@
+{
+  "counts": {
+    "required": {
+      "SUCCESS": 110,
+      "WARNING": 3,
+      "FAILURE": 4,
+      "INFO": 1
+    },
+    "not_scored": {
+      "FAILURE": 27,
+      "SUCCESS": 47,
+      "SKIPPED": 1
+    }
+  },
+  "non_success": [
+    {
+      "scenario": "server-stateless",
+      "group": "required",
+      "id": "sep-2575-server-sends-prompts-list-changed-on-subscription",
+      "status": "WARNING",
+      "error": "Mutated the prompt list but no notifications/prompts/list_changed arrived on the open subscription stream. This is a SHOULD requirement.",
+      "details": {}
+    },
+    {
+      "scenario": "server-stateless",
+      "group": "required",
+      "id": "sep-2575-server-sends-tools-list-changed-on-subscription",
+      "status": "WARNING",
+      "error": "Mutated the tool list but no notifications/tools/list_changed arrived on the open subscription stream. This is a SHOULD requirement.",
+      "details": {}
+    },
+    {
+      "scenario": "input-required-result-basic-list-roots",
+      "group": "required",
+      "id": "sep-2322-list-roots-incomplete",
+      "status": "FAILURE",
+      "error": "JSON-RPC error: Unknown name",
+      "details": {}
+    },
+    {
+      "scenario": "input-required-result-capability-check",
+      "group": "required",
+      "id": "sep-2322-respect-client-capabilities",
+      "status": "FAILURE",
+      "error": "JSON-RPC error: Unknown name",
+      "details": {}
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "tasks-sync-tool-call",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-result-type-task-on-create",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-tasks-get-status-working",
+      "status": "FAILURE",
+      "error": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+      "details": {
+        "untestable": true,
+        "reason": "no task was created by the preceding step, so this check could not be exercised"
+      }
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-tasks-get-status-completed",
+      "status": "FAILURE",
+      "error": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+      "details": {
+        "untestable": true,
+        "reason": "no task was created by the preceding step, so this check could not be exercised"
+      }
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-tool-error-uses-completed-status",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-tasks-get-status-failed",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "sep-2663-cancel-ack-empty-result",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-lifecycle",
+      "group": "not_scored",
+      "id": "tasks-cancel-terminal-idempotent-ack",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-capability-negotiation",
+      "group": "not_scored",
+      "id": "sep-2663-server-rejects-undeclared-client",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-capability-negotiation",
+      "group": "not_scored",
+      "id": "tasks-per-request-meta-opt-in",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-wire-fields",
+      "group": "not_scored",
+      "id": "tasks-wire-field-renames",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-wire-fields",
+      "group": "not_scored",
+      "id": "tasks-no-early-ttl-expiry",
+      "status": "FAILURE",
+      "error": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+      "details": {
+        "untestable": true,
+        "reason": "no task was created by the preceding step, so this check could not be exercised"
+      }
+    },
+    {
+      "scenario": "tasks-wire-fields",
+      "group": "not_scored",
+      "id": "tasks-no-related-task-meta-on-inlined-result",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-mrtr-input",
+      "group": "not_scored",
+      "id": "sep-2663-tasks-get-status-input-required",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-mrtr-input",
+      "group": "not_scored",
+      "id": "tasks-mrtr-tasks-update-resumes",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-mrtr-input",
+      "group": "not_scored",
+      "id": "tasks-mrtr-partial-fulfillment",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-dispatch-and-envelope",
+      "group": "not_scored",
+      "id": "tasks-server-directed-creation-no-hint",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-dispatch-and-envelope",
+      "group": "not_scored",
+      "id": "sep-2663-legacy-task-param-ignored",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-dispatch-and-envelope",
+      "group": "not_scored",
+      "id": "tasks-immediate-result-shortcut",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-dispatch-and-envelope",
+      "group": "not_scored",
+      "id": "tasks-result-type-complete-on-non-task-responses",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-dispatch-and-envelope",
+      "group": "not_scored",
+      "id": "sep-2663-durable-create-strong-consistency",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-required-task-error",
+      "group": "not_scored",
+      "id": "sep-2663-server-returns-missing-capability-when-required",
+      "status": "FAILURE",
+      "error": "tools/call for failing_job returned error code -32602; spec requires -32021.",
+      "details": {
+        "observedCode": -32602
+      }
+    },
+    {
+      "scenario": "input-required-result-basic-sampling",
+      "group": "required",
+      "id": "sep-2322-sampling-incomplete",
+      "status": "FAILURE",
+      "error": "JSON-RPC error: Unknown name",
+      "details": {}
+    },
+    {
+      "scenario": "input-required-result-multiple-input-requests",
+      "group": "required",
+      "id": "sep-2322-multiple-inputs-incomplete",
+      "status": "FAILURE",
+      "error": "JSON-RPC error: Unknown name",
+      "details": {}
+    },
+    {
+      "scenario": "input-required-result-ignore-extra-params",
+      "group": "required",
+      "id": "sep-2322-ignore-unexpected-params",
+      "status": "WARNING",
+      "error": "Server returned JSON-RPC error when extra params were included: Input responses require a continuation. Servers SHOULD ignore unrecognized information.",
+      "details": {}
+    },
+    {
+      "scenario": "tasks-request-state-removal",
+      "group": "not_scored",
+      "id": "tasks-request-state-removal-setup",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-request-headers",
+      "group": "not_scored",
+      "id": "tasks-headers-tolerate-mcp-method-on-tools-call",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-request-headers",
+      "group": "not_scored",
+      "id": "sep-2663-routing-headers-accepted-on-tasks-get",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    },
+    {
+      "scenario": "tasks-request-headers",
+      "group": "not_scored",
+      "id": "sep-2663-server-rejects-mismatched-mcp-name-on-tasks-get",
+      "status": "FAILURE",
+      "error": "routing-task fixture from Check 2 unavailable; cannot drive negative-path probe",
+      "details": null
+    },
+    {
+      "scenario": "tasks-status-notifications",
+      "group": "not_scored",
+      "id": "tasks-status-notifications",
+      "status": "SKIPPED",
+      "error": "Skipped: SEP-2663 delivers notifications/tasks via the SEP-2575 subscriptions/listen stream, not via the tools/call POST SSE response that the prior harness observed. The harness needs a rewrite against the new channel; tracked as a follow-up.",
+      "details": null
+    },
+    {
+      "scenario": "tasks-mrtr-composition",
+      "group": "not_scored",
+      "id": "sep-2663-mrtr-synchronous-before-task-creation",
+      "status": "FAILURE",
+      "error": "Unknown name",
+      "details": null
+    }
+  ]
+}

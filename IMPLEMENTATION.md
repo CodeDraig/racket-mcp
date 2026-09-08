@@ -5461,3 +5461,34 @@ All 14 official Go probes and the Scribble build also passed. The preceding
 as broad verification of it.
 Installed Linux Racket 9.3 package dependency setup and all 29 selected installed
 checks passed. The final source ZIP was rebuilt twice and byte-compared.
+
+## Current remaining work and reader verification (2026-09-08)
+
+REMAINING.md is now the mutable source of unmet release requirements. Historical
+open-gate statements in this append-only evidence ledger do not reopen completed
+work. Each completed row is removed; partial rows retain only their unmet portion.
+
+The full Linux Racket 9.3 run on ed75ea8 exited zero: 6,199 native tests, 1,301
+schema core cases, 86 regex cases and Scribble passed. Terminal evidence is in
+ test-artifacts/reader-full-refresh-20260908. The independent requirements run
+exited one; its fixture limitations and actual counts are retained in
+ test-artifacts/reader-conformance-refresh-20260908/README.md. It is not a
+conformance pass. No SDK/test source changed during either run.
+
+## Actual list mutation conformance (2026-09-08)
+
+The separate dev/conformance-list-changes.rkt application supplies the pinned
+stateless fixture's missing tool/prompt mutation hooks. It routes each request to
+an immutable interface snapshot and shares accepted subscriptions across those
+snapshots. Each trigger changes an actual list before publishing its event;
+repeated triggers remove the added entry. This does not introduce an SDK
+interface-mutation API or change the core fixture's protocol behavior.
+
+The native HTTP regression verifies both list transitions, retained original
+entries and acknowledged notifications on Linux Racket 9.2 and 9.3. The independent
+server-stateless scenario exited zero: all 30 checks passed, including both
+previously unexercised list-change checks. FIXTURE-LISTS was removed from
+REMAINING.md. Evidence and the initial test-envelope mistake are retained under
+ test-artifacts/conformance-list-changes-20260908. Diagnostic log trailing
+whitespace was normalized before SHA-256 recording. The full suite was not
+repeated for this dev fixture and its focused regression.

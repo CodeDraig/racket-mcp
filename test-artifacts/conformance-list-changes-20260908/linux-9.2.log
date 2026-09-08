@@ -1,0 +1,11 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/conformance-list-changes.rkt")
+--------------------
+diagnostic mutations change actual lists before accepted events
+ERROR
+
+hash-ref: no value found for key
+  key: 'tools
+--------------------
+1/1 test failures
