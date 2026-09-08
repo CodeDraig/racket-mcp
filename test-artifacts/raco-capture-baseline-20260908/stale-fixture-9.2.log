@@ -1,0 +1,11 @@
+instantiate-linklet: mismatch;
+ reference to a variable that is not exported
+  name: make-interface77.1
+  exporting instance: "/srv/data/code/racket-mcp/mcp/descriptor.rkt"
+  importing instance: "/srv/data/code/racket-mcp/examples/greeter.rkt"
+  possible reason: modules need to be recompiled because dependencies changed
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   body of "/srv/data/code/racket-mcp/examples/greeter.rkt"
+   /srv/data/code/racket-mcp/mcp/cli.rkt:61:0: main
+   body of (submod "/srv/data/code/racket-mcp/mcp/command.rkt" main)

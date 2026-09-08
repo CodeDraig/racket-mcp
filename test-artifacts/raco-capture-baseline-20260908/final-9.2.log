@@ -1,0 +1,8 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/raco-launcher.rkt")
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/command-process.rkt")
+raco test: (file "tests/loader-cli-restart.rkt")
+59 tests passed

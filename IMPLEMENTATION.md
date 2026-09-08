@@ -5180,3 +5180,48 @@ tests, all 1,301 core schema cases, all 86 optional regex cases and Scribble.
 The distribution was built twice and byte-compared; logs and hashes are in the
 prompt-completion evidence bundle. This does not close the outstanding release
 gates or establish native macOS/Windows verification.
+
+## Actual raco command capture gap (2026-09-08)
+
+A frozen-graph probe passed for direct file and library command entries on Linux
+Racket 9.2 and 9.3. On 9.3, only 22 predefined runtime modules lack identities;
+all ordinary static and observed dynamic dependencies have code evidence. Adding
+the real raco mcp invocation reproduced missing ordinary modules that raco loads
+before MCP observation starts. The extended command-observation regression is
+currently failing for that invocation. A fresh-registry experiment did not fix
+it and its runtime changes were removed. Evidence is retained in
+ test-artifacts/raco-capture-baseline-20260908. This identifies an additional
+production-command integration requirement; default captured workflows and the
+runtime baseline policy remain incomplete. The prior 6,112 passing native tests
+precede this newly added failing regression.
+
+## Fresh-process raco launcher (2026-09-08)
+
+The raco registration now delegates to a small launcher that runs the existing
+kernel entry with the Racket executable from the same installation. This closes
+the reproduced ordinary-module observation gap without reusing raco's already
+instantiated libraries. The subprocess receives literal argument strings and
+inherited standard streams; its exit status is forwarded. A launcher custodian
+kills its child on a catchable interruption. Uncatchable parent-only termination
+still requires the supervisor to terminate the serving child/process tree; this
+limit is explicit in the manual and is not claimed as crash cleanup coverage.
+
+Five launcher cases cover independent manifest inspection, diagnostics/status,
+argument validation, paths containing shell metacharacters, and actual listener
+cleanup after a break. The command observation test now exercises direct file,
+library and real raco entries. The existing SQLite loader restart test exercises
+both direct CLI and raco, checking successful unchanged resumes and rejection of
+changed runtime IDs and helper code before further handler work.
+
+Linux 9.3 passed 59 focused checks and Scribble. The initial 9.2 run exposed an
+outdated compiled greeter fixture (instantiate-linklet/export mismatch), whose
+stderr is preserved; the fixture was explicitly rebuilt before the final run.
+Final 9.2 and installed verification is recorded in the raco-capture evidence
+bundle. The prior full native suite predates this launcher change. Default
+workflow capture/sealing and automatic predefined-runtime identity remain open.
+
+Final launcher verification passed all 59 focused checks on Linux Racket 9.2
+and 9.3 and in the installed 9.3 package. Installed dependency checks and the
+manual build passed. Reproducible ZIP and evidence hashes are retained with the
+logs. No native macOS/Windows execution or full-suite result is claimed for this
+change. All remaining release requirements stay open.

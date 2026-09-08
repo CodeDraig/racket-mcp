@@ -2432,9 +2432,14 @@ The serving command opts into this loader with an explicit runtime identity:
 
 The @tt{mcp/command} entry point starts in Racket's kernel language and installs
 observation before loading ordinary SDK libraries. Direct file execution and
-@tt{racket -l mcp/command} use this cold entry; @tt{raco mcp} uses the same command
-inside its existing Racket process. Libraries already loaded by @tt{raco} precede
-the observation scope. Importing the command alone does not load the ordinary SDK.
+@tt{racket -l mcp/command} use this cold entry. The @tt{raco mcp} launcher starts
+that entry in a fresh Racket process from the same installation, so libraries
+already loaded by @tt{raco} do not escape observation in the serving process.
+Arguments are passed without a shell; standard streams and the exit status are
+forwarded. Interrupting the launcher terminates its owned child. For supervisors
+that forcibly terminate process trees, include the child serving process; an
+uncatchable parent-only termination does not run Racket custodian cleanup.
+Importing the kernel command alone does not load the ordinary SDK.
 Kernel observations transfer to the SDK collector by module registry, and retained
 loader hooks forward later declarations until the command scope closes. For
 SDK dependencies evaluated under observation, captured loading uses the actual

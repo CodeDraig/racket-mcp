@@ -1,0 +1,33 @@
+raco setup: version: 9.2
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.2
+raco setup: variants: cs
+raco setup: main collects: /usr/share/racket/collects/
+raco setup: collects paths:
+raco setup:   /srv/data/code/racket-mcp
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/collects
+raco setup:   /usr/share/racket/collects/
+raco setup: main pkgs: /usr/share/racket/pkgs
+raco setup: pkgs paths:
+raco setup:   /usr/share/racket/pkgs
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/pkgs
+raco setup: links files:
+raco setup:   /usr/share/racket/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/links.rktd
+raco setup: compiled-file roots:
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/compiled-9.2-effect
+raco setup: --- updating info-domain tables ---                    [11:59:01]
+raco setup: updating: /srv/data/code/racket-mcp/info-domain/compiled/cache.rktd
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/raco-launcher.rkt")
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/command-process.rkt")
+Transport closed
+  context...:
+   /srv/data/code/racket-mcp/mcp/stdio.rkt:131:7
+command-process.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/loader-cli-restart.rkt")
+1/58 test failures

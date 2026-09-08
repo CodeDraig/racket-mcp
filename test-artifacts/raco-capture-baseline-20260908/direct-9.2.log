@@ -1,0 +1,2 @@
+raco test: (file "tests/command-observation.rkt")
+2 tests passed
