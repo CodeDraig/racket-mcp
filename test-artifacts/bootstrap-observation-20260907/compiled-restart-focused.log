@@ -1,0 +1,2 @@
+raco test: (file "tests/bootstrap-sdk-restart.rkt")
+6 tests passed

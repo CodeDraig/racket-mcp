@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/path (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt" "private/module-identity.rkt")
+(require racket/path racket/port file/sha1 "private/module-observation.rkt" (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt" "private/module-identity.rkt")
 (provide load-interface)
 (define-namespace-anchor sdk-home)
 (define sdk-language
@@ -14,15 +14,16 @@
   (define (visit identity)
     (define name (module-name identity))
     (unless (hash-has-key? seen name)
-      (hash-set! seen name #t)
+      (hash-set! seen name identity)
       (when (module-declared? identity #f)
         (for ([dependency (in-list (resolved-module-imports identity))])
           (visit dependency)))))
   (visit sdk-language)
   (visit sdk-reader)
   seen)
-;; The caller owns the immutable identity of its already-loaded SDK/runtime
-;; distribution. It never substitutes for an uncaptured application dependency.
+;; Prefer observed bootstrap code from the actual SDK registry. The caller owns
+;; the immutable identity of any SDK/runtime code loaded before observation.
+;; That identity never substitutes for an uncaptured application dependency.
 (define (load-interface path #:runtime-build-id runtime-build-id)
   (unless (and (string? runtime-build-id) (positive? (string-length runtime-build-id)))
     (raise-argument-error 'load-interface "nonempty runtime build identity" runtime-build-id))
@@ -47,6 +48,15 @@
       (unless (or (hash-has-key? bootstrap name)
                   (member name (module-code-capture-predefined capture)))
         (error 'load-interface "application code was not captured; use a fresh loading process: ~a" name))
-      (values name (string-append "explicit-runtime-build/1:" runtime-build-id))))
+      (define identity (hash-ref bootstrap name #f))
+      (define code
+        (and identity
+             (observed-module-code identity (namespace-anchor->namespace sdk-home))))
+      (values name
+        (if code
+            (bytes->hex-string
+             (sha256-bytes
+              (open-input-bytes (call-with-output-bytes (lambda (out) (write code out))))))
+            (string-append "explicit-runtime-build/1:" runtime-build-id)))))
   (void (seal-module-code-capture! capture #:dependencies dependencies))
   (module-code-capture-value capture))

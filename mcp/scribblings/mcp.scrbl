@@ -2025,6 +2025,20 @@ resolver or namespace.
 The serving command opts into this loader with an explicit runtime identity:
 @verbatim{raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serve application.rkt}
 
+The @tt{raco mcp} entry point installs an observer before loading the SDK. For
+SDK dependencies evaluated under that observer, captured loading uses the actual
+compiled module code in its original module registry instead of the supplied
+identity. The explicit identity remains required for dependencies loaded before
+observation, including predefined runtime modules. Importing the SDK first or
+calling @tt{mcp/cli} directly does not retroactively observe those modules.
+
+Use the same compiled SDK build when restarting durable execution. Fresh source
+compilation can produce different compiled code even without source edits; this
+is conservatively treated as a different executable. Rebuilds are not promised
+compatible merely because their source text or package version is unchanged.
+An SDK code change captured by this entry point invalidates saved execution even
+when the caller supplies the same runtime identity.
+
 The returned descriptor works with ordinary @tt{make-runtime}, local dispatch,
 stdio and HTTP APIs. Captured tool, resource and prompt workflows use the same
 validation and authorization paths. A changed build currently reaches stdio

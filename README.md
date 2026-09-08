@@ -61,13 +61,14 @@ their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
-Local Linux x86_64 verification passed on Racket 9.2 and 9.3, including 4,928 native
-checks, 1,301 pinned core schema cases, documentation and package checks. The
-current Racket 9.3 refresh also passed fresh dependency bootstrap and all thirteen
-Go interoperability probes. Its initial run exposed an omitted development
-fixture retaining 9.2 bytecode; validation scripts now compile every top-level
-development fixture before testing. See `test-artifacts/linux-9.3-current-20260907`
-for the failure, fix and final evidence.
+Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
+Racket 9.3 run passed 4,962 native checks, 1,301 pinned core schema cases,
+documentation, package checks and all thirteen Go probes; see
+`test-artifacts/bootstrap-observation-20260907`. The last full 9.2 run passed
+4,928 native checks; the new observer separately passed 11 focused checks on 9.2.
+The earlier fresh 9.3 dependency bootstrap exposed an omitted development fixture
+retaining 9.2 bytecode. Validation scripts now compile every top-level development
+fixture; `test-artifacts/linux-9.3-current-20260907` retains that failure and fix.
 The first hosted matrix run was prevented from starting by an Actions budget;
 macOS and Windows remain unverified. See `test-artifacts/native-platform-2026-09-07`
 and the implementation ledger for the version-specific evidence.

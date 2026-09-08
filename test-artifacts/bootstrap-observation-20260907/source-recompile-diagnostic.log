@@ -1,0 +1,8 @@
+raco test: (file "tests/bootstrap-sdk-restart.rkt")
+bootstrap-sdk-restart: unchanged resume failed: #hasheq((error . #hasheq((code . -32603) (message . "Internal error"))) (id . 1) (jsonrpc . "2.0")); stderr: DEBUG workflow code is incompatible with saved execution
+; changed: ("#<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-sdk-restart-17888263451788826345654/mcp/schema.rkt>")
+  context...:
+   body of "/srv/data/code/racket-mcp/tests/bootstrap-sdk-restart.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:209:16
+bootstrap-sdk-restart.rkt: raco test: test raised an exception
+1 test passed

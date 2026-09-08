@@ -1,0 +1,34 @@
+raco test: (file "tests/bootstrap-sdk-restart.rkt")
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/bootstrap-sdk-restart.rkt:45:8
+
+hash-ref: no value found for key
+  key: 'result
+--------------------
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/bootstrap-sdk-restart.rkt:46:8
+
+open-input-file: cannot open input file
+  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-sdk-restart-17888262021788826202123/completed.txt
+  system error: No such file or directory; errno=2
+--------------------
+--------------------
+FAILURE
+name:       check-regexp-match
+location:   tests/bootstrap-sdk-restart.rkt:54:8
+params:     '(#rx"incompatible" "Internal error")
+--------------------
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/bootstrap-sdk-restart.rkt:55:8
+
+open-input-file: cannot open input file
+  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-sdk-restart-17888262021788826202123/completed.txt
+  system error: No such file or directory; errno=2
+--------------------
+4/6 test failures

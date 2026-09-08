@@ -1,0 +1,2 @@
+raco test: (file "tests/module-observation.rkt")
+11 tests passed

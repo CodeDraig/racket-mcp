@@ -15,7 +15,7 @@ Passing a fixture does not establish every behavior of an advertised facility.
 | 4. Durable interactions | SQLite stages, effects, MRTR, explicit recovery, task polling/update/cancel | Remaining workflow binding/extension checks, full task/effect/nested MRTR failure matrix |
 | 5. Interface integration | Mounts/views, reference remapping, named adapter restrictions, upstream domain adapters with opt-in durable MRTR, scoped resource/task subscription forwarding, cache/outbox primitives, external committed-feed reconciliation, separate extension example | Concurrent upstream task observation/control matrix, Tasks failure matrices, complete integration coverage |
 | 6. Developer experience | All named CLI commands; manifests, Scribble, examples; local/wire sessions, asynchronous requests, cancellation, disconnect/reconnect and process kill/restart scenarios | Complete manifests/diagrams/docs, authored fault scheduling and acceptance matrix, binding-aware extension API |
-| 7. Release verification | Linux 9.2 tests, pinned schema suite, independent MCP checks, Go SDK probe, package checks | Full applicable conformance, other platforms/releases, all acceptance cases |
+| 7. Release verification | Linux 9.2 and 9.3 tests, pinned schema suite, independent MCP checks, Go SDK probes, package checks | Full applicable conformance, macOS/Windows, all acceptance cases |
 
 ## Requirement-to-test ledger
 
@@ -51,7 +51,7 @@ complete coverage of its surrounding milestone.
 | MRTR state and input | Workflow/store and `interaction.rkt`; workflow and official MRTR fixtures | Opaque handles, ownership/arguments/expiry/code checks, sequential input; round-specific tokens, conflicting-response arbitration, and partial input batches covered |
 | SQLite durability and recovery | `storage.rkt`, `workflow.rkt`; workflow/restart tests | Real child-process crash/manual recovery tested; full every-boundary concurrent/crash matrix missing |
 | Effect policies | Transactional, idempotent, manual adapters; workflow/restart tests | Explicit intents and journaled recovery; instance claims exclude in-flight recovery; competing outcome repairs and retry waiting tested; exhaustive effect crash matrix remains |
-| Workflow executable compatibility | Version and source-form fingerprint stored; explicit captured loader includes imported helpers | Default/direct loading still omits imported helper changes; automatic runtime provenance and complete executable compatibility gate missing |
+| Workflow executable compatibility | Version and source-form fingerprint stored; explicit captured loader includes imported helpers and command-observed SDK code | Default/direct loading still omits imported helper changes; automatic runtime provenance and complete executable compatibility gate missing |
 | Tasks | `tasks.rkt`; tasks tests | Persist-before-return, polling, input update, owner checks, terminal immutability; task workers detached from request cancellation/output |
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
@@ -4126,3 +4126,39 @@ package dependency setup completed, and installed `raco mcp inspect` returned th
 greeter manifest with workspace collection overrides absent. `git diff --check`
 passed. The previously recorded full 4,928-check run predates this entry-point
 change; it was not repeated for this wrapper.
+
+## Observed SDK code in captured builds (2026-09-07)
+
+The deferred command entry now installs a module evaluator observer before
+loading the SDK. It retains the compiled objects actually evaluated, scoped to
+their module registry. `load-interface` uses this evidence for bootstrap
+identities shared from the SDK's original registry. Unobserved bootstrap code
+still requires the caller's explicit runtime identity; unobserved application
+code still fails. Default/direct loading and automatic provenance for preloaded
+runtime modules remain unfinished. No source-file hash is substituted for loaded
+code, and the observer is a private implementation facility.
+
+`tests/module-observation.rkt` checks changed source versus already-loaded code,
+separate registries and observation lifetimes. `tests/bootstrap-sdk-restart.rkt`
+uses a temporary SDK build with the same explicit runtime ID across fresh
+processes. Unchanged compiled code resumes; a changed/rebuilt SDK rejects the
+saved continuation before the completion effect executes; fresh work under the
+new build still succeeds. The fixture only modifies its temporary SDK copy.
+
+An initial source-only restart probe rejected unchanged source because fresh
+compilation produced a different compiled digest for `mcp/schema.rkt`.
+Temporary-copy diagnostics isolated that difference; the outputs are retained.
+The final regression compiles one SDK build before restarting it. The manual
+now explicitly distinguishes reusing a compiled build from recompiling source;
+source equivalence does not establish executable compatibility. An earlier
+fixture path contract error was corrected before these runtime observations.
+
+Final validation on Linux Racket 9.3: `sh scripts/check.sh` passed compilation,
+4,962 native checks, all 1,301 pinned core schema cases and Scribble. All 13
+`sh scripts/check-interop.sh` official Go probes passed. Distribution construction,
+installed `raco setup --check-pkg-deps --pkgs racket-mcp`, and installed
+`raco mcp inspect` without workspace collection overrides passed. A source-only
+focused observer run on Linux Racket 9.2 passed 11 checks; this is not a new full
+9.2 run. `git diff --check` passed. Evidence is retained under
+`test-artifacts/bootstrap-observation-20260907`. Other platforms and the remaining
+full SDK implementation/release gates remain open.
