@@ -1,0 +1,2 @@
+raco test: (file "tests/stdio-raised-values.rkt")
+4 tests passed

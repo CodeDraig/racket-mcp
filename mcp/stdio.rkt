@@ -1,7 +1,7 @@
 #lang racket/base
-(require racket/async-channel racket/port "json.rkt" "runtime.rkt" "subscription.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt")
+(require racket/async-channel racket/port "json.rkt" "runtime.rkt" "subscription.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "private/failure.rkt")
 (provide serve-stdio make-stdio-client client-request client-call client-close!
-         (struct-out request-handle) (struct-out exn:fail:notification-overflow) (struct-out exn:fail:request-cancelled) (struct-out exn:fail:request-timeout) request-cancel!)
+         (struct-out exn:fail:stdio) (struct-out request-handle) (struct-out exn:fail:notification-overflow) (struct-out exn:fail:request-cancelled) (struct-out exn:fail:request-timeout) request-cancel!)
 (struct request-handle (id ready result cancel notifications) #:transparent
   #:property prop:evt (lambda (self) (wrap-evt (semaphore-peek-evt (request-handle-ready self))
                                              (lambda (_) (unbox (request-handle-result self))))))
@@ -99,6 +99,7 @@
         (sync deadline (thread-dead-evt (vector-ref entry 2))))
       (custodian-shutdown-all owner))))
     (when (unbox output-failure) (raise (cdr (unbox output-failure))))))
+(struct exn:fail:stdio exn:fail (cause) #:transparent)
 (struct exn:fail:request-timeout exn:fail (request-id seconds) #:transparent)
 (struct exn:fail:request-cancelled exn:fail (request-id) #:transparent)
 (struct exn:fail:notification-overflow exn:fail (request-id) #:transparent)
@@ -127,7 +128,7 @@
     (thread
      (lambda ()
        (semaphore-wait start)
-       (with-handlers ([exn:fail? (lambda (e) (client-close! c e))])
+       (with-handlers ([non-break-failure? (lambda (e) (client-close! c e))])
          (let loop ()
            (define line (read-json-line in))
            (if (eof-object? line)
@@ -137,7 +138,7 @@
     (thread
      (lambda ()
        (semaphore-wait start)
-       (with-handlers ([exn:fail? (lambda (e) (client-close! c e))])
+       (with-handlers ([non-break-failure? (lambda (e) (client-close! c e))])
          (let loop ()
            (write-outbound! c (async-channel-get (stdio-client-control c)))
            (loop))))))
@@ -217,7 +218,7 @@
                             (outbound-cancel (pending-request-outbound pending))))
                   (error 'client "outbound cancellation queue exhausted")))))]))))
 (define (cancel-request! c id [reason (exn:fail:request-cancelled "Request cancelled locally" (current-continuation-marks) id)])
-  (with-handlers ([exn:fail? (lambda (e) (client-close! c e))])
+  (with-handlers ([non-break-failure? (lambda (e) (client-close! c e))])
     (call-with-semaphore (stdio-client-lock c)
       (lambda ()
         (define pending (hash-ref (stdio-client-pending c) id #f))
@@ -255,7 +256,7 @@
 (define (client-send! c wire)
   ;; Never hold the state lock while writing: EOF/close must resolve pending
   ;; handles even when a peer stops consuming our output.
-  (with-handlers ([exn:fail? (lambda (e) (client-close! c e) (raise e))])
+  (with-handlers ([non-break-failure? (lambda (e) (client-close! c e) (raise e))])
     (call-with-semaphore
      (stdio-client-writer-lock c)
      (lambda ()
@@ -317,22 +318,27 @@
   (define result (sync (client-request c method params #:capabilities caps #:timeout timeout)))
   (if (exn? result) (raise result) result))
 (define (client-close! c [reason (exn:fail "Client closed" (current-continuation-marks))])
-  (define first?
-    (call-with-semaphore
-     (stdio-client-lock c)
-     (lambda ()
-       (and (not (stdio-client-closed? c))
-            (begin
-              (set-stdio-client-closed?! c #t)
-              (for ([id (in-list (hash-keys (stdio-client-pending c)))])
-                (finish-request! c id reason))
-              (hash-clear! (stdio-client-tokens c))
-              #t)))))
-  (when first?
-    ;; Cleanup attempts both halves even if one port's close procedure fails.
-    (when (stdio-client-close-ports? c)
-      (for ([close (in-list (list (lambda () (close-input-port (stdio-client-in c)))
-                                 (lambda () (close-output-port (stdio-client-out c)))))])
-        (with-handlers ([exn:fail? void]) (close))))
-    (for ([worker (in-list (list (stdio-client-reader c) (stdio-client-control-worker c)))])
-      (when (and worker (not (eq? worker (current-thread)))) (kill-thread worker)))))
+  (define outcome
+    (if (exn? reason) reason
+        (exn:fail:stdio "Stdio transport raised a non-exception value"
+                        (current-continuation-marks) reason)))
+  (parameterize-break #f
+    (define first?
+      (call-with-semaphore
+       (stdio-client-lock c)
+       (lambda ()
+         (and (not (stdio-client-closed? c))
+              (begin
+                (set-stdio-client-closed?! c #t)
+                (for ([id (in-list (hash-keys (stdio-client-pending c)))])
+                  (finish-request! c id outcome))
+                (hash-clear! (stdio-client-tokens c))
+                #t)))))
+    (when first?
+      ;; Cleanup attempts both halves even if one port's close procedure fails.
+      (when (stdio-client-close-ports? c)
+        (for ([close (in-list (list (lambda () (close-input-port (stdio-client-in c)))
+                                   (lambda () (close-output-port (stdio-client-out c)))))])
+          (with-handlers ([(lambda (_) #t) void]) (close))))
+      (for ([worker (in-list (list (stdio-client-reader c) (stdio-client-control-worker c)))])
+        (when (and worker (not (eq? worker (current-thread)))) (kill-thread worker))))))

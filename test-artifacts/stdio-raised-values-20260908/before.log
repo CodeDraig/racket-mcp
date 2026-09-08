@@ -1,0 +1,16 @@
+raco test: (file "tests/stdio-raised-values.rkt")
+uncaught exception: 'reader-failed
+--------------------
+an arbitrary reader failure settles requests and closes owned ports
+FAILURE
+name:       check-true
+location:   tests/stdio-raised-values.rkt:13:6
+params:     '(#f)
+--------------------
+--------------------
+arbitrary close failures do not skip the other owned port
+ERROR
+
+A value other than an exception was raised: 'close-failed
+--------------------
+2/2 test failures

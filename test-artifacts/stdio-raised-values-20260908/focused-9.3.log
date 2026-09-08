@@ -1,0 +1,7 @@
+raco test: (file "tests/stdio-raised-values.rkt")
+raco test: (file "tests/stdio-lifecycle.rkt")
+raco test: (file "tests/stdio-cancellation.rkt")
+raco test: (file "tests/stdio-timeouts.rkt")
+raco test: (file "tests/stdio-overflow.rkt")
+raco test: (file "tests/stdio-output-failure.rkt")
+130 tests passed

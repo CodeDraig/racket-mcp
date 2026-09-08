@@ -435,6 +435,12 @@ Explicit close, EOF, or a decoding/protocol failure resolves all pending handles
 stops the reader, and closes both ports. With @racket[#:close-ports? #f], the
 caller retains port ownership; explicit close still stops the reader. Writes use
 a separate lock so a blocked peer cannot prevent pending-handle resolution.
+Non-break failures raised by custom port procedures also close the client.
+Existing exception objects retain their identity. Non-exception values, including
+@racket[#f], become @racket[exn:fail:stdio] values; @racket[exn:fail:stdio-cause]
+retains the original raised value. This ensures synchronous calls raise failures
+instead of returning them as protocol results. Cleanup attempts both owned ports
+and stops client workers even when a port's close procedure raises a value.
 @racket[client-request]
 returns an event-compatible request handle; @racket[client-call] synchronizes it.
 The notification channel is bounded. @racket[request-cancel!] signals cancellation.
