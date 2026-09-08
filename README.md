@@ -63,9 +63,9 @@ passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
 Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 5,950 native checks, 1,301 pinned core schema cases,
+Racket 9.3 run passed 5,953 native checks, 1,301 pinned core schema cases,
 86 optional regex cases, documentation, package checks and all fourteen Go probes;
-see `test-artifacts/kernel-command-20260908`. The full 9.2 run at
+see `test-artifacts/native-executable-20260908`. The full 9.2 run at
 017af62 passed 5,785 native checks, the core and optional regex suites, and
 Scribble. The subsequent reference-compiler dependency fix passed the full 9.3
 run and focused source-only checks on 9.2; no newer full 9.2 run is claimed.

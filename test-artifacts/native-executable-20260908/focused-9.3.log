@@ -1,0 +1,4 @@
+raco test: (file "tests/native-executable.rkt")
+raco test: (file "tests/executable-build.rkt")
+raco test: (file "tests/executable-capture.rkt")
+48 tests passed

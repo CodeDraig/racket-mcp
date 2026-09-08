@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt" "module-code-tree.rkt" "compiled-identity.rkt")
+(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt" "module-code-tree.rkt" "compiled-identity.rkt" "native-executable.rkt")
 (provide (struct-out module-code-capture) capture-module-export seal-module-code-capture!)
 
 ;; A capture records code evaluated under this loader or identities retained by
@@ -100,12 +100,13 @@
               ([name (in-list (module-code-capture-unobserved capture))])
       (hash-set all name (hash-ref dependencies name))))
   (define fingerprint
-    (string-append "mcp-executable/1:"
+    (string-append "mcp-executable/2:"
       (bytes->hex-string
         (sha256-bytes (open-input-bytes
           (call-with-output-bytes
             (lambda (out)
               (write (list (version) (system-type 'vm) (system-type 'arch)
+                           (running-executable-identity)
                            (for/list ([name (in-list (sort (hash-keys all) string<?))])
                              (list name (hash-ref all name)))) out))))))))
   (define namespace (module-code-capture-namespace capture))

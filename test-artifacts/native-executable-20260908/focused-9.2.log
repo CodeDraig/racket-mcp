@@ -1,0 +1,6 @@
+raco test: (file "tests/native-executable.rkt")
+raco test: (file "tests/executable-build.rkt")
+raco test: (file "tests/executable-capture.rkt")
+raco test: (file "tests/loader.rkt")
+raco test: (file "tests/retained-capture.rkt")
+71 tests passed

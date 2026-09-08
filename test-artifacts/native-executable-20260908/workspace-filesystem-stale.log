@@ -1,0 +1,12 @@
+raco test: (file "tests/native-executable.rkt")
+--------------------
+late identity query and sealed build follow running image after path replacement
+FAILURE
+name:       check-equal?
+location:   tests/native-executable.rkt:47:6
+message:
+  "open-input-file: cannot open input file\n  path: /proc/self/exe\n  system error: Stale file handle; errno=116\n  context...:\n   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/promise.rkt:80:15\n   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/more-scheme.rkt:263:2: call-with-exception-handler\n   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/promise.rkt:48:2\n   /srv/data/code/racket-mcp/dev/native-executable-worker.rkt:12:0\n   body of \"/srv/data/code/racket-mcp/dev/native-executable-worker.rkt\"\n"
+actual:     1
+expected:   0
+--------------------
+1/2 test failures

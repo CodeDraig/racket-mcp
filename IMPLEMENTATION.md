@@ -4755,3 +4755,28 @@ an additional official Go client probe through the command. Installed raco inspe
 passed. Full 9.3 verification passed compilation, 5,950 native checks, all 1,301
 core schema cases, all 86 optional regex cases, and the updated Scribble build. Predefined and preloaded
 runtime identity, and default workflow build sealing, remain open.
+
+## Running executable evidence (2026-09-08)
+
+Captured fingerprints now include optional Linux /proc/self/exe evidence and use
+mcp-executable/2. A late first query follows the actual running image after its
+pathname has been replaced; no pathname hash substitutes for unavailable procfs.
+The identity is cached. Shared libraries and preloaded runtime code still require
+the explicit runtime build ID, and other platforms have no automatic image query.
+Older captured fingerprints remain tied to their compatible SDK/runtime build.
+
+A real copied-executable process test distinguishes the old and replacement image
+and their sealed fingerprints with otherwise identical input code/runtime IDs.
+Removing the image field reproduced equal fingerprints. Unreadable evidence is
+tested independently. The workspace temporary filesystem exposed ESTALE after
+unlink; the successful replacement fixture runs on /tmp, and this limitation is
+recorded rather than treated as a universal Linux guarantee.
+
+Focused compilation and 48 checks passed on 9.3; the broader 9.2 suite passed 71.
+Evidence is in `test-artifacts/native-executable-20260908`. Full 9.3 verification
+passed compilation, 5,953 native checks, all 1,301 core schema cases, all 86
+optional regex cases, and the updated Scribble build. Automatic whole-runtime identity and default workflow sealing remain
+open, along with the other complete-release gates.
+
+All 14 official Go probes passed for the executable-image change. Installed
+package dependency checks and 75 installed tests passed.

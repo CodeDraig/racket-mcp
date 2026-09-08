@@ -1,0 +1,19 @@
+raco test: (file "tests/native-executable.rkt")
+--------------------
+unreadable executable evidence stays explicitly unavailable
+ERROR
+
+make-security-guard: contract violation
+  expected: (procedure-arity-includes/c 4)
+  given: #f
+--------------------
+--------------------
+late identity query and sealed build follow running image after path replacement
+FAILURE
+name:       check-not-equal?
+location:   tests/native-executable.rkt:83:8
+params:
+  '("mcp-executable/2:0e216ef1162cf3b8cba33e0151405b3eb42660091f333caae63db84fd6086994"
+  "mcp-executable/2:0e216ef1162cf3b8cba33e0151405b3eb42660091f333caae63db84fd6086994")
+--------------------
+2/3 test failures
