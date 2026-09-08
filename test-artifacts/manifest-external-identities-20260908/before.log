@@ -1,0 +1,10 @@
+raco test: (file "tests/manifest-external-identities.rkt")
+--------------------
+removing a distinct external submodule reference requires review
+FAILURE
+name:       check-equal?
+location:   tests/manifest-external-identities.rkt:26:2
+actual:     "static-manifest-unchanged"
+expected:   "review-required"
+--------------------
+1/1 test failures

@@ -1781,6 +1781,13 @@ they are not wire names or stable identifiers across builds. Imported resources
 remain external even when their names and source files match a local declaration.
 Generated bindings need no source location to establish a local target.
 
+References also record @tt{binding-provider}: the defining module's file or
+symbol identity, submodule path, and binding phase. Re-export aliases retain the
+original provider. This distinguishes same-name resources in different submodules
+of one file without relying on source positions or generated binding names.
+Unavailable module-binding information is explicitly @racket[#f]. These are
+static declaration identities, not executable compatibility fingerprints.
+
 The compiler emits the manifest after declaration right-hand sides expand, using
 Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
@@ -1852,8 +1859,9 @@ Compiler-owned source positions and incidental local-ID renumbering do not affec
 comparison. Local target IDs resolve to declaration identities before comparison;
 retargeting and local/external changes require review. Duplicate local IDs and
 dangling local targets are errors. Resource-reference
-origins retain their source identity so distinct providers with the same name
-are not collapsed. Schema properties named @tt{source} or @tt{line} remain
+origins retain their source and binding-provider identities so distinct providers
+with the same name are not collapsed. Older manifests without provider information
+cannot establish submodule distinctions. Schema properties named @tt{source} or @tt{line} remain
 application data and still participate in comparison. Ordinary tools and workflow
 tools share one published identity for comparison.
 

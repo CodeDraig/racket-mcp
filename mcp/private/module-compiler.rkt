@@ -1,6 +1,17 @@
 #lang racket/base
 (require racket/list "declaration-ir.rkt" "resource-binding.rkt" (for-template racket/base))
 (provide make-module-compilers)
+;; Preserve the defining module, not an import alias or generated binding name.
+;; Resolving an already expanded binding does not instantiate its provider.
+(define (reference-provider target)
+  (define binding (identifier-binding target))
+  (and (list? binding)
+       (let* ([name (resolved-module-path-name (module-path-index-resolve (car binding)))]
+              [root (if (pair? name) (car name) name)])
+         (hasheq 'kind (if (path? root) "file" "symbol")
+                 'module (if (path? root) (path->string root) (symbol->string root))
+                 'submodules (if (pair? name) (map symbol->string (cdr name)) '())
+                 'phase (list-ref binding 4)))))
 ;; Each module owns a lexical collector/finalizer pair. No process-wide table
 ;; communicates between modules or transformer instances.
 (define (make-module-compilers runtime-register)
@@ -41,8 +52,9 @@
          (define origins
            (remove-duplicates
             (for/list ([target (in-list targets)])
-              (hash-set
+              (hash-set*
                 (or (syntax-property target 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
+                'binding-provider (reference-provider target)
                 'local-target
                 (for/first ([resource (in-list local-resources)]
                             #:when (and (car resource) (free-identifier=? target (car resource))))

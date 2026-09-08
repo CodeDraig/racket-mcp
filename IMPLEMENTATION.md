@@ -4819,3 +4819,17 @@ installed package dependency checks and 95 installed tests passed. Full 9.3
 verification passed compilation, 5,962 native checks, all 1,301 core schema cases,
 all 86 optional regex cases and Scribble. Whole-interface cross-module analysis
 remains incomplete.
+
+## External manifest provider identities (2026-09-08)
+
+A regression reproduced two same-name external resources from distinct submodules
+of one source file collapsing during diff normalization. Generated references now
+retain defining module identity, submodule path and binding phase. Removing one
+reference requires review; re-export aliases still deduplicate and source-position
+changes remain incidental. Providers are not instantiated by this analysis.
+
+Focused compilation and 55 checks passed on Linux Racket 9.2 and 9.3. Evidence is
+in `test-artifacts/manifest-external-identities-20260908`. All 14 Go probes, installed
+dependency checks and 55 installed tests passed. Full 9.3 verification passed
+compilation, 5,965 native checks, all 1,301 core schema cases, all 86 optional regex
+cases and Scribble. Complete cross-module interface analysis remains open.
