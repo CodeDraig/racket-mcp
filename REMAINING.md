@@ -8,7 +8,7 @@ without a regression or a dependency of a remaining requirement. Historical
 
 | ID | Concrete unmet work | Evidence needed to remove this row |
 |---|---|---|
-| PLATFORM | Obtain final-source Racket 9.2/9.3 native macOS and Windows verification. | Native builds/tests/package/docs run successfully. GitHub run 34272422677 terminates with startup_failure and zero jobs; startup cause is not established. |
+| PLATFORM | Obtain final-source Racket 9.2/9.3 native macOS and Windows verification. | Native builds/tests/package/docs run successfully. After the billing update, run 34279042543 creates matrix jobs but GitHub explicitly blocks startup: "an Actions budget is preventing further use." Remove that budget block or supply native runners. |
 
 Final Linux checks passed on Racket 9.2 (6,264 native tests) and 9.3 (6,268),
 including 1,301 schema core cases, 86 regex cases and Scribble on each. Installed
