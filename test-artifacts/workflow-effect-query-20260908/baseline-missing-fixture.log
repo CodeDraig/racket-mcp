@@ -1,0 +1,21 @@
+directory-list: could not open directory
+  path: /srv/data/code/racket-mcp/.cache/probes/effect-query-baseline/mcp/private/../../vendor/metaschemas
+  system error: No such file or directory; errno=2
+  context...:
+   /usr/share/racket/collects/racket/private/for.rkt:2762:2: dir-list
+   /usr/share/racket/collects/racket/private/for.rkt:2792:7
+   /usr/share/racket/collects/racket/private/for.rkt:620:2: make-sequence
+   /srv/data/code/racket-mcp/.cache/probes/effect-query-baseline/mcp/private/metaschema.rkt:8:2: schemas
+   /usr/share/racket/collects/racket/private/promise.rkt:125:10
+   /usr/share/racket/collects/racket/private/more-scheme.rkt:263:2: call-with-exception-handler
+   /usr/share/racket/collects/racket/private/promise.rkt:117:0: force/generic
+   /srv/data/code/racket-mcp/.cache/probes/effect-query-baseline/mcp/schema.rkt:24:0: check-schema!
+   body of "/srv/data/code/racket-mcp/.cache/probes/effect-query-baseline/tests/binding-provider.rkt"
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:428:27
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:430:0: call-with-summary
+   .../private/map.rkt:40:19: loop
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:1165:1: test
+   body of "/usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt"
+   /usr/share/racket/collects/raco/raco.rkt:41:0
+   body of "/usr/share/racket/collects/raco/raco.rkt"
+   ...

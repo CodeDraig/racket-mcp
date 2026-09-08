@@ -1598,6 +1598,18 @@ or operation for these queries. Ordinary host bindings retain their own behavior
 The compiler exposes this context only while expanding the stage; it does not
 register identifiers globally or evaluate value expressions to discover metadata.
 
+Effect-space queries follow lexical stage order as well. A @racket[perform]
+introduces its adapter identifier in the effect space for its input expression
+and subsequent stages of the same block. Earlier stages, sibling branches and
+code after a completed inner block cannot see an adapter introduced only there.
+Adapters inherited from an enclosing sequence remain visible across joins.
+These rules apply both to workflow extension queries and to expression macros
+inside handlers; adapters are not hoisted over the whole workflow. Value-space
+bindings with the same spelling remain separate in generated stage environments.
+An ordinary host @racket[let] retains Racket lexical shadowing, including for
+binding queries in its body. Extension-generated adapters
+preserve their scopes, and an unresolved forward query is a source error.
+
 @tt{examples/extensions/checkpoint-copy.rkt} demonstrates the query in a separately
 implemented workflow extension. @tt{(checkpoint-copy [saved String] name)} requires
 @tt{name} to be an available workflow value and emits a normal checked checkpoint.

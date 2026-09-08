@@ -29,7 +29,7 @@ complete coverage of its surrounding milestone.
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
-| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values; full domain binding API audit remains open |
+| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values and lexical effect adapters; full domain binding API audit remains open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
@@ -4406,3 +4406,36 @@ execution, plus manifest access without parent instantiation. Evidence is in
 A separate probe in `test-artifacts/workflow-effect-query-20260908` confirms that
 effect-space queries inside workflow extensions remain unresolved; no forward or
 branch-scope behavior is inferred from that failure. The full SDK goal remains open.
+
+
+## Lexical workflow effect queries (2026-09-08)
+
+The reproduced effect query failure is corrected by passing the lexical adapter
+context into workflow extension expansion. A perform introduces its adapter for
+its own input expression and the rest of that sequence. Branch and let-local
+adapters do not escape their block; inherited adapters survive joins. Generated
+handler scopes use the same rule instead of hoisting every adapter over the
+whole workflow. Generated stage adapter references have their own checked scope.
+
+A same-spelled workflow value initially hid an adapter from expression macros.
+A minimal scope-order probe isolated this: placing the effect scope inside the
+generated value scope preserves both. Ordinary host let bindings retain Racket's
+lexical shadowing. Extension-generated adapter binders are normalized without
+removing their private scopes. Changed emitted stages change the existing
+workflow fingerprint, so old generated code is not silently treated as compatible.
+
+The focused 9.3 compiler/workflow selection passed 96 checks. The final scope
+regression passed 11 checks, including ordinary host shadowing, and all 14 Go
+probes passed. Source-only 9.2 passed the new effect test but failed two existing
+cross-module dynamic-require checks. The isolated compiled 9.2 selection passed
+40 checks. A source-only comparison against committed c05b670 reproduces the two
+failures when workflow-extension-bindings precedes domain-bindings; domain-bindings
+alone passes. This pre-existing source-only test-order issue remains a separate
+compiler investigation. Installed dependency setup and 40 installed checks passed.
+A separate four-check language probe passed, including manifest access without
+parent instantiation. Full 9.3 validation passed 5,789 native checks, 1,301
+core schema cases, 86 optional regex cases and Scribble. A full 9.2 run is active
+in an isolated source copy; all 608 copied source inputs were hash-checked against
+the worktree. This is not yet a passing full 9.2 result.
+Evidence and unsuccessful probes are retained in
+`test-artifacts/workflow-effect-query-20260908`. The full SDK goal remains open.

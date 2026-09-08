@@ -1,0 +1,2 @@
+raco test: (file ".cache/probes/effect-query-baseline/tests/domain-bindings.rkt")
+20 tests passed

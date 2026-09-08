@@ -1,0 +1,4 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/workflow-effect-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/domain-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/workflow-extension-bindings.rkt")
+40 tests passed

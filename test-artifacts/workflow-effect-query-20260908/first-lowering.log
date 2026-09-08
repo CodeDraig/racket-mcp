@@ -1,0 +1,22 @@
+raco test: (submod (file "test-artifacts/workflow-effect-query-20260908/probe.rkt") test)
+probe.rkt:9:32: effect-reference: not bound as MCP effect binding
+  at: writer
+  in: effect-reference
+  location...:
+   probe.rkt:9:32
+  context...:
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:474:32
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:485:0: map/trees
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:194:23
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:98:0: update-pvar*
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:185:0: simple-expand-internal
+   [repeats 1 more time]
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:155:0: expand-top
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+probe.rkt: raco test: non-zero exit: 1
+raco test: (file "test-artifacts/workflow-effect-query-20260908/host-probe.rkt")
+raco test: (file "tests/domain-bindings.rkt")
+raco test: (file "tests/workflow-extension-bindings.rkt")
+1/30 test failures

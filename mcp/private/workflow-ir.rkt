@@ -25,4 +25,5 @@
   (for/list ([node (in-list (check-workflow-nodes nodes))])
     #`(workflow-stage '#,(workflow-node-id node) '#,(workflow-node-kind node)
                       (checked-schema-expression #,(workflow-node-schema node)) #,(workflow-node-procedure node)
-                      #,(if (eq? (workflow-node-kind node) 'effect) #`(effect-reference #,(workflow-node-adapter node)) #`'#,(workflow-node-adapter node)) '#,(workflow-node-policy node))))
+                      #,(if (eq? (workflow-node-kind node) 'effect) #`(workflow-effects ([#,(workflow-node-adapter node) '#,(workflow-node-adapter node)])
+                                         (effect-reference #,(workflow-node-adapter node))) #`'#,(workflow-node-adapter node)) '#,(workflow-node-policy node))))

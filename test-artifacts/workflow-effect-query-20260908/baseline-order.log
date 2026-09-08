@@ -1,0 +1,19 @@
+raco test: (file ".cache/probes/effect-query-baseline/tests/workflow-extension-bindings.rkt")
+raco test: (file ".cache/probes/effect-query-baseline/tests/domain-bindings.rkt")
+--------------------
+ERROR
+name:       check-equal?
+location:   .cache/probes/effect-query-baseline/tests/domain-bindings.rkt:21:0
+
+Label: MCP schema binding may not be used as a racket expression
+  in: Label
+--------------------
+--------------------
+ERROR
+name:       check-equal?
+location:   .cache/probes/effect-query-baseline/tests/domain-bindings.rkt:22:0
+
+operation: MCP operation binding may not be used as a racket expression
+  in: operation
+--------------------
+2/29 test failures

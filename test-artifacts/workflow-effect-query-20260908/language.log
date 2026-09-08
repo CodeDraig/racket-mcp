@@ -1,0 +1,2 @@
+raco test: (file "test-artifacts/workflow-effect-query-20260908/lang-check.rkt")
+4 tests passed

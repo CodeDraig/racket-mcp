@@ -11,7 +11,8 @@
   (unless (memq space '(value effect)) (raise-argument-error 'lookup-mcp-binding "(or/c 'value 'effect)" space))
   (unless (syntax-transforming?) (error 'lookup-mcp-binding "only available during syntax expansion"))
   (cond
-    [(eq? space 'effect) (and (lookup-domain-kind id #:space 'effect) (mcp-binding-info 'effect #f #f))]
+    [(eq? space 'effect) (and (or (workflow-context-effect? id) (lookup-domain-kind id #:space 'effect))
+                            (mcp-binding-info 'effect #f #f))]
     [(workflow-context-binding? id) (mcp-binding-info 'workflow-value #f #f)]
     [else
      (define resource (lookup-resource-binding id))

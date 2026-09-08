@@ -267,9 +267,9 @@
      (define args (argument-code ids (syntax->list #'(a.spec ...)) (syntax->list #'(a.optional ...)) (attribute a.default)))
      (define (stage-key prefix id) (string->symbol (string-append prefix (symbol->string (syntax-e id)))))
      (define (block body) (syntax-parse body #:literals (begin) [(begin form ...+) (syntax->list #'(form ...))] [_ (list body)]))
-     (define (compile-sequence forms bound prefix wrap [join #f])
+     (define (compile-sequence forms bound prefix wrap [join #f] [effects '()])
        (when (null? forms) (raise-syntax-error #f "workflow requires a completion expression" stx))
-       (define (proc expression)
+       (define (proc expression [visible-effects effects])
          #`(mcp-owned-handler name (env)
              (workflow-environment
               (#,@(for/list ([binding (in-list bound)])
@@ -278,21 +278,22 @@
                        #,(if (match-binding? reference)
                              #`(list-ref (cadr (hash-ref env '#,(match-binding-record reference))) #,(match-binding-index reference))
                              #`(hash-ref env '#,reference missing))]))
-              #,(wrap expression))))
+              (workflow-effects (#,@(for/list ([id (in-list visible-effects)]) #`[#,id '#,id]))
+                #,(wrap expression)))))
        (define first
          (call-with-workflow-binding-context (map car bound)
-           (lambda () (expand-workflow-extension (car forms)))))
+           (lambda () (expand-workflow-extension (car forms))) #:effects effects))
        (define tail (cdr forms))
        (define (node id kind schema procedure [adapter #f] [policy #f])
          (check-literal-schema! schema)
          (workflow-node id kind schema procedure adapter policy first))
        (define (continuation)
-         (if (null? tail) '() (compile-sequence tail bound (string-append prefix "after/") wrap join)))
+         (if (null? tail) '() (compile-sequence tail bound (string-append prefix "after/") wrap join effects)))
        (define (destination after) (if (null? after) join (workflow-node-id (car after))))
        (syntax-parse first #:literals (checkpoint await-input perform task-boundary if match let begin)
          [(task-boundary id:id)
           (cons (node (stage-key prefix #'id) 'task-boundary #'Any (proc #'json-null))
-                (compile-sequence tail bound prefix wrap join))]
+                (compile-sequence tail bound prefix wrap join effects))]
          [(await-input ([id:id spec:expr request:expr] ...+))
           (define names (map syntax-local-identifier-as-binding (syntax->list #'(id ...))))
           (check-binders (append (map car bound) names) stx)
@@ -304,22 +305,26 @@
           (cons (node group-id 'input-group
                       #`(object-schema (hasheq #,@(append-map (lambda (key spec) (list #`'#,key spec)) keys specs)))
                       (proc #`(hasheq #,@(append-map (lambda (key request) (list #`'#,key request)) keys requests))) keys)
-                (compile-sequence tail (append bound (map cons names keys)) prefix wrap join))]
+                (compile-sequence tail (append bound (map cons names keys)) prefix wrap join effects))]
          [((~and kind (~or checkpoint await-input)) [id:id spec:expr] value:expr)
           (define binder (syntax-local-identifier-as-binding #'id))
           (check-binders (append (map car bound) (list binder)) stx)
           (define wire-id (stage-key prefix #'id))
           (cons (node wire-id (if (free-identifier=? #'kind #'checkpoint) 'checkpoint 'input) #'spec (proc #'value))
-                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join))]
+                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join effects))]
          [(perform [id:id spec:expr] #:adapter adapter:id #:policy policy:id value:expr)
           (unless (memq (syntax-e #'policy) '(transactional idempotent manual)) (raise-syntax-error #f "unknown effect policy" stx #'policy))
           (define binder (syntax-local-identifier-as-binding #'id))
           (check-binders (append (map car bound) (list binder)) stx)
           (define wire-id (stage-key prefix #'id))
-          (cons (node wire-id 'effect #'spec (proc #'value) #'adapter (syntax-e #'policy))
-                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join))]
+          (define adapter-id (syntax-local-identifier-as-binding #'adapter))
+          (define next-effects
+            (if (ormap (lambda (id) (bound-identifier=? id adapter-id)) effects)
+                effects (append effects (list adapter-id))))
+          (cons (node wire-id 'effect #'spec (proc #'value next-effects) adapter-id (syntax-e #'policy))
+                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join next-effects))]
          [(begin body ...+)
-          (compile-sequence (append (syntax->list #'(body ...)) tail) bound prefix wrap join)]
+          (compile-sequence (append (syntax->list #'(body ...)) tail) bound prefix wrap join effects)]
          [(let ([id:id value:expr] ...) body ...+)
           (define names (map syntax-local-identifier-as-binding (syntax->list #'(id ...))))
           (check-binders names stx)
@@ -333,13 +338,13 @@
             (filter (lambda (binding) (not (ormap (lambda (id) (bound-identifier=? id (car binding))) names))) bound))
           (append bindings
                   (compile-sequence (syntax->list #'(body ...)) (append outer (map cons names keys))
-                                    inner-prefix wrap (destination after))
+                                    inner-prefix wrap (destination after) effects)
                   after)]
          [(if condition then otherwise)
           (define after (continuation))
           (define branch-id (string->symbol (string-append prefix "$branch")))
-          (define yes (compile-sequence (block #'then) bound (string-append prefix "then/") wrap (destination after)))
-          (define no (compile-sequence (block #'otherwise) bound (string-append prefix "else/") wrap (destination after)))
+          (define yes (compile-sequence (block #'then) bound (string-append prefix "then/") wrap (destination after) effects))
+          (define no (compile-sequence (block #'otherwise) bound (string-append prefix "else/") wrap (destination after) effects))
           (cons (node branch-id 'branch #'Integer (proc #'(if condition 0 1))
                       (list (workflow-node-id (car yes)) (workflow-node-id (car no))))
                 (append yes no after))]
@@ -362,7 +367,7 @@
                 (for/list ([id (in-list binders)] [index (in-naturals)])
                   (cons id (match-binding capture-id index))))
               (compile-sequence body (append outer captured) (format "~acase~a/" prefix i)
-                                wrap (destination after))))
+                                wrap (destination after) effects)))
           (define selector #`(car (hash-ref env '#,capture-id)))
           (define targets (map (lambda (branch) (workflow-node-id (car branch))) branches))
           (append (list (node subject-id 'checkpoint #'Any (proc #'subject))
@@ -381,7 +386,6 @@
        (when (and (hash-has-key? policies key) (not (eq? (hash-ref policies key) (workflow-node-policy node))))
          (raise-syntax-error 'perform "conflicting policies for the same effect adapter" (workflow-node-source node) (workflow-node-adapter node)))
        (hash-set! policies key (workflow-node-policy node)))
-     (define effect-ids (remove-duplicates (map workflow-node-adapter effect-nodes) free-identifier=?))
      (define stages (emit-workflow-nodes nodes))
      (define stage-summaries
        (for/list ([node (in-list nodes)])
@@ -391,10 +395,9 @@
      ;; compatibility even when the caller's source is unchanged.
      (define fingerprint (format "mcp-workflow/3:~s:~s" (syntax->datum stx) (map syntax->datum stages)))
      (define program-code
-       #`(workflow-effects (#,@(for/list ([id (in-list effect-ids)]) #`[#,id '#,id]))
-           (make-workflow (symbol->string 'name) version #,fingerprint (list #,@stages) #:key key
+       #`(make-workflow (symbol->string 'name) version #,fingerprint (list #,@stages) #:key key
                           #:changes (lambda (arguments outcome)
-                                      (let (#,@(for/list ([id ids]) #`[#,id (hash-ref arguments '#,id missing)])) changes)))))
+                                      (let (#,@(for/list ([id ids]) #`[#,id (hash-ref arguments '#,id missing)])) changes))))
      (if program-only?
          (if summaries? (values program-code stage-summaries) program-code)
      #`(begin (define-operation-value name

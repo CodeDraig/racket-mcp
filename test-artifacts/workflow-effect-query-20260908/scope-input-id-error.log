@@ -1,0 +1,65 @@
+raco test: (file "tests/workflow-effect-bindings.rkt")
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/workflow-effect-bindings.rkt:97:4
+actual:     '(after/after/after/answer)
+expected:   '(answer)
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/workflow-effect-bindings.rkt:101:4
+actual:
+  '#hasheq((inputRequests
+          .
+          #hasheq((after/after/after/answer
+                   .
+                   #hasheq((method . "elicitation/create")
+                           (params
+                            .
+                            #hasheq((message . "Continue")
+                                    (mode . "form")
+                                    (requestedSchema
+                                     .
+                                     #hasheq((additionalProperties . #f)
+                                             (properties . #hasheq())
+                                             (required . ())
+                                             (type . "object")))))))))
+         (requestState
+          .
+          "ff90c71a8d37b8c3988a09d04e8f10a3dbbb34adc61d5fa452822f9d085a8aa8")
+         (resultType . "input_required"))
+expected:
+  '#hasheq((content . (#hasheq((text . "outer") (type . "text"))))
+         (resultType . "complete"))
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/workflow-effect-bindings.rkt:102:4
+actual:
+  '#hasheq((inputRequests
+          .
+          #hasheq((after/after/after/answer
+                   .
+                   #hasheq((method . "elicitation/create")
+                           (params
+                            .
+                            #hasheq((message . "Continue")
+                                    (mode . "form")
+                                    (requestedSchema
+                                     .
+                                     #hasheq((additionalProperties . #f)
+                                             (properties . #hasheq())
+                                             (required . ())
+                                             (type . "object")))))))))
+         (requestState
+          .
+          "ff90c71a8d37b8c3988a09d04e8f10a3dbbb34adc61d5fa452822f9d085a8aa8")
+         (resultType . "input_required"))
+expected:
+  '#hasheq((content . (#hasheq((text . "outer") (type . "text"))))
+         (resultType . "complete"))
+--------------------
+3/11 test failures
