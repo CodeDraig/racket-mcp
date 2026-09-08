@@ -31,8 +31,14 @@
     (define located
       (if (hash-has-key? entry 'local-id)
           (hash-set entry 'local-id (string-append prefix (hash-ref entry 'local-id))) entry))
+    (define prompted
+      (if (and (hash-ref located 'prompt-reference #f)
+               (hash-ref (hash-ref located 'prompt-reference) 'local-target #f))
+          (hash-set located 'prompt-reference
+            (hash-set (hash-ref located 'prompt-reference) 'local-target
+                      (string-append prefix (hash-ref (hash-ref located 'prompt-reference) 'local-target)))) located))
     (define named (if (eq? (hash-ref entry 'kind) 'mount)
-                      (hash-set located 'name (string-append prefix (wire-name (hash-ref located 'name)))) located))
+                      (hash-set prompted 'name (string-append prefix (wire-name (hash-ref prompted 'name)))) prompted))
     (if (hash-has-key? named 'resource-references)
         (hash-set named 'resource-references
           (for/list ([ref (in-list (hash-ref named 'resource-references))])
@@ -81,13 +87,19 @@
                          (keep? (hash-ref entry 'name)))) entries))
          (define resources (filter (lambda (entry) (eq? (hash-ref entry 'kind) 'resource)) selected))
          (for ([entry (in-list entries)]
-               #:when (and (eq? (hash-ref entry 'kind) 'resource) (not (memq entry selected))))
+               #:when (and (memq (hash-ref entry 'kind) '(resource prompt)) (not (memq entry selected))))
            (record-exclusion
-            (hasheq 'binding-origin (hash-ref entry 'binding-origin #f)
+            (hasheq 'kind (hash-ref entry 'kind) 'binding-origin (hash-ref entry 'binding-origin #f)
                     'source (format "~a" (syntax-source source)) 'line (syntax-line source)
                     'column (syntax-column source) 'position (syntax-position source) 'span (syntax-span source))))
          (define present (map (lambda (entry) (hash-ref entry 'local-id #f)) resources))
+         (define present-prompts
+           (for/list ([entry selected] #:when (eq? (hash-ref entry 'kind) 'prompt)) (hash-ref entry 'local-id #f)))
          (for ([entry (in-list selected)])
+           (define prompt-reference (hash-ref entry 'prompt-reference #f))
+           (when (and prompt-reference (hash-ref prompt-reference 'local-target #f)
+                      (not (member (hash-ref prompt-reference 'local-target) present-prompts)))
+             (raise-syntax-error 'view "removed a referenced prompt" source))
            (for ([ref (in-list (hash-ref entry 'resource-references '()))])
              (when (and (hash-ref ref 'local-target #f) (not (member (hash-ref ref 'local-target) present)))
                (raise-syntax-error 'view "removed a referenced resource" source))))
@@ -162,17 +174,26 @@
         [(completion)
          (define target (hash-ref entry 'target))
          (define references (hash-ref entry 'resource-references '()))
-         (define local-target
-           (and (= (length references) 1) (hash-ref (car references) 'local-target #f)))
-         (define resource
+         (define prompt? (eq? (hash-ref target 'kind #f) 'prompt))
+         (define reference? (if prompt? (hash-has-key? entry 'prompt-reference) (pair? references)))
+         (define reference
+           (if prompt? (hash-ref entry 'prompt-reference #f)
+               (and (= (length references) 1) (car references))))
+         (define local-target (and reference (hash-ref reference 'local-target #f)))
+         (define resolved
            (and local-target
                 (findf (lambda (candidate)
-                         (and (eq? (hash-ref candidate 'kind) 'resource)
+                         (and (eq? (hash-ref candidate 'kind) (hash-ref target 'kind #f))
                               (equal? (hash-ref candidate 'local-id #f) local-target))) entries)))
-         (define uri (and resource (hash-ref (hash-ref resource 'metadata) 'uri)))
-         (if resource
-             (and (hash-ref uri 'known? #f)
-                  (list kind 'resource (hash-ref uri 'value) (hash-ref entry 'argument)))
+         ;; An unresolved lexical reference must not fall back to another
+         ;; declaration sharing its name. The post-resolution pass checks it.
+         (if reference?
+             (and resolved
+                  (let ([identity
+                         (if prompt? (wire-name (hash-ref resolved 'name))
+                             (let ([uri (hash-ref (hash-ref resolved 'metadata) 'uri)])
+                               (and (hash-ref uri 'known? #f) (hash-ref uri 'value))))])
+                    (and identity (list kind (hash-ref resolved 'kind) identity (hash-ref entry 'argument)))))
          (and (hash-ref target 'known? #f)
               (= 1 (count (lambda (candidate)
                             (and (eq? (hash-ref candidate 'kind) (hash-ref target 'kind))
@@ -195,6 +216,7 @@
           (set! routes (cons route routes)))))))
 (define (resolve-mounted-references entries #:exclusions [exclusions '()])
   (define resources (filter (lambda (entry) (eq? (hash-ref entry 'kind) 'resource)) entries))
+  (define prompts (filter (lambda (entry) (eq? (hash-ref entry 'kind) 'prompt)) entries))
   (define dynamic? (ormap (lambda (entry) (eq? (hash-ref entry 'kind) 'mount)) entries))
   ;; Source hints are diagnostic data, not proof of binding identity. Older
   ;; manifests without a binding key remain unresolved across module boundaries.
@@ -207,7 +229,8 @@
       (datum->syntax #f (hash-ref entry 'name)
         (map (lambda (field) (hash-ref entry field #f)) '(source line column position span)))))
   (for/list ([entry (in-list entries)])
-    (if (hash-has-key? entry 'resource-references)
+    (define resource-resolved
+     (if (hash-has-key? entry 'resource-references)
         (hash-set entry 'resource-references
           (for/list ([ref (in-list (hash-ref entry 'resource-references))])
             (define candidates
@@ -215,7 +238,23 @@
             (when (> (length candidates) 1)
               (source-error entry (format "references an ambiguous mounted resource: ~a" (hash-ref ref 'name))))
             (when (and (null? candidates) (not dynamic?)
-                       (ormap (lambda (excluded) (same-binding? (hash-ref excluded 'binding-origin #f) ref)) exclusions))
+                       (ormap (lambda (excluded) (and (eq? (hash-ref excluded 'kind 'resource) 'resource)
+                                                      (same-binding? (hash-ref excluded 'binding-origin #f) ref))) exclusions))
               (source-error entry (format "references a resource removed by a composed view: ~a" (hash-ref ref 'name))))
             (if (and (not (hash-ref ref 'local-target #f)) (= (length candidates) 1))
-                (hash-set ref 'local-target (hash-ref (car candidates) 'local-id)) ref))) entry)))
+                (hash-set ref 'local-target (hash-ref (car candidates) 'local-id)) ref))) entry))
+    (define ref (hash-ref entry 'prompt-reference #f))
+    (cond [ref
+           (define candidates (filter (lambda (prompt) (same-binding? (hash-ref prompt 'binding-origin #f) ref)) prompts))
+           (when (> (length candidates) 1)
+             (source-error entry (format "references an ambiguous mounted prompt: ~a" (hash-ref ref 'name))))
+           (when (and (null? candidates) (not dynamic?)
+                      (ormap (lambda (excluded) (and (eq? (hash-ref excluded 'kind 'resource) 'prompt)
+                                                     (same-binding? (hash-ref excluded 'binding-origin #f) ref))) exclusions))
+             (source-error entry (format "references a prompt removed by a composed view: ~a" (hash-ref ref 'name))))
+           (if (= (length candidates) 1)
+               (hash-set* resource-resolved
+                 'prompt-reference (hash-set ref 'local-target (hash-ref (car candidates) 'local-id))
+                 'target (hash-set (hash-ref entry 'target) 'name (hash-ref (car candidates) 'name)))
+               resource-resolved)]
+          [else resource-resolved])))

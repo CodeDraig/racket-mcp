@@ -5144,3 +5144,39 @@ The CLI gives only a generic likely-workflow-file diagnostic; no specific cause
 was available through the inspected API responses. Browser inspection could not
 start because the local browser-tool runtime failed to initialize. This run does
 not establish a billing cause or native macOS/Windows verification.
+
+## Prompt completion composition (2026-09-08)
+
+Three probes reproduced missing prompt parity: a completion outside a view failed
+to instantiate after its target was renamed, its manifest retained the old name,
+and an excluded imported target did not receive an expansion diagnostic. Views
+now retain a private prompt declaration identity without changing the public
+five-argument constructor. Interface construction resolves prompt completions by
+that identity, including nested views and raw runtime interfaces, and rejects
+absent, ambiguous or duplicate targets. Required scopes remain on the published
+prompt; the denied regression confirms the handler does not execute.
+
+Prompt manifests now contain binding origins and local IDs; completions carry a
+prompt-reference through imports, prefixing, provider rebasing and exclusions.
+Diffs normalize these references and diagrams show their targets. A further probe
+reproduced a false duplicate when an imported prompt and an unrelated local
+prompt shared an original name. Static checking now waits for lexical resolution
+rather than falling back to the unrelated declaration's name. Both routes are
+instantiated and dispatched in the regression.
+
+The eleven new cases also cover re-exported exclusions, dynamic restoration,
+independent inspection, binding-name/ID normalization and raw descriptor identity.
+An existing completion-diff fixture was corrected to retain its now-referenced
+prompt declaration; dangling local references remain errors. Initial 471-check
+focused runs on both versions exposed that incomplete fixture. After correction,
+63 focused prompt/completion/diagram checks passed on Linux 9.3. Final verification
+is recorded in test-artifacts/prompt-completion-composition-20260908. The full SDK
+and native platform release gates remain open.
+
+Final prompt-completion source passed 472 focused checks on Linux Racket 9.2
+and 9.3 and 472 across 25 installed-package test files on 9.3. Dependency setup
+and all 14 Go probes passed. Full Linux 9.3 verification passed 6,112 native
+tests, all 1,301 core schema cases, all 86 optional regex cases and Scribble.
+The distribution was built twice and byte-compared; logs and hashes are in the
+prompt-completion evidence bundle. This does not close the outstanding release
+gates or establish native macOS/Windows verification.

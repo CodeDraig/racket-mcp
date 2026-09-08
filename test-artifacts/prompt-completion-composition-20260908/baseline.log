@@ -1,0 +1,25 @@
+raco test: (file "tests/prompt-completion-composition.rkt")
+--------------------
+a completion outside a view follows the renamed prompt
+ERROR
+
+make-interface: completion references an absent prompt
+--------------------
+--------------------
+the manifest resolves the imported prompt's published name
+FAILURE
+name:       check-not-false
+location:   tests/prompt-completion-composition.rkt:21:2
+params:     '(#f)
+--------------------
+--------------------
+excluding an imported prompt completion target fails expansion
+FAILURE
+name:       check-exn
+location:   tests/prompt-completion-composition.rkt:26:4
+params:
+  '(#rx"prompt removed by a composed view"
+  #<procedure:...ion-composition.rkt:27:6>)
+message:    "No exception raised"
+--------------------
+3/3 test failures

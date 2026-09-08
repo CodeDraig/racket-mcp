@@ -21,6 +21,15 @@
   #:property prop:procedure
   (lambda (self . args) (resource-ref self args)))
 (struct prompt-descriptor (name description arguments handler workflow) #:transparent)
+(struct mounted-prompt-descriptor prompt-descriptor (identity) #:transparent)
+(define (prompt-declaration-identity prompt)
+  (if (mounted-prompt-descriptor? prompt) (mounted-prompt-descriptor-identity prompt) prompt))
+(define (rename-prompt-descriptor prompt name)
+  (mounted-prompt-descriptor name (prompt-descriptor-description prompt)
+    (prompt-descriptor-arguments prompt) (prompt-descriptor-handler prompt)
+    (prompt-descriptor-workflow prompt) (prompt-declaration-identity prompt)))
+(module* prompt-identity #f
+  (provide rename-prompt-descriptor))
 (struct interface-descriptor (server tools resources prompts completions) #:transparent)
 (struct scoped-interface interface-descriptor (requirements adapters references restrictions) #:transparent)
 (define (interface-requires-state? interface)
@@ -283,7 +292,16 @@
             (when (null? candidates) (error 'make-interface "completion references an absent resource"))
             (unless (null? (cdr candidates))
               (error 'make-interface "completion references an ambiguous mounted resource"))
-            (car candidates)) original))
+            (car candidates))
+          (if (prompt-descriptor? original)
+              (let ([candidates
+                     (filter (lambda (prompt)
+                               (eq? (prompt-declaration-identity prompt)
+                                    (prompt-declaration-identity original))) prompts)])
+                (when (null? candidates) (error 'make-interface "completion references an absent prompt"))
+                (unless (null? (cdr candidates))
+                  (error 'make-interface "completion references an ambiguous mounted prompt"))
+                (car candidates)) original)))
     (define argument-name* (completion-descriptor-argument completion))
     (define arguments
       (cond [(resource-descriptor? target)

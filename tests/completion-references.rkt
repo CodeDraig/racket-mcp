@@ -66,9 +66,10 @@
 (check-equal? (hash-ref entry 'target) (hasheq 'known? #t 'kind 'prompt 'name 'choose))
 (check-true (exact-positive-integer? (hash-ref entry 'position)))
 (define another-entry (hash-set entry 'argument 'another))
+(define prompt-entry (findf (lambda (d) (eq? (hash-ref d 'kind) 'prompt)) fixture:manifest))
 (check-equal? (sort (map (lambda (d) (hash-ref d 'change))
-                        (manifest-diff (list entry another-entry) (list another-entry))) string<?)
-              '("breaking-removal" "static-manifest-unchanged"))
+                        (manifest-diff (list prompt-entry entry another-entry) (list prompt-entry another-entry))) string<?)
+              '("breaking-removal" "static-manifest-unchanged" "static-manifest-unchanged"))
 
 (module provider racket/base
   (require mcp)

@@ -1,0 +1,4 @@
+raco test: (file "tests/prompt-completion-composition.rkt")
+raco test: (file "tests/completion-references.rkt")
+raco test: (file "tests/manifest-diagram.rkt")
+63 tests passed

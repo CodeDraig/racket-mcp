@@ -20,11 +20,11 @@
              (if text (format "|~a|" (label text)) "") to))
   (define declarations (for/list ([d (in-list manifest)] [i (in-naturals)]) (cons (format "d~a" i) d)))
   (define external (make-hash))
-  (define (resource-target ref)
+  (define (declaration-target kind ref)
     (define candidates
       (filter (lambda (pair)
                 (define d (cdr pair))
-                (and (eq? (hash-ref d 'kind #f) 'resource)
+                (and (eq? (hash-ref d 'kind #f) kind)
                      (if (hash-has-key? ref 'local-target)
                          (and (hash-ref ref 'local-target)
                               (equal? (hash-ref d 'local-id #f) (hash-ref ref 'local-target)))
@@ -34,11 +34,12 @@
                               (equal? (hash-ref d 'source #f) (hash-ref ref 'source)))))) declarations))
     (cond [(= (length candidates) 1) (caar candidates)]
           [else
-           (hash-ref! external ref
+           (hash-ref! external (cons kind ref)
              (lambda ()
                (define id (format "r~a" (hash-count external)))
-               (node id (format "~a resource: ~a"
+               (node id (format "~a ~a: ~a"
                                 (if (null? candidates) "external or unresolved" "ambiguous")
+                                kind
                                 (hash-ref ref 'name "unknown")))
                id))]))
   (display "flowchart LR\n" out)
@@ -50,7 +51,9 @@
   (for ([pair (in-list declarations)])
     (define id (car pair)) (define d (cdr pair))
     (for ([ref (in-list (hash-ref d 'resource-references '()))])
-      (edge id (resource-target ref) "references" #t))
+      (edge id (declaration-target 'resource ref) "references" #t))
+    (when (hash-ref d 'prompt-reference #f)
+      (edge id (declaration-target 'prompt (hash-ref d 'prompt-reference)) "completes" #t))
     (define stages (hash-ref d 'workflow-stages '()))
     (define stage-ids
       (for/hash ([stage (in-list stages)] [i (in-naturals)])

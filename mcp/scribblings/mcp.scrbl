@@ -1876,7 +1876,13 @@ public targets; a changed unresolved external binding requires review.
 String encoding preserves manifest write/read round trips when Racket uses
 uninterned symbols internally for module bindings.
 
-The independent manifest submodule retains @tt{manifest-exclusions} for resources
+Prompt declarations also carry local IDs and binding origins. A completion's
+@tt{prompt-reference} records its lexical prompt target using the same provider,
+binding-name and local-target fields. Mounted views resolve it to the prompt's
+published name. Diffs normalize incidental IDs and binding names once that target
+is resolved; unresolved references require review.
+
+The independent manifest submodule retains @tt{manifest-exclusions} for resources and prompts
 explicitly removed by static views. Exclusions survive fragment re-exports.
 A local handler referencing an excluded resource receives an expansion error
 when no other static mount supplies it and no dynamic mount could supply it.
@@ -1939,11 +1945,13 @@ does not establish that the capability was previously unnecessary.
 @tt{manifest->mermaid}, exported by @tt{mcp/cli}, accepts an already read manifest
 and returns the same text. Neither operation runs application handlers.
 
-The diagram shows declarations, dotted resource-reference edges, workflow entry
+The diagram shows declarations, dotted resource-reference and prompt-completion
+edges, workflow entry
 points, sequential stage transitions, numbered branch alternatives, explicit
 joins, and effect adapters labelled with their policy. Completion stages have no
 implicit outgoing transition. Imported resources outside the local manifest are
-labelled external or unresolved. Generated manifests use lexical local targets;
+labelled external or unresolved. Unresolved prompt targets receive the same
+explicit treatment. Generated manifests use lexical local targets;
 older manifests lacking these fields use source/name hints. Explicit external
 targets never fall back to those hints. Ambiguous matches remain explicit.
 
@@ -2005,6 +2013,11 @@ and by @racket[make-interface].
 @racket[make-runtime] retains normalized completion targets when given a raw
 interface descriptor. If the supplied interface is already normalized, its
 descriptor identity is preserved.
+The same resolution applies to prompt completions across renamed and nested
+views. Views retain a private prompt declaration identity while preserving the
+public five-argument @racket[prompt-descriptor] constructor. A separately
+constructed prompt with the same name does not satisfy a reference to the
+original declaration. Required scopes remain attached to the published target.
 
 Compiler-owned source positions and incidental local-ID renumbering do not affect
 comparison. Local target IDs resolve to declaration identities before comparison;

@@ -22,7 +22,9 @@
         (hash-set value 'binding-provider
           (hash-set* provider 'kind (hash-ref actual 'kind) 'module (hash-ref actual 'module))) value))
   (for/list ([entry (in-list entries)])
-    (define located (if (hash-has-key? entry 'binding-origin) (hash-set entry 'binding-origin (origin (hash-ref entry 'binding-origin))) entry))
+    (define prompted (if (hash-has-key? entry 'prompt-reference)
+                         (hash-set entry 'prompt-reference (origin (hash-ref entry 'prompt-reference))) entry))
+    (define located (if (hash-has-key? prompted 'binding-origin) (hash-set prompted 'binding-origin (origin (hash-ref prompted 'binding-origin))) prompted))
     (if (hash-has-key? located 'resource-references)
         (hash-set located 'resource-references (map origin (hash-ref located 'resource-references))) located)))
 (define (lookup-interface-data id export)

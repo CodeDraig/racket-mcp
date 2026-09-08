@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "descriptor.rkt" "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
+(require racket/list "descriptor.rkt" (submod "descriptor.rkt" prompt-identity) "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
 (provide mount mount-interfaces view role message image-content audio-content)
 (define-syntax (mount stx) (syntax-parse stx [(_ interface:expr ...)
                                            #`(let ([result (mount-interfaces interface ...)])
@@ -49,7 +49,7 @@
       transformed))
   (define prompts
     (for/list ([d (in-list (interface-descriptor-prompts iface))] #:when (keep? (prompt-descriptor-name d)))
-      (define transformed (struct-copy prompt-descriptor d [name (name (prompt-descriptor-name d))]))
+      (define transformed (rename-prompt-descriptor d (name (prompt-descriptor-name d))))
       (hash-set! targets d transformed)
       transformed))
   (define tools

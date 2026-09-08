@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "declaration-ir.rkt" "resource-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
+(require racket/list "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
 (provide make-module-compilers)
 ;; Preserve the defining module, not an import alias or generated binding name.
 ;; Resolving an already expanded binding does not instantiate its provider.
@@ -47,10 +47,15 @@
                   #:when (eq? (declaration-node-kind node) 'resource))
          (define binding (lookup-resource-binding (declaration-node-name node)))
          (cons (and binding (local-expand (resource-binding-target binding) 'expression '())) (format "declaration-~a" index))))
+     (define local-prompts
+       (for/list ([node (in-list nodes)] [index (in-naturals)]
+                  #:when (eq? (declaration-node-kind node) 'prompt))
+         (define binding (lookup-prompt-binding (declaration-node-name node)))
+         (cons (and binding (local-expand (prompt-binding-target binding) 'expression '())) (format "declaration-~a" index))))
      (define compiled
        (for/list ([node (in-list nodes)] [base-entry (in-list (declarations->manifest nodes))]
                   [index (in-naturals)])
-         (define entry
+         (define resource-entry
            (if (eq? (declaration-node-kind node) 'resource)
                (let ([target (car (findf (lambda (pair) (equal? (cdr pair) (format "declaration-~a" index))) local-resources))])
                  (hash-set* base-entry 'local-id (format "declaration-~a" index)
@@ -58,29 +63,46 @@
                               (hash-set* (or (syntax-property (resource-binding-target (lookup-resource-binding (declaration-node-name node))) 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
                                          'binding-provider (reference-provider target)
                                          'binding-name (reference-binding-name target))))) base-entry))
+         (define entry
+           (if (eq? (declaration-node-kind node) 'prompt)
+               (let ([target (car (findf (lambda (pair) (equal? (cdr pair) (format "declaration-~a" index))) local-prompts))])
+                 (hash-set* resource-entry 'local-id (format "declaration-~a" index)
+                            'binding-origin (and target
+                              (hasheq 'binding-provider (reference-provider target)
+                                      'binding-name (reference-binding-name target))))) resource-entry))
+         (define completion-prompt
+           (and (eq? (declaration-node-kind node) 'completion)
+                (lookup-prompt-binding (declaration-node-name node))))
          (define targets
            (if (eq? (declaration-node-kind node) 'completion)
                (let ([binding (lookup-resource-binding (declaration-node-name node))])
                  (if binding
                      (let ([target (resource-binding-target binding)])
                        (list (syntax-property (local-expand target 'expression '()) 'mcp-resource-origin
-                                              (syntax-property target 'mcp-resource-origin)))) '()))
+                                              (syntax-property target 'mcp-resource-origin))))
+                     (if completion-prompt
+                         (list (local-expand (prompt-binding-target completion-prompt) 'expression '())) '())))
                (append-map cdr (filter (lambda (group) (and (identifier? (declaration-node-name node)) (free-identifier=? (car group) (declaration-node-name node)))) references))))
          (define origins
            (remove-duplicates
             (for/list ([target (in-list targets)])
               (hash-set*
-                (or (syntax-property target 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
+                (if completion-prompt (hasheq 'name (prompt-binding-name completion-prompt))
+                    (or (syntax-property target 'mcp-resource-origin) (hasheq 'name #f 'known? #f)))
                 'binding-provider (reference-provider target)
                 'binding-name (reference-binding-name target)
                 'local-target
-                (for/first ([resource (in-list local-resources)]
+                (for/first ([resource (in-list (if completion-prompt local-prompts local-resources))]
                             #:when (and (car resource) (free-identifier=? target (car resource))))
                   (cdr resource)))) equal?))
-         (if (memq (declaration-node-kind node) '(tool resource prompt workflow completion))
+         (cond [completion-prompt
+                (hash-set* entry 'resource-references '() 'prompt-reference (and (pair? origins) (car origins))
+                           'reference-analysis 'lexical-completion-target)]
+               [(memq (declaration-node-kind node) '(tool resource prompt workflow completion))
              (hash-set* entry 'resource-references (sort origins string<? #:key (lambda (origin) (format "~a:~a:~a" (hash-ref origin 'source "") (hash-ref origin 'position 0) (hash-ref origin 'name))))
                         'reference-analysis (if (eq? (declaration-node-kind node) 'completion)
-                                                'lexical-completion-target 'lexical-handler-syntax)) entry)))
+                                                'lexical-completion-target 'lexical-handler-syntax))]
+               [else entry])))
      ;; Called in the final generated RHS, after application RHS expansion.
      ;; Lift a fresh, independent module containing only quoted manifest data.
      (define exclusions '())

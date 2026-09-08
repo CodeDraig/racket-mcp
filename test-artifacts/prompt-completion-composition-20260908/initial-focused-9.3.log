@@ -1,0 +1,33 @@
+raco test: (file "tests/prompt-completion-composition.rkt")
+raco test: (file "tests/prompt-codecs.rkt")
+raco test: (file "tests/manifest-completion-identities.rkt")
+raco test: (file "tests/manifest-composition.rkt")
+raco test: (file "tests/composed-reference-checks.rkt")
+raco test: (file "tests/manifest-diff.rkt")
+raco test: (file "tests/manifest-resource-identities.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+raco test: (file "tests/reference-manifest.rkt")
+raco test: (file "tests/manifest-reference-bindings.rkt")
+raco test: (file "tests/manifest-external-identities.rkt")
+raco test: (file "tests/manifest-provider-phases.rkt")
+raco test: (file "tests/manifest-diagram.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+raco test: (file "tests/manifest-capability-parity.rkt")
+raco test: (file "tests/extension-phase-matrix.rkt")
+raco test: (file "tests/phase-exports.rkt")
+raco test: (file "tests/module-imports.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/resource-reference-contract.rkt")
+raco test: (file "tests/completion-references.rkt")
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/completion-references.rkt:69:0
+
+manifest-diff: unresolved local prompt target: declaration-0
+--------------------
+raco test: (file "tests/view-adapters.rkt")
+raco test: (file "tests/view-effects.rkt")
+raco test: (file "tests/view-scopes.rkt")
+1/471 test failures

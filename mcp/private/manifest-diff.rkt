@@ -4,6 +4,11 @@
 (define location-fields '(source line column position span))
 (define (without value fields)
   (for/fold ([result value]) ([field (in-list fields)]) (hash-remove result field)))
+(define (reference-contract ref)
+  (define located (without ref '(line column position span local-target)))
+  (define stable (if (hash-ref ref 'local-target #f) (hash-remove located 'binding-name) located))
+  (if (hash-has-key? ref 'local-target)
+      (hash-set stable 'target-scope (if (hash-ref ref 'local-target) 'local 'external)) stable))
 (define (contract entry)
   ;; Strip compiler-owned locations only. A schema property called "source" or
   ;; "line" is application data and must still participate in comparison.
@@ -15,16 +20,13 @@
     (if (hash-has-key? base 'workflow-stages)
         (hash-set base 'workflow-stages
                   (map (lambda (stage) (without stage location-fields)) (hash-ref base 'workflow-stages))) base))
-  (if (hash-has-key? stages 'resource-references)
+  (define resources
+   (if (hash-has-key? stages 'resource-references)
       (hash-set stages 'resource-references
                 (remove-duplicates
-                 (map (lambda (ref)
-                        (define located (without ref '(line column position span local-target)))
-                        (define stable (if (hash-ref ref 'local-target #f) (hash-remove located 'binding-name) located))
-                        (if (hash-has-key? ref 'local-target)
-                            (hash-set stable 'target-scope (if (hash-ref ref 'local-target) 'local 'external))
-                            stable))
-                      (hash-ref stages 'resource-references)) equal?)) stages))
+                 (map reference-contract (hash-ref stages 'resource-references)) equal?)) stages))
+  (if (hash-ref resources 'prompt-reference #f)
+      (hash-set resources 'prompt-reference (reference-contract (hash-ref resources 'prompt-reference))) resources))
 (define (resource? entry) (and entry (eq? (hash-ref entry 'kind) 'resource)))
 (define (resource-uri entry)
   (and (resource? entry)
@@ -36,7 +38,11 @@
   (define target (hash-ref entry 'target (hasheq)))
   (and (hash-ref target 'known? #f)
        (case (hash-ref target 'kind #f)
-         [(prompt) (list 'prompt (hash-ref target 'name))]
+         [(prompt)
+          (if (hash-has-key? entry 'prompt-reference)
+              (and (hash-ref entry 'prompt-reference #f)
+                   (hash-ref (hash-ref entry 'prompt-reference) 'local-target-declaration #f))
+              (list 'prompt (hash-ref target 'name)))]
          [(resource)
           (define references (hash-ref entry 'resource-references '()))
           (and (= (length references) 1)
@@ -58,24 +64,30 @@
     (raise-argument-error 'manifest-diff "(listof hash?)" manifest))
   (define local-targets
     (for/fold ([targets (hash)]) ([entry (in-list manifest)] [ordinal (in-naturals)]
-                                 #:when (and (eq? (hash-ref entry 'kind #f) 'resource)
+                                 #:when (and (memq (hash-ref entry 'kind #f) '(resource prompt))
                                              (hash-has-key? entry 'local-id)))
       (define id (hash-ref entry 'local-id))
       (when (hash-has-key? targets id)
         (error 'manifest-diff "duplicate local declaration identity: ~a" id))
       (hash-set targets id (key entry ordinal))))
+  (define (normalize-reference ref kind)
+    (if (hash-ref ref 'local-target #f)
+        (let ([target (hash-ref local-targets (hash-ref ref 'local-target) #f)])
+          (unless (and target (eq? (car target) kind))
+            (error 'manifest-diff "unresolved local ~a target: ~a" kind (hash-ref ref 'local-target)))
+          (hash-set ref 'local-target-declaration target))
+        (hash-remove ref 'local-target-declaration)))
   (for/fold ([result (hash)]) ([entry (in-list manifest)] [ordinal (in-naturals)])
-    (define normalized
+    (define resources-normalized
       (if (hash-has-key? entry 'resource-references)
           (hash-set entry 'resource-references
             (for/list ([ref (in-list (hash-ref entry 'resource-references))])
-              (cond [(hash-ref ref 'local-target #f)
-                     (hash-set ref 'local-target-declaration
-                       (hash-ref local-targets (hash-ref ref 'local-target)
-                         (lambda () (error 'manifest-diff "unresolved local resource target: ~a"
-                                           (hash-ref ref 'local-target)))))]
-                    [else (hash-remove ref 'local-target-declaration)])))
+              (normalize-reference ref 'resource)))
           entry))
+    (define normalized
+      (if (hash-ref entry 'prompt-reference #f)
+          (hash-set resources-normalized 'prompt-reference
+                    (normalize-reference (hash-ref entry 'prompt-reference) 'prompt)) resources-normalized))
     (define id (key normalized ordinal))
     (when (hash-has-key? result id) (error 'manifest-diff "duplicate declaration identity: ~a" id))
     (hash-set result id normalized)))

@@ -1,0 +1,24 @@
+raco test: (file "tests/prompt-completion-composition.rkt")
+--------------------
+an imported target is not confused with a same-named local prompt
+FAILURE
+name:               check-not-exn
+location:           tests/prompt-completion-composition.rkt:141:4
+params:             '(#<procedure:...ion-composition.rkt:142:6>)
+message:            "Exception raised"
+exception-message:
+  "mount: duplicate statically known published identity: (completion prompt choose id)\n  in: (mount (view imported #:namespace \"api/\"))"
+exception:
+  mount: duplicate statically known published identity: (completion prompt choose id)
+    in: (mount (view imported #:namespace "api/"))
+    context...:
+     /srv/data/code/racket-mcp/mcp/private/interface-manifest.rkt:162:0: check-composed-manifest
+     /srv/data/code/racket-mcp/mcp/private/module-compiler.rkt:42:3
+     /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/rackunit-lib/rackunit/private/check.rkt:125:32
+     /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     [repeats 1 more time]
+     /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/rackunit-lib/rackunit/private/test-case.rkt:28:2
+     body of "/srv/data/code/racket-mcp/tests/prompt-completion-composition.rkt"
+     /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:209:16
+--------------------
+1/11 test failures
