@@ -1,0 +1,35 @@
+#lang racket/base
+(require racket/port file/sha1 rackunit)
+(current-check-handler (lambda (failure) (raise failure)))
+(define namespace (make-base-namespace))
+(parameterize ([current-namespace namespace])
+  (define (digest code)
+    (bytes->hex-string (sha256-bytes (open-input-bytes
+      (call-with-output-bytes (lambda (out) (write code out)))))))
+  (define code (compile '(module application racket/base
+    (provide value) (define value "old") (displayln "APPLICATION INSTANTIATED"))))
+  (define fingerprint (digest code))
+  (define stamp (module-compiled-name
+    (compile `(module mcp-executable racket/base (provide fingerprint)
+      (define fingerprint ,fingerprint))) '(application mcp-executable)))
+  (define stamped (module-compiled-submodules code #t
+    (append (module-compiled-submodules code #t) (list stamp))))
+  (define stored (call-with-output-bytes (lambda (out) (write stamped out))))
+  (define restored (parameterize ([read-accept-compiled #t]) (read (open-input-bytes stored))))
+  (eval restored)
+  (define output (with-output-to-string
+    (lambda () (check-equal? (dynamic-require '(submod 'application mcp-executable) 'fingerprint) fingerprint))))
+  (check-equal? output "")
+  (define (roundtrip code)
+    (parameterize ([read-accept-compiled #t])
+      (read (open-input-bytes (call-with-output-bytes (lambda (out) (write code out)))))))
+  (check-equal? (digest (roundtrip (module-compiled-submodules code #t '())))
+                (digest (roundtrip (module-compiled-submodules restored #t '()))))
+  (for ([item (list code (module-compiled-submodules code #t '())
+                   (roundtrip code) (module-compiled-submodules stamped #t '())
+                   (module-compiled-submodules restored #t '())
+                   (roundtrip (module-compiled-submodules restored #t '())))])
+    (printf "DIGEST ~a\n" (digest item)))
+  (check-equal? (with-output-to-string (lambda () (check-equal? (dynamic-require ''application 'value) "old")))
+                "APPLICATION INSTANTIATED\n")
+  (printf "Compiled identity survives serialization; inspection does not instantiate application; canonical stripped-body identity survives serialization.\n"))

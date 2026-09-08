@@ -1,8 +1,11 @@
 #lang racket/base
-(require "main.rkt" "cli.rkt" "completion.rkt" "private/registration.rkt" racket/splicing
+(require "main.rkt" "cli.rkt" "completion.rkt" "private/registration.rkt" "private/module-observation.rkt" racket/splicing
          (for-syntax racket/base racket/list syntax/parse "private/module-compiler.rkt"))
 (provide (except-out (all-from-out racket/base) #%module-begin module+ module*) (all-from-out "main.rkt")
          (rename-out [mcp-module-begin #%module-begin] [mcp-module+ module+] [mcp-module* module*]))
+;; Compiled clients may bypass the reader. Install before their subsequent
+;; application imports are instantiated; already loaded code remains unknown.
+(install-module-observation!)
 ;; The enclosing form supplies the implicit module-begin context. Keep that
 ;; context in racket/base while preserving each user's body syntax unchanged.
 (define-syntax (mcp-module+ stx)

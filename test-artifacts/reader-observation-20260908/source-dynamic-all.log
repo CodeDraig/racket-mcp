@@ -1,0 +1,5 @@
+INSTALL
+EVAL #<resolved-module-path:"/tmp/mcp-reader-provenance-3d1ohutx/application.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/tmp/mcp-reader-provenance-3d1ohutx/helper.rkt"> compiled=#f syntax=#t
+HELPER INSTANTIATED
+hello

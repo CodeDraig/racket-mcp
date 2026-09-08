@@ -4605,3 +4605,40 @@ core schema cases, all 86 optional regex cases and Scribble. Evidence, including
 the initial fixture failures, is retained in
 `test-artifacts/upstream-subscription-loss-20260908`. This change does not complete the remaining upstream process-loss/task matrix, automatic executable
 provenance, compiler/API audit or full release gates.
+
+
+## Reader and language code observation (2026-09-08)
+
+The private module observer now has a parameter-local idempotent installation
+operation as well as its existing scoped operation. The #lang mcp reader installs
+it before source evaluation; the language runtime also installs it for compiled
+applications that bypass the reader. Caller evaluators remain in the chain and
+nested observation restores the enclosing hook. Captures remain associated with
+the actual module registry; file contents are not consulted to identify code that
+was loaded before observation.
+
+Ten new cases cover repeated installation, nested restoration, single caller
+evaluation, source/compiled loading through a small independent language and the
+actual MCP language, preloaded helper exclusion and retained code after file edits.
+The four-file focused suite passed 49 checks on both Racket 9.2 and 9.3. All 14
+Go probes passed, including real server-process loss over stdio and HTTP.
+Installed package dependency checks and the same 49 installed checks passed.
+Full Racket 9.3 validation passed compilation, 5,931 native checks, all 1,301
+core schema cases, all 86 optional regex cases and Scribble. A byte comparison
+confirmed that the SDK/documentation/test source files match the verified
+installed distribution.
+
+This is automatic dependency observation, not completed automatic durable build
+identity. Compiled roots and dependencies loaded before the hook still require
+complete identity handling and sealing. A separate compiled-submodule identity
+probe confirmed readable metadata without parent instantiation, but failed its
+attempted serialization normalization assertion on both Racket versions. That
+normalization is not used by the SDK. Probe inputs, intermediate traces and
+verification logs are retained in test-artifacts/reader-observation-20260908.
+
+A subsequent producer-identity probe passed on both versions: an embedded digest
+of the original compiled input survives serialization, changes with the body,
+preserves original submodules and can be read without parent instantiation.
+Unlike the failed normalization, it makes no post-rewrite hash equality claim.
+This is a candidate integration mechanism; transformations after stamping would
+need a new identity and complete default-path sealing remains unfinished.

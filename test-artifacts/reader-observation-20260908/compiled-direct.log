@@ -1,0 +1,6 @@
+INSTALL
+OBSERVE #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/base.rkt"> (base reader)
+OBSERVE #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/module-reader.rkt"> module-reader
+OBSERVE #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/readerr.rkt"> readerr
+HELPER INSTANTIATED
+hello

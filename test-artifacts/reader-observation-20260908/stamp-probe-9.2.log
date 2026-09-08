@@ -1,0 +1,10 @@
+Exit status: 1
+
+  location...:
+   /tmp/racket-mcp-compiled-stamp-probe.rkt:26:2
+  context...:
+   /usr/share/racket/pkgs/rackunit-lib/rackunit/private/check.rkt:168:8
+   /usr/share/racket/pkgs/rackunit-lib/rackunit/private/check.rkt:125:32
+   /usr/share/racket/pkgs/rackunit-lib/rackunit/private/check.rkt:71:4
+   /tmp/racket-mcp-compiled-stamp-probe.rkt:5:0
+   body of "/tmp/racket-mcp-compiled-stamp-probe.rkt"

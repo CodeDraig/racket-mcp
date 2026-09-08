@@ -2259,6 +2259,14 @@ validation and authorization paths. A changed build currently reaches stdio
 clients through the runtime's ordinary internal-error channel; local workflow
 calls retain the recovery diagnostic.
 
+The language reader and runtime install an idempotent code observer before
+subsequent application dependencies load. Source and compiled imports retain the
+actual evaluated module code, including after the corresponding files change.
+The observer preserves caller evaluator behavior and scopes records by module
+registry. Code loaded before the observer remains explicitly unknown. This is
+private capture infrastructure; it does not yet seal a complete executable
+identity for the default serving path.
+
 Automatic runtime build provenance is not implemented yet. Serving without this
 option, including a generated direct executable entry point, still uses the
 existing loading path and retains its imported-helper compatibility limitation.

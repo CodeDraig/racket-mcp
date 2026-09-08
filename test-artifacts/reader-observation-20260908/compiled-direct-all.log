@@ -1,0 +1,8 @@
+INSTALL
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/base.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/module-reader.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/readerr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/tmp/mcp-reader-provenance-3d1ohutx/helper.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/runtime-config.rkt"> compiled=#f syntax=#t
+HELPER INSTANTIATED
+hello

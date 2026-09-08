@@ -3,9 +3,10 @@
 ;; This module deliberately imports no SDK or hashing libraries: command startup
 ;; installs its observer before those libraries are loaded. Evidence is scoped to
 ;; the actual module registry, never inferred from a source file after loading.
-(provide call-with-module-observation observed-module-code)
+(provide call-with-module-observation install-module-observation! observed-module-code)
 (struct observation (registries lock))
 (define current-observations (make-parameter #f))
+(define current-observing-evaluator (make-parameter #f))
 (define (observed-module-code identity [namespace (current-namespace)])
   (define observations (current-observations))
   (and observations
@@ -19,10 +20,8 @@
        (pair? (syntax-e expression))
        (identifier? (car (syntax-e expression)))
        (eq? (syntax-e (car (syntax-e expression))) 'module)))
-(define (call-with-module-observation thunk)
-  (define observations (observation (make-hasheq) (make-semaphore 1)))
-  (define original-eval (current-eval))
-  (define (observe expression)
+(define (make-observing-evaluator observations original-eval)
+  (lambda (expression)
     (define code (if (module-source? expression) (compile expression) expression))
     (define identity (current-module-declare-name))
     (define registry (namespace-module-registry (current-namespace)))
@@ -32,6 +31,22 @@
           (lambda ()
             (define modules (hash-ref! (observation-registries observations) registry make-hash))
             (for ([entry (in-list (module-code-tree identity code))])
-              (hash-set! modules (car entry) (cdr entry))))))))
-  (parameterize ([current-eval observe] [current-observations observations])
+              (hash-set! modules (car entry) (cdr entry)))))))))
+;; Reader and language entry points cannot wrap the rest of module loading in a
+;; thunk. Installation is parameter-local and idempotent for the current hook.
+;; A caller-supplied replacement evaluator is preserved beneath the new wrapper.
+(define (install-module-observation!)
+  (unless (and (current-observations)
+               (eq? (current-eval) (current-observing-evaluator)))
+    (define observations
+      (or (current-observations) (observation (make-hasheq) (make-semaphore 1))))
+    (define observe (make-observing-evaluator observations (current-eval)))
+    (current-observations observations)
+    (current-observing-evaluator observe)
+    (current-eval observe)))
+(define (call-with-module-observation thunk)
+  (define observations (observation (make-hasheq) (make-semaphore 1)))
+  (define observe (make-observing-evaluator observations (current-eval)))
+  (parameterize ([current-eval observe] [current-observations observations]
+                 [current-observing-evaluator observe])
     (thunk)))
