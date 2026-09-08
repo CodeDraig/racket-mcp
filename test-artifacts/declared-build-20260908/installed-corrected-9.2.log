@@ -1,0 +1,44 @@
+raco setup: version: 9.2
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.2
+raco setup: variants: cs
+raco setup: main collects: /usr/share/racket/collects/
+raco setup: collects paths:
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/collects
+raco setup:   /usr/share/racket/collects/
+raco setup: main pkgs: /usr/share/racket/pkgs
+raco setup: pkgs paths:
+raco setup:   /usr/share/racket/pkgs
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/pkgs
+raco setup: links files:
+raco setup:   /usr/share/racket/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/links.rktd
+raco setup: compiled-file roots:
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/compiled-9.2-effect
+raco setup: --- updating info-domain tables ---                    [16:01:38]
+raco setup: --- pre-installing collections ---                     [16:01:38]
+raco setup: --- installing foreign libraries ---                   [16:01:38]
+raco setup: --- installing shared files ---                        [16:01:38]
+raco setup: --- compiling collections ---                          [16:01:38]
+raco setup: --- parallel build using 8 jobs ---                    [16:01:38]
+raco setup: 7 making: <pkgs>/eli-tester/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger
+raco setup: 5 making: <pkgs>/racket-mcp/examples
+raco setup: 4 making: <pkgs>/racket-mcp/mcp
+raco setup: 3 making: <pkgs>/racket-mcp/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/check-requires
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/helper
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/tests
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/lang
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/private
+raco setup: 5 making: <pkgs>/racket-mcp/examples/extensions
+raco setup: --- creating launchers ---                             [16:02:17]
+raco setup: --- installing man pages ---                           [16:02:17]
+raco setup: --- installing collections ---                         [16:02:17]
+raco setup: --- post-installing collections ---                    [16:02:17]
+raco setup: --- checking package dependencies ---                  [16:02:17]
+raco test: (file ".cache/distribution/racket-mcp/tests/declared-build.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/declared-build-cli.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/view-adapters.rkt")
+22 tests passed

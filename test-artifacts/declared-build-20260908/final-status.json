@@ -1,0 +1,22 @@
+{
+  "sdk_commit": "5731907dfc4833fc0e235e0bcd50fa12bd30df27",
+  "racket_9_2": {
+    "exit": 0,
+    "native": 6264,
+    "schema": 1301,
+    "regex": 86,
+    "scribble": true
+  },
+  "racket_9_3": {
+    "exit": 0,
+    "native": 6268,
+    "schema": 1301,
+    "regex": 86,
+    "scribble": true
+  },
+  "installed": {
+    "9.2": 22,
+    "9.3": 22,
+    "dependency_checks": true
+  }
+}

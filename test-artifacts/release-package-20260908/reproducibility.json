@@ -1,0 +1,8 @@
+{
+  "identical": true,
+  "sha256": "7c0e1840b66e297823cd5cdfa4c8fbe5e2f76da407be9d1b18138b15790cee2f",
+  "bytes": 4526232,
+  "files": 1849,
+  "archive": ".cache/distribution/racket-mcp-0.1.zip",
+  "sdk_commit": "5731907dfc4833fc0e235e0bcd50fa12bd30df27"
+}

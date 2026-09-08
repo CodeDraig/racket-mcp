@@ -1,0 +1,92 @@
+[
+  {
+    "id": "tasks-extension-advertised",
+    "name": "TasksExtensionAdvertised",
+    "description": "Server advertises io.modelcontextprotocol/tasks under capabilities.extensions (and not capabilities.tasks)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:40.328Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "hasExtensions": true,
+      "hasTasksExtension": true,
+      "hasV1TasksSlot": false
+    }
+  },
+  {
+    "id": "sep-2663-tasks-methods-non-declaring",
+    "name": "TasksMethodsGatedWithoutExtension",
+    "description": "tasks/get, tasks/update, tasks/cancel return -32021 when the client did not negotiate the tasks extension (SEP-2575 Missing Required Capabilities)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:40.350Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/seps/2575-stateless-mcp"
+      },
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ]
+  },
+  {
+    "id": "sep-2663-server-rejects-undeclared-client",
+    "name": "TasksToolsCallWithoutExtensionSync",
+    "description": "tools/call from a session without the extension MUST fall through to sync (no CreateTaskResult, even for task-supporting tools)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:40.373Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "resultType": "complete",
+      "hasTaskId": false
+    }
+  },
+  {
+    "id": "tasks-per-request-meta-opt-in",
+    "name": "TasksPerRequestMetaOptIn",
+    "description": "tools/call with extension declared in _meta.io.modelcontextprotocol/clientCapabilities produces a CreateTaskResult even when the session did not negotiate the extension",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:40.384Z",
+    "specReferences": [
+      {
+        "id": "SEP-2575",
+        "url": "https://modelcontextprotocol.io/seps/2575-stateless-mcp"
+      },
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "resultType": "task",
+      "taskId": "03e80e47f7ee1dfd0b2ee25a9f382a9ac158e0932058520b6b13f51a48844720"
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:40.384Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 14,
+      "violations": []
+    }
+  }
+]

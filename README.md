@@ -63,16 +63,16 @@ their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
-Linux x86_64 verification is recorded in `test-artifacts`. Before the declared-build
-integration, full runs passed on Racket 9.2 (6,256 native checks) and 9.3 (6,238,
-followed by 22 incremental checks), including 1,301 schema cases, 86 regex cases
-and Scribble. The new identity contract passed 63 targeted checks, both versions'
-installed-package dependency checks and 22 installed checks, plus Scribble.
-Final full runs are in progress in `test-artifacts/declared-build-20260908`.
+Final Linux x86_64 checks pass on Racket 9.2 (6,264 native tests) and 9.3 (6,268),
+with 1,301 schema cases, 86 regex cases and Scribble on each. Installed-package
+dependency validation and 22 selected installed checks also pass on both versions.
+Evidence, including the corrected adapter-guard regression and retained failed
+attempts, is in `test-artifacts/declared-build-20260908`. Reproducible source-archive
+evidence is in `test-artifacts/release-package-20260908`.
 
 All fourteen official Go interoperability probes passed after the identity integration.
 Core and Tasks conformance were refreshed with unchanged qualified outcomes in
-`test-artifacts/declared-core-20260908` and `test-artifacts/declared-tasks-20260908`.
+`test-artifacts/declared-core-20260908` and `test-artifacts/declared-tasks-corrected-20260908`.
 The qualified MCP results are in `test-artifacts/conformance-closure-20260908`:
 144 core successes with four excluded roots/sampling fixture failures and one
 recorded MRTR warning; 43 Tasks successes with a header-specification disagreement

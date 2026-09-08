@@ -5671,3 +5671,22 @@ the declared-build identity. Changed declarations still reject input before
 persistence; ordinary adapter changes still fail before executing the next stage.
 The existing test is unchanged and passes with declared-build/tasks tests (32).
 Both failed full logs are retained and complete checks are being repeated.
+
+### Local release verification completed (2026-09-08)
+
+The corrected full Linux commands both exit zero: Racket 9.2 passes 6,264 native
+tests and 9.3 passes 6,268; each passes the 1,301-case schema suite, 86 regex cases
+and Scribble. Installed dependency checks and 22 installed checks pass on both.
+The final guard correction repeats Tasks conformance at the qualified 43/1/1
+outcome. Core/client/OAuth/Go evidence and explicit disagreements remain recorded.
+Failed full attempts and their correction are retained, not counted as success.
+
+The original-plan evidence map is test-artifacts/release-acceptance-20260908.
+The final archive comparison and integrity checks are recorded by
+release-package-20260908/compare-archives.py in reproducibility.json. The package
+includes REMAINING.md and excludes compiled/cache/development evidence artifacts.
+RELEASE is removed after local verification. PLATFORM is the only remaining row:
+final SDK commit 5731907 produced startup_failure with zero native jobs in GitHub
+run 34272422677. Its startup cause is not established; native macOS and Windows
+9.2/9.3 results require working native runners. No unqualified release/platform
+or protocol-conformance claim is made.

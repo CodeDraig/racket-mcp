@@ -53,3 +53,19 @@ view-adapters and tasks checks. final-source-sha256.txt records this corrected s
 the earlier source-sha256.txt remains the preceding verification snapshot.
 run-final.sh repeats all native tests with four independent test processes per
 version, then the pinned schema/regex runners and Scribble. Final logs are pending.
+
+## Final terminal results
+
+Both corrected full commands exited zero. final-9.2.log: 6,264 native tests;
+final-9.3.log: 6,268. Each also passes 1,301 schema cases, 86 regex cases and
+Scribble. installed-corrected-9.2.log and installed-corrected-9.3.log each pass
+package dependency checks and 22 installed declared-build/direct-entry/adapter-view
+checks. ../declared-tasks-corrected-20260908 repeats the qualified 43/1/1 Tasks
+outcome on the corrected source. The guard-only correction does not change the
+core/client/OAuth or Go paths already demonstrated. No failed attempt is counted
+as a pass; the earlier failed runs remain available above.
+
+Final SDK source is commit 5731907dfc4833fc0e235e0bcd50fa12bd30df27 and matches
+final-source-sha256.txt. Subsequent edits only finalize root release records and
+verification artifacts. The final native CI attempt again failed before starting
+jobs; see ../native-blocker-20260908.

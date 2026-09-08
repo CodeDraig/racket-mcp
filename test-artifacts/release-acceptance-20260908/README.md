@@ -2,7 +2,7 @@
 
 This maps the approved plan to implementation and behavioral evidence. It does
 not resurrect completed historical checklists. The user-selected declared-build contract is implemented; final Linux release
-checks are running and macOS/Windows remain externally unverified.
+checks pass and macOS/Windows remain externally unverified.
 
 | Original acceptance requirement | Implementation / evidence |
 |---|---|
@@ -15,7 +15,7 @@ checks are running and macOS/Windows remain externally unverified.
 | Prompt/resource input, nested rendering, partial responses, decline/cancel, out-of-band completion | domain-workflows, embedded-workflows, input-groups, scenario-conflicting-inputs, task-notifications and render provenance tests. New mcp-render-boundaries process kills close parent/child commit gaps. |
 | Checkpoint/effect restarts, duplicate/concurrent retries, expiry, ownership, arguments and code compatibility | durability-boundaries-20260908 transition map and 11 new process-kill cases; existing 18 effect crash combinations and task/recovery/clock tests. Captured-loader compatibility and user-declared ordinary build identities are tested; the latter puts update responsibility on the application. |
 | Transactional/idempotent/manual recovery semantics | scenario-effect-crashes, restart, recovery-races, recovery-codec-lock and task-recovery-process tests. Recorded keys do not imply exactly-once behavior. |
-| Tasks durability/input/ownership/cancellation races/terminal immutability | tasks, task-keys, task-restart, task-boundary-restart, checkpoint-lock and task-recovery-process tests; dedicated independent Tasks 43-success run with explicit header disagreement and notification-harness gap. |
+| Tasks durability/input/ownership/cancellation races/terminal immutability | tasks, task-keys, task-restart, task-boundary-restart, checkpoint-lock and task-recovery-process tests; dedicated independent Tasks 43-success run (refreshed after the task guard correction) with explicit header disagreement and notification-harness gap. |
 | Commit-driven freshness without authorization leakage | shared-resource-policy-20260908, workflow-freshness, task-freshness, external-change-restart and shared-resource-freshness. Explicit per-owner fanout and authorization-aware delivery are documented. |
 | Manifest inspection avoids application instantiation; transformer trust boundary retained | manifest-side-effect, manifest-examples, cli-artifacts, declaration-manifest and extension tests. Docs exports source examples separately and never presents assertions as run results. |
 
@@ -30,10 +30,12 @@ checks are running and macOS/Windows remain externally unverified.
 | serve/inspect/diagram/docs/check/scenario/snapshot/diff commands | mcp/cli.rkt and command launcher; cli-artifacts plus existing command/scenario tests exercise actual command paths. |
 | Scenarios and separate language extension | mcp/scenario*.rkt; examples/extensions/collection.rkt and related executable examples; native scenario controls and official Go collection probe. |
 | Requirement-to-test ledger, pinned inputs and explicit refresh | IMPLEMENTATION.md, REMAINING.md, test-artifacts audits, vendor pins and scripts. Native runtime does not depend on Go/Node conformance tooling. |
-| Reproducible source distribution and package verification | scripts/package.py and scripts/ci.py; final package checks and archive comparison pending in release-package-20260908. |
-| Linux 9.2/9.3 and native macOS/Windows | Linux 9.3 full check passed before 22 additional test cases, which passed separately on both versions with unchanged SDK code. Full Linux 9.2 passed 6,256 checks. Both versions are being refreshed after the declared-build integration. GitHub native matrix is configured but inspected runs fail before any jobs start. |
+| Reproducible source distribution and package verification | scripts/package.py and scripts/ci.py; final installed dependency checks and 22 installed cases pass on both versions in declared-build-20260908; archive comparison is recorded in release-package-20260908/reproducibility.json. |
+| Linux 9.2/9.3 and native macOS/Windows | Final full checks pass: 6,264 native tests on 9.2 and 6,268 on 9.3, plus schema/regex/Scribble on both. GitHub native matrix is configured; final SDK commit run 34272422677 failed at startup with zero jobs (native-blocker-20260908). |
 
 Only earlier-revision compatibility, other optional extensions, distributed stores,
 and a hosted authorization service are excluded as originally approved. Deprecated
 roots/sampling/logging/DCR are not advertised. Specification interpretations and
 harness gaps are enumerated in conformance-closure-20260908/README.md.
+
+Final release evidence closes every local row in REMAINING.md. Only native macOS/Windows verification remains, with the exact hosted pre-job failure retained. The guard regression was corrected without changing the existing adapter-view expectation; both final full commands exit zero.

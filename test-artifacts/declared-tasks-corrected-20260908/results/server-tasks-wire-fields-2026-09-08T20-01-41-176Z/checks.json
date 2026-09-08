@@ -1,0 +1,68 @@
+[
+  {
+    "id": "tasks-wire-field-renames",
+    "name": "TasksWireFieldRenames",
+    "description": "CreateTaskResult uses ttlMs + pollIntervalMs (integer milliseconds); legacy ttl / pollInterval keys absent",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:41.254Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "ttlMs": 86400000,
+      "pollIntervalMs": 100,
+      "hasLegacyTtl": false,
+      "hasLegacyPollInterval": false
+    }
+  },
+  {
+    "id": "tasks-no-early-ttl-expiry",
+    "name": "TasksNoEarlyTtlExpiry",
+    "description": "Task remains accessible via tasks/get for the duration of its ttlMs",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:42.798Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ]
+  },
+  {
+    "id": "tasks-no-related-task-meta-on-inlined-result",
+    "name": "TasksNoRelatedTaskMetaOnInlinedResult",
+    "description": "tasks/get inlined result MUST NOT include the v1 io.modelcontextprotocol/related-task _meta key (taskId is at the root)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:43.841Z",
+    "specReferences": [
+      {
+        "id": "SEP-2663",
+        "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+      }
+    ],
+    "details": {
+      "hasMeta": false,
+      "hasRelatedTask": false
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T20:01:43.841Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 30,
+      "violations": []
+    }
+  }
+]
