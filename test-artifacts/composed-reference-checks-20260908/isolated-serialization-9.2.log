@@ -1,0 +1,4 @@
+raco test: (file "tests/composed-reference-checks.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+raco test: (file "tests/manifest-composition.rkt")
+65 tests passed

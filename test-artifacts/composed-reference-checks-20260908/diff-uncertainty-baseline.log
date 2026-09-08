@@ -1,0 +1,10 @@
+raco test: (file "tests/manifest-resource-identities.rkt")
+--------------------
+dynamic mounts may retain resources and operations
+FAILURE
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:35:2
+actual:     '("breaking-contract-change" "review-required")
+expected:   '("added" "review-required" "review-required")
+--------------------
+1/10 test failures

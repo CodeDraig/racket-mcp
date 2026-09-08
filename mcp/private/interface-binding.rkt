@@ -1,6 +1,6 @@
 #lang racket/base
 (require (for-template racket/base))
-(provide (struct-out interface-binding) lookup-interface-manifest)
+(provide (struct-out interface-binding) lookup-interface-manifest lookup-interface-exclusions)
 ;; Runtime use denotes the ordinary interface descriptor. Static consumers read
 ;; only the generated independent manifest submodule of this defining binding.
 (struct interface-binding (target)
@@ -25,7 +25,7 @@
     (define located (if (hash-has-key? entry 'binding-origin) (hash-set entry 'binding-origin (origin (hash-ref entry 'binding-origin))) entry))
     (if (hash-has-key? located 'resource-references)
         (hash-set located 'resource-references (map origin (hash-ref located 'resource-references))) located)))
-(define (lookup-interface-manifest id)
+(define (lookup-interface-data id export)
   (and (identifier? id)
        (let ([binding (syntax-local-value id (lambda () #f))])
          (and (interface-binding? binding)
@@ -37,6 +37,10 @@
                                `(submod ,@name) resolved)])
                 (define-values (relative base) (module-path-index-split (car origin)))
                 (and relative (module-declared? path #t)
-                     (rebase-manifest (dynamic-require path 'manifest)
+                     (rebase-manifest (if (eq? export 'manifest)
+                                          (dynamic-require path export)
+                                          (dynamic-require path export (lambda () '())))
                                       (dynamic-require path 'manifest-provider)
                                       (provider-root (car origin)))))))))
+(define (lookup-interface-manifest id) (lookup-interface-data id 'manifest))
+(define (lookup-interface-exclusions id) (or (lookup-interface-data id 'manifest-exclusions) '()))

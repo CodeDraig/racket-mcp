@@ -5044,3 +5044,49 @@ from the installed 9.3 package; final installed dependency checks passed. All
 broad runtime source hashes and that small subsequent patch are retained with
 the logs in test-artifacts/composed-manifests-20260908. Native macOS/Windows and
 the other full SDK release gates remain open.
+
+## Composed reference identity and resource comparison (2026-09-08)
+
+A local handler referencing a resource explicitly removed by a mounted view
+previously compiled without a diagnostic. A second regression showed hygienic
+resources with identical public names and source positions failing to resolve
+through a mount. Resource origins and references now retain the actual module
+binding name alongside provider identity. Matching uses that binding pair, not
+diagnostic source fields. Explicit exclusions are retained in independent
+manifest submodules and survive renamed fragment re-exports. Known absent and
+ambiguous references receive source-attached errors; another supplying mount is
+accepted, and computed mounts defer absence checks to runtime.
+
+Module-binding names are serialized as strings. Initial focused 9.2 and full
+9.3 runs exposed uninterned symbols failing the existing manifest write/read
+round-trip check. The isolated correction passed 65 checks on 9.2. A subsequent
+main 9.3 run still loaded an older compiled dynamic fixture; explicitly making
+manifest-rich.rkt refreshed it, and its 35 checks passed. The failed observations
+are retained separately from final verification.
+
+Manifest diffs now identify known resources by URI/template instead of display
+name. Same-named distinct URIs remain distinct, annotation renames are reviewed,
+and references normalize to their URI identities. Unmatched unique names retain
+a single URI-replacement report. Unknown URI identities require review, including
+known unmatched URIs whose counterpart is unknown. A retargeting fixture was
+corrected to give its second resource a distinct URI, matching a valid interface.
+The new tests cover 13 composed-reference cases and eleven resource-diff cases.
+Additional probes reproduced false breaking-change reports when a unique-name
+URI replacement coexisted with an unknown URI or dynamic mount. Such name pairing
+now requires resolved resource surfaces. Dynamic mounts also prevent definite
+addition/removal claims for otherwise unmatched declarations. An independent
+finite oracle fills partial resource snapshots with concrete unique URIs and
+checks every claimed URI loss against every possible resulting world.
+
+Before the final conservative diff correction, the full Linux 9.3 run passed
+6,090 native checks, 1,301 core schema cases, 86 optional regex cases and Scribble.
+Both Linux versions and the installed 9.3 package passed 380 focused checks;
+installed dependency setup and 14 Go probes passed. These observations cover the
+composed-reference implementation but precede the final diff correction and three
+added test cases. Final source passed 383 focused checks on Linux 9.2, Linux 9.3
+and the installed 9.3 package; package dependency setup and the manual build with
+the project command's +m option also passed. An initial manual invocation without
++m emitted cross-reference warnings and is retained separately. Evidence is in
+test-artifacts/composed-reference-checks-20260908.
+The original release scope is unchanged; remaining complete interface, workflow,
+conformance and platform gates stay open.

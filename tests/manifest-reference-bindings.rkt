@@ -46,7 +46,9 @@
       (equal? (hash-ref difference 'change) "review-required"))))
 (test-case "retargeting an ID is visible even when origin hints are unchanged"
   (define original (car manifest))
-  (define other (hash-set* original 'name 'other 'local-id "other-resource"))
+  (define other (hash-set* original 'name 'other 'local-id "other-resource"
+                           'metadata (hash-set (hash-ref original 'metadata) 'uri
+                                               (hasheq 'known? #t 'value "other:///{id}"))))
   (define tool (cadr manifest))
   (define changed
     (hash-set tool 'resource-references

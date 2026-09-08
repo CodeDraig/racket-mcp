@@ -43,7 +43,7 @@
                 'expression (format "~s" (syntax->datum expression))
                 'source (format "~a" (syntax-source expression))
                 'line (syntax-line expression))))
-(define (transform-view entries options source)
+(define (transform-view entries options source record-exclusion)
   (define (option keyword default) (if (hash-has-key? options keyword) (literal (hash-ref options keyword)) default))
   (define include (option '#:include #f))
   (define exclude (option '#:exclude '()))
@@ -80,6 +80,12 @@
                          (keep? (hash-ref (hash-ref entry 'target) 'name))
                          (keep? (hash-ref entry 'name)))) entries))
          (define resources (filter (lambda (entry) (eq? (hash-ref entry 'kind) 'resource)) selected))
+         (for ([entry (in-list entries)]
+               #:when (and (eq? (hash-ref entry 'kind) 'resource) (not (memq entry selected))))
+           (record-exclusion
+            (hasheq 'binding-origin (hash-ref entry 'binding-origin #f)
+                    'source (format "~a" (syntax-source source)) 'line (syntax-line source)
+                    'column (syntax-column source) 'position (syntax-position source) 'span (syntax-span source))))
          (define present (map (lambda (entry) (hash-ref entry 'local-id #f)) resources))
          (for ([entry (in-list selected)])
            (for ([ref (in-list (hash-ref entry 'resource-references '()))])
@@ -111,11 +117,12 @@
                  'dynamic-metadata
                  (or (hash-ref transformed 'dynamic-metadata #f)
                      (for/or ([policy (in-hash-values policies)]) (not (hash-ref policy 'known?))))))))))
-(define (mount-manifest node index)
+(define (mount-manifest node index #:record-exclusion [record-exclusion void])
   (define (resolve expression prefix)
     (define imported (lookup-interface-manifest expression))
     (define parts (syntax->list expression))
     (cond [imported
+           (for-each record-exclusion (lookup-interface-exclusions expression))
            (prefix-identities
             (filter (lambda (entry) (memq (hash-ref entry 'kind) '(tool workflow resource prompt completion mount))) imported) prefix)]
           [(and parts (pair? parts) (identifier? (car parts))
@@ -133,7 +140,7 @@
                       (when (hash-has-key? options key) (raise-syntax-error 'view "duplicate option" expression (car rest)))
                       (loop (cddr rest) (hash-set options key (cadr rest)))]
                      [else (raise-syntax-error 'view "expected keyword and option expression" expression (car rest))])))
-           (or (transform-view (resolve (cadr parts) prefix) options expression) (dynamic-mount expression prefix))]
+           (or (transform-view (resolve (cadr parts) prefix) options expression record-exclusion) (dynamic-mount expression prefix))]
           [else (dynamic-mount expression prefix)]))
   (append-map (lambda (expression child)
                 (define prefix (format "mount-~a-~a/" index child))
@@ -174,13 +181,29 @@
             (define witness (uri-matchers-overlap route prior))
             (when (string? witness) (error 'mount "overlapping resource URI routes match ~s" witness)))
           (set! routes (cons route routes)))))))
-(define (resolve-mounted-references entries)
+(define (resolve-mounted-references entries #:exclusions [exclusions '()])
   (define resources (filter (lambda (entry) (eq? (hash-ref entry 'kind) 'resource)) entries))
+  (define dynamic? (ormap (lambda (entry) (eq? (hash-ref entry 'kind) 'mount)) entries))
+  ;; Source hints are diagnostic data, not proof of binding identity. Older
+  ;; manifests without a binding key remain unresolved across module boundaries.
+  (define (same-binding? origin reference)
+    (and origin (hash-ref origin 'binding-name #f) (hash-ref origin 'binding-provider #f)
+         (equal? (hash-ref origin 'binding-name) (hash-ref reference 'binding-name #f))
+         (equal? (hash-ref origin 'binding-provider) (hash-ref reference 'binding-provider #f))))
+  (define (source-error entry message)
+    (raise-syntax-error 'mount message
+      (datum->syntax #f (hash-ref entry 'name)
+        (map (lambda (field) (hash-ref entry field #f)) '(source line column position span)))))
   (for/list ([entry (in-list entries)])
     (if (hash-has-key? entry 'resource-references)
         (hash-set entry 'resource-references
           (for/list ([ref (in-list (hash-ref entry 'resource-references))])
             (define candidates
-              (filter (lambda (resource) (equal? (hash-ref resource 'binding-origin #f) (hash-remove ref 'local-target))) resources))
+              (filter (lambda (resource) (same-binding? (hash-ref resource 'binding-origin #f) ref)) resources))
+            (when (> (length candidates) 1)
+              (source-error entry (format "references an ambiguous mounted resource: ~a" (hash-ref ref 'name))))
+            (when (and (null? candidates) (not dynamic?)
+                       (ormap (lambda (excluded) (same-binding? (hash-ref excluded 'binding-origin #f) ref)) exclusions))
+              (source-error entry (format "references a resource removed by a composed view: ~a" (hash-ref ref 'name))))
             (if (and (not (hash-ref ref 'local-target #f)) (= (length candidates) 1))
                 (hash-set ref 'local-target (hash-ref (car candidates) 'local-id)) ref))) entry)))

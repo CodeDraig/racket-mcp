@@ -1866,6 +1866,24 @@ of one file without relying on source positions or generated binding names.
 Unavailable module-binding information is explicitly @racket[#f]. These are
 static declaration identities, not executable compatibility fingerprints.
 
+Resource origins and references also retain an opaque string @tt{binding-name} from
+the module binding. Together with the provider, this distinguishes hygienic
+declarations even when their public names and diagnostic locations coincide.
+Cross-module resolution uses that binding pair, not source hints. Missing keys
+leave a reference unresolved. These compiler names are not public wire names or
+stable build identifiers. Diffs ignore their incidental spelling for resolved
+public targets; a changed unresolved external binding requires review.
+String encoding preserves manifest write/read round trips when Racket uses
+uninterned symbols internally for module bindings.
+
+The independent manifest submodule retains @tt{manifest-exclusions} for resources
+explicitly removed by static views. Exclusions survive fragment re-exports.
+A local handler referencing an excluded resource receives an expansion error
+when no other static mount supplies it and no dynamic mount could supply it.
+Multiple known mounts of one referenced binding are ambiguous and also receive
+an expansion error. Exclusion is not a permanent ban: another mount can supply
+the declaration. Runtime interface checks still arbitrate computed compositions.
+
 The compiler emits the manifest after declaration right-hand sides expand, using
 Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
@@ -1958,6 +1976,16 @@ and unchanged fields. Removed declarations are @tt{breaking-removal}; newly
 required arguments and changed known published resource URIs/templates are
 @tt{breaking-contract-change}. Other static changes require review. New
 declarations are reported as added. Duplicate published identities are errors.
+
+Known resource identities use their URI or URI template, not their display name.
+Different URIs may share a name; changing a name while retaining the URI requires
+review rather than reporting a removal. Unmatched resource entries with a unique
+name on each side are associated for a URI-replacement report only when both
+surfaces have fully known resource identities and no dynamic mounts. Otherwise known
+URI additions and removals are reported separately. Unknown resource URIs require
+review, including unmatched known URIs that an unknown counterpart could retain.
+Dynamic mounts also prevent definite addition/removal claims for declarations
+whose counterpart could be supplied by the unresolved mount.
 
 Compiler-owned source positions and incidental local-ID renumbering do not affect
 comparison. Local target IDs resolve to declaration identities before comparison;

@@ -1,0 +1,1085 @@
+raco test: (file "tests/composed-reference-checks.rkt")
+raco test: (file "tests/manifest-composition.rkt")
+raco test: (file "tests/core.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/declaration-manifest.rkt:42:0
+actual:
+  '(#hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #t)
+          (kind . server)
+          (line . 3)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((name
+                    .
+                    #hasheq((expression . "(string-append \"mani\" \"fest\")")
+                            (known? . #f)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . (string-append "mani" "fest"))
+          (position . 92)
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 59))
+  #hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . schema)
+          (line . 4)
+          (manifest-version . 2)
+          (metadata . #hasheq())
+          (name . Title)
+          (position . 152)
+          (schema
+           .
+           #hasheq((known? . #t) (value . #hasheq((type . "string")))))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 21))
+  #hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . shape)
+          (line . 5)
+          (manifest-version . 2)
+          (metadata . #hasheq())
+          (name . Entry)
+          (position . 174)
+          (schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((count . #hasheq((type . "integer")))
+                                     (title . #hasheq((type . "string")))))
+                            (required . ("title" "count"))
+                            (type . "object")))))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 43))
+  #hasheq((arguments
+           .
+           (#hasheq((name . entry)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value
+                              .
+                              #hasheq((additionalProperties . #f)
+                                      (properties
+                                       .
+                                       #hasheq((count
+                                                .
+                                                #hasheq((type . "integer")))
+                                               (title
+                                                .
+                                                #hasheq((type . "string")))))
+                                      (required . ("title" "count"))
+                                      (type . "object"))))))
+            #hasheq((default . #hasheq((known? . #t) (value . #f)))
+                    (name . verbose)
+                    (required . #f)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "boolean"))))))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((entry
+                                      .
+                                      #hasheq((additionalProperties . #f)
+                                              (properties
+                                               .
+                                               #hasheq((count
+                                                        .
+                                                        #hasheq((type
+                                                                 .
+                                                                 "integer")))
+                                                       (title
+                                                        .
+                                                        #hasheq((type
+                                                                 .
+                                                                 "string")))))
+                                              (required . ("title" "count"))
+                                              (type . "object")))
+                                     (verbose . #hasheq((type . "boolean")))))
+                            (required . ("entry"))
+                            (type . "object")))))
+          (kind . tool)
+          (line . 6)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((description
+                    .
+                    #hasheq((known? . #t) (value . "Inspect an entry")))
+                   (output
+                    .
+                    #hasheq((known? . #t)
+                            (value
+                             .
+                             #hasheq((additionalProperties . #f)
+                                     (properties
+                                      .
+                                      #hasheq((count
+                                               .
+                                               #hasheq((type . "integer")))
+                                              (title
+                                               .
+                                               #hasheq((type . "string")))))
+                                     (required . ("title" "count"))
+                                     (type . "object")))))))
+          (name . inspect-entry)
+          (position . 218)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 147))
+  #hasheq((arguments
+           .
+           (#hasheq((name . id)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (binding-origin
+           .
+           #hasheq((binding-name . entry7.2)
+                   (binding-provider
+                    .
+                    #hasheq((kind . "symbol")
+                            (module . "manifest-rich")
+                            (phase . 0)
+                            (submodules . ())))
+                   (column . 11)
+                   (line . 9)
+                   (name . entry)
+                   (position . 377)
+                   (source
+                    .
+                    "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                   (span . 5)))
+          (column . 0)
+          (dynamic-metadata . #t)
+          (kind . resource)
+          (line . 9)
+          (local-id . "declaration-4")
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((description
+                    .
+                    #hasheq((expression
+                             .
+                             "(begin (error (quote metadata) \"must not evaluate\") \"dynamic\")")
+                            (known? . #f)))
+                   (mime-type
+                    .
+                    #hasheq((known? . #t) (value . "application/json")))
+                   (uri . #hasheq((known? . #t) (value . "entry:///{id}")))))
+          (name . entry)
+          (position . 366)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 173))
+  #hasheq((arguments
+           .
+           (#hasheq((name . title)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq((elicitation . #hasheq())))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((title . #hasheq((type . "string")))))
+                            (required . ("title"))
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 14)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((version . #hasheq((known? . #t) (value . "1")))))
+          (name . approval)
+          (position . 541)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 220)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . saved)
+                    (kind . checkpoint)
+                    (line . 15)
+                    (policy . #f)
+                    (position . 592)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 33))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . answer)
+                    (kind . input)
+                    (line . 16)
+                    (policy . #f)
+                    (position . 628)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 110))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 17)
+                    (policy . #f)
+                    (position . 741)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 19)))))
+  #hasheq((arguments
+           .
+           (#hasheq((name . title)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq())))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . prompt)
+          (line . 19)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((workflow . #hasheq((known? . #t) (value . "1")))))
+          (name . approval-prompt)
+          (position . 763)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 166)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . saved)
+                    (kind . checkpoint)
+                    (line . 20)
+                    (policy . #f)
+                    (position . 821)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 33))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 21)
+                    (policy . #f)
+                    (position . 857)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 71)))))
+  #hasheq((arguments
+           .
+           (#hasheq((name . id)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (binding-origin
+           .
+           #hasheq((binding-name . approval-resource9.2)
+                   (binding-provider
+                    .
+                    #hasheq((kind . "symbol")
+                            (module . "manifest-rich")
+                            (phase . 0)
+                            (submodules . ())))
+                   (column . 11)
+                   (line . 23)
+                   (name . approval-resource)
+                   (position . 942)
+                   (source
+                    .
+                    "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                   (span . 17)))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq())))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . resource)
+          (line . 23)
+          (local-id . "declaration-7")
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((uri . #hasheq((known? . #t) (value . "approval:///{id}")))
+                   (workflow . #hasheq((known? . #t) (value . "1")))))
+          (name . approval-resource)
+          (position . 931)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage adapters))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 155)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . save)
+                    (column . 2)
+                    (id . saved)
+                    (kind . effect)
+                    (line . 24)
+                    (policy . idempotent)
+                    (position . 1015)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 62))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 25)
+                    (policy . #f)
+                    (position . 1080)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 5)))))
+  #hasheq((arguments . ())
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required
+                    .
+                    #hasheq((extensions
+                             .
+                             #hasheq((io.modelcontextprotocol/tasks
+                                      .
+                                      #hasheq())))))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties . #hasheq())
+                            (required . ())
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 27)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((execution . #hasheq((known? . #t) (value . task)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . forced-task)
+          (position . 1088)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage task-workers))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 78)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 28)
+                    (policy . #f)
+                    (position . 1145)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 20)))))
+  #hasheq((arguments . ())
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional
+                    .
+                    #hasheq((extensions
+                             .
+                             #hasheq((io.modelcontextprotocol/tasks
+                                      .
+                                      #hasheq())))))
+                   (required . #hasheq((elicitation . #hasheq())))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties . #hasheq())
+                            (required . ())
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 30)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((execution . #hasheq((known? . #t) (value . task-optional)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . optional-task)
+          (position . 1168)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage task-workers))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 231)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . answer)
+                    (kind . input)
+                    (line . 31)
+                    (policy . #f)
+                    (position . 1236)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 114))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . launch)
+                    (kind . task-boundary)
+                    (line . 33)
+                    (policy . #f)
+                    (position . 1353)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 22))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 34)
+                    (policy . #f)
+                    (position . 1378)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 20))))))
+expected:
+  '(#hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #t)
+          (kind . server)
+          (line . 3)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((name
+                    .
+                    #hasheq((expression . "(string-append \"mani\" \"fest\")")
+                            (known? . #f)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . (string-append "mani" "fest"))
+          (position . 92)
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 59))
+  #hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . schema)
+          (line . 4)
+          (manifest-version . 2)
+          (metadata . #hasheq())
+          (name . Title)
+          (position . 152)
+          (schema
+           .
+           #hasheq((known? . #t) (value . #hasheq((type . "string")))))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 21))
+  #hasheq((arguments . ())
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . shape)
+          (line . 5)
+          (manifest-version . 2)
+          (metadata . #hasheq())
+          (name . Entry)
+          (position . 174)
+          (schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((count . #hasheq((type . "integer")))
+                                     (title . #hasheq((type . "string")))))
+                            (required . ("title" "count"))
+                            (type . "object")))))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 43))
+  #hasheq((arguments
+           .
+           (#hasheq((name . entry)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value
+                              .
+                              #hasheq((additionalProperties . #f)
+                                      (properties
+                                       .
+                                       #hasheq((count
+                                                .
+                                                #hasheq((type . "integer")))
+                                               (title
+                                                .
+                                                #hasheq((type . "string")))))
+                                      (required . ("title" "count"))
+                                      (type . "object"))))))
+            #hasheq((default . #hasheq((known? . #t) (value . #f)))
+                    (name . verbose)
+                    (required . #f)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "boolean"))))))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((entry
+                                      .
+                                      #hasheq((additionalProperties . #f)
+                                              (properties
+                                               .
+                                               #hasheq((count
+                                                        .
+                                                        #hasheq((type
+                                                                 .
+                                                                 "integer")))
+                                                       (title
+                                                        .
+                                                        #hasheq((type
+                                                                 .
+                                                                 "string")))))
+                                              (required . ("title" "count"))
+                                              (type . "object")))
+                                     (verbose . #hasheq((type . "boolean")))))
+                            (required . ("entry"))
+                            (type . "object")))))
+          (kind . tool)
+          (line . 6)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((description
+                    .
+                    #hasheq((known? . #t) (value . "Inspect an entry")))
+                   (output
+                    .
+                    #hasheq((known? . #t)
+                            (value
+                             .
+                             #hasheq((additionalProperties . #f)
+                                     (properties
+                                      .
+                                      #hasheq((count
+                                               .
+                                               #hasheq((type . "integer")))
+                                              (title
+                                               .
+                                               #hasheq((type . "string")))))
+                                     (required . ("title" "count"))
+                                     (type . "object")))))))
+          (name . inspect-entry)
+          (position . 218)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 147))
+  #hasheq((arguments
+           .
+           (#hasheq((name . id)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (binding-origin
+           .
+           #hasheq((binding-name . entry7.2)
+                   (binding-provider
+                    .
+                    #hasheq((kind . "symbol")
+                            (module . "manifest-rich")
+                            (phase . 0)
+                            (submodules . ())))
+                   (column . 11)
+                   (line . 9)
+                   (name . entry)
+                   (position . 377)
+                   (source
+                    .
+                    "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                   (span . 5)))
+          (column . 0)
+          (dynamic-metadata . #t)
+          (kind . resource)
+          (line . 9)
+          (local-id . "declaration-4")
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((description
+                    .
+                    #hasheq((expression
+                             .
+                             "(begin (error (quote metadata) \"must not evaluate\") \"dynamic\")")
+                            (known? . #f)))
+                   (mime-type
+                    .
+                    #hasheq((known? . #t) (value . "application/json")))
+                   (uri . #hasheq((known? . #t) (value . "entry:///{id}")))))
+          (name . entry)
+          (position . 366)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 173))
+  #hasheq((arguments
+           .
+           (#hasheq((name . title)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq((elicitation . #hasheq())))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties
+                             .
+                             #hasheq((title . #hasheq((type . "string")))))
+                            (required . ("title"))
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 14)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((version . #hasheq((known? . #t) (value . "1")))))
+          (name . approval)
+          (position . 541)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 220)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . saved)
+                    (kind . checkpoint)
+                    (line . 15)
+                    (policy . #f)
+                    (position . 592)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 33))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . answer)
+                    (kind . input)
+                    (line . 16)
+                    (policy . #f)
+                    (position . 628)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 110))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 17)
+                    (policy . #f)
+                    (position . 741)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 19)))))
+  #hasheq((arguments
+           .
+           (#hasheq((name . title)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq())))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . prompt)
+          (line . 19)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((workflow . #hasheq((known? . #t) (value . "1")))))
+          (name . approval-prompt)
+          (position . 763)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 166)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . saved)
+                    (kind . checkpoint)
+                    (line . 20)
+                    (policy . #f)
+                    (position . 821)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 33))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 21)
+                    (policy . #f)
+                    (position . 857)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 71)))))
+  #hasheq((arguments
+           .
+           (#hasheq((name . id)
+                    (required . #t)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string"))))))))
+          (binding-origin
+           .
+           #hasheq((binding-name . approval-resource9.2)
+                   (binding-provider
+                    .
+                    #hasheq((kind . "symbol")
+                            (module . "manifest-rich")
+                            (phase . 0)
+                            (submodules . ())))
+                   (column . 11)
+                   (line . 23)
+                   (name . approval-resource)
+                   (position . 942)
+                   (source
+                    .
+                    "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                   (span . 17)))
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required . #hasheq())))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (kind . resource)
+          (line . 23)
+          (local-id . "declaration-7")
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((uri . #hasheq((known? . #t) (value . "approval:///{id}")))
+                   (workflow . #hasheq((known? . #t) (value . "1")))))
+          (name . approval-resource)
+          (position . 931)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage adapters))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 155)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . save)
+                    (column . 2)
+                    (id . saved)
+                    (kind . effect)
+                    (line . 24)
+                    (policy . idempotent)
+                    (position . 1015)
+                    (schema
+                     .
+                     #hasheq((known? . #t)
+                             (value . #hasheq((type . "string")))))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 62))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 25)
+                    (policy . #f)
+                    (position . 1080)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 5)))))
+  #hasheq((arguments . ())
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional . #hasheq())
+                   (required
+                    .
+                    #hasheq((extensions
+                             .
+                             #hasheq((io.modelcontextprotocol/tasks
+                                      .
+                                      #hasheq())))))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties . #hasheq())
+                            (required . ())
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 27)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((execution . #hasheq((known? . #t) (value . task)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . forced-task)
+          (position . 1088)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage task-workers))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 78)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 28)
+                    (policy . #f)
+                    (position . 1145)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 20)))))
+  #hasheq((arguments . ())
+          (client-capabilities
+           .
+           #hasheq((analysis . declared-workflow-stages)
+                   (optional
+                    .
+                    #hasheq((extensions
+                             .
+                             #hasheq((io.modelcontextprotocol/tasks
+                                      .
+                                      #hasheq())))))
+                   (required . #hasheq((elicitation . #hasheq())))))
+          (column . 0)
+          (dynamic-metadata . #f)
+          (input-schema
+           .
+           #hasheq((known? . #t)
+                   (value
+                    .
+                    #hasheq((additionalProperties . #f)
+                            (properties . #hasheq())
+                            (required . ())
+                            (type . "object")))))
+          (kind . workflow)
+          (line . 30)
+          (manifest-version . 2)
+          (metadata
+           .
+           #hasheq((execution . #hasheq((known? . #t) (value . task-optional)))
+                   (version . #hasheq((known? . #t) (value . "1")))))
+          (name . optional-task)
+          (position . 1168)
+          (reference-analysis . lexical-handler-syntax)
+          (resource-references . ())
+          (runtime-requirements . (workflow-storage task-workers))
+          (source . "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+          (span . 231)
+          (workflow-stages
+           .
+           (#hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . answer)
+                    (kind . input)
+                    (line . 31)
+                    (policy . #f)
+                    (position . 1236)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 114))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . launch)
+                    (kind . task-boundary)
+                    (line . 33)
+                    (policy . #f)
+                    (position . 1353)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 22))
+            #hasheq((adapter-or-targets . #f)
+                    (column . 2)
+                    (id . completion)
+                    (kind . complete)
+                    (line . 34)
+                    (policy . #f)
+                    (position . 1378)
+                    (schema . #hasheq((known? . #t) (value . #t)))
+                    (source
+                     .
+                     "/srv/data/code/racket-mcp/tests/manifest-rich.rkt")
+                    (span . 20))))))
+--------------------
+raco test: (file "tests/reference-manifest.rkt")
+raco test: (file "tests/manifest-reference-bindings.rkt")
+raco test: (file "tests/manifest-external-identities.rkt")
+raco test: (file "tests/manifest-provider-phases.rkt")
+raco test: (file "tests/manifest-diagram.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+raco test: (file "tests/manifest-diff.rkt")
+raco test: (file "tests/manifest-capability-parity.rkt")
+raco test: (file "tests/phase-exports.rkt")
+raco test: (file "tests/module-imports.rkt")
+raco test: (file "tests/extension-phase-matrix.rkt")
+raco test: (file "tests/view-scopes.rkt")
+raco test: (file "tests/view-adapters.rkt")
+raco test: (file "tests/view-effects.rkt")
+1/371 test failures

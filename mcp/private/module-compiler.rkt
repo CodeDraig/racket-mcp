@@ -12,6 +12,9 @@
                  'module (if (path? root) (path->string root) (symbol->string root))
                  'submodules (if (pair? name) (map symbol->string (cdr name)) '())
                  'phase (list-ref binding 4)))))
+(define (reference-binding-name target)
+  (define binding (identifier-binding target))
+  (and (list? binding) (symbol->string (cadr binding))))
 ;; Each module owns a lexical collector/finalizer pair. No process-wide table
 ;; communicates between modules or transformer instances.
 (define (make-module-compilers runtime-register interface-runtime)
@@ -52,8 +55,9 @@
                (let ([target (car (findf (lambda (pair) (equal? (cdr pair) (format "declaration-~a" index))) local-resources))])
                  (hash-set* base-entry 'local-id (format "declaration-~a" index)
                             'binding-origin (and target
-                              (hash-set (or (syntax-property (resource-binding-target (lookup-resource-binding (declaration-node-name node))) 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
-                                        'binding-provider (reference-provider target))))) base-entry))
+                              (hash-set* (or (syntax-property (resource-binding-target (lookup-resource-binding (declaration-node-name node))) 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
+                                         'binding-provider (reference-provider target)
+                                         'binding-name (reference-binding-name target))))) base-entry))
          (define targets
            (append-map cdr (filter (lambda (group) (and (identifier? (declaration-node-name node)) (free-identifier=? (car group) (declaration-node-name node)))) references)))
          (define origins
@@ -62,6 +66,7 @@
               (hash-set*
                 (or (syntax-property target 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
                 'binding-provider (reference-provider target)
+                'binding-name (reference-binding-name target)
                 'local-target
                 (for/first ([resource (in-list local-resources)]
                             #:when (and (car resource) (free-identifier=? target (car resource))))
@@ -71,18 +76,21 @@
                         'reference-analysis 'lexical-handler-syntax) entry)))
      ;; Called in the final generated RHS, after application RHS expansion.
      ;; Lift a fresh, independent module containing only quoted manifest data.
+     (define exclusions '())
+     (define (record-exclusion entry) (set! exclusions (cons entry exclusions)))
      (define combined
        (append compiled
                (append-map (lambda (entry index)
-                             (cond [(mounted-node? entry) (mount-manifest entry index)]
+                             (cond [(mounted-node? entry) (mount-manifest entry index #:record-exclusion record-exclusion)]
                                    [(declaration-node? entry) '()]
                                    [else (list entry)])) ordered (range (length ordered)))))
-     (define manifest (resolve-mounted-references combined))
      (when (ormap mounted-node? ordered)
-       (check-composed-manifest manifest (mounted-node-source (findf mounted-node? ordered))))
+       (check-composed-manifest combined (mounted-node-source (findf mounted-node? ordered))))
+     (define manifest (resolve-mounted-references combined #:exclusions exclusions))
      (syntax-local-lift-module
-      #`(module manifest racket/base (provide manifest manifest-version manifest-provider)
+      #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions)
           (define manifest-version 2)
           (define manifest-provider '#,(reference-provider interface-runtime))
+          (define manifest-exclusions '#,(remove-duplicates (reverse exclusions) equal?))
           (define manifest '#,manifest)))
      #'(void))))

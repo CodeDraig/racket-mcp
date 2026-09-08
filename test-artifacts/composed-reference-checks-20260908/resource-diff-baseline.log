@@ -1,0 +1,62 @@
+raco test: (file "tests/manifest-resource-identities.rkt")
+--------------------
+distinct resource URIs may share a display name
+ERROR
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:10:2
+
+manifest-diff: duplicate declaration identity: (resource document)
+--------------------
+--------------------
+renaming a resource does not remove its URI
+FAILURE
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:12:2
+actual:     '("added" "breaking-removal")
+expected:   '("review-required")
+--------------------
+--------------------
+removing one same-named URI preserves the other
+ERROR
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:14:2
+
+manifest-diff: duplicate declaration identity: (resource document)
+--------------------
+--------------------
+duplicate URI identities are invalid even under different names
+FAILURE
+name:         check-exn
+location:     tests/manifest-resource-identities.rkt:16:2
+params:
+  '(#rx"duplicate declaration identity" #<procedure:...urce-identities.rkt:17:4>)
+message:      "Wrong exception raised"
+exn-message:  "manifest-diff: duplicate local declaration identity: first"
+exn:
+  #(struct:exn:fail "manifest-diff: duplicate local declaration identity: first" #<continuation-mark-set>)
+--------------------
+--------------------
+retargeting a reference between same-named resources requires review
+ERROR
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:22:2
+
+manifest-diff: duplicate declaration identity: (resource document)
+--------------------
+--------------------
+unresolved resource identities are reviewed, including repeated names
+ERROR
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:26:2
+
+manifest-diff: duplicate declaration identity: (resource document)
+--------------------
+--------------------
+an unknown counterpart prevents a definite URI removal claim
+FAILURE
+name:       check-equal?
+location:   tests/manifest-resource-identities.rkt:29:2
+actual:     '("added" "breaking-removal")
+expected:   '("review-required" "review-required")
+--------------------
+7/8 test failures
