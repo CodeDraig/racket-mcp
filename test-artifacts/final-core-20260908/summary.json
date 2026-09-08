@@ -1,0 +1,116 @@
+{
+  "counts": {
+    "core": {
+      "SUCCESS": 143,
+      "FAILURE": 5,
+      "WARNING": 1,
+      "INFO": 1
+    },
+    "tasks-on-core-fixture": {
+      "FAILURE": 27,
+      "SUCCESS": 15,
+      "SKIPPED": 1
+    }
+  },
+  "core_failures_and_warnings": [
+    {
+      "id": "localhost-host-valid-accepted",
+      "name": "LocalhostHostAccepted",
+      "description": "Server accepts requests with valid localhost Host/Origin headers",
+      "timestamp": "2026-09-08T19:12:33.048Z",
+      "specReferences": [
+        {
+          "id": "MCP-DNS-Rebinding-Protection",
+          "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices#local-mcp-server-compromise"
+        },
+        {
+          "id": "MCP-Transport-Security",
+          "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning"
+        }
+      ],
+      "status": "FAILURE",
+      "errorMessage": "Expected HTTP 2xx for valid localhost Host/Origin headers, got 403",
+      "details": {
+        "hostHeader": "127.0.0.1:36035",
+        "originHeader": "http://127.0.0.1:36035",
+        "statusCode": 403,
+        "body": null
+      }
+    },
+    {
+      "id": "sep-2322-list-roots-incomplete",
+      "name": "InputRequiredResultListRootsIncomplete",
+      "description": "Server returns InputRequiredResult with roots/list inputRequest",
+      "status": "FAILURE",
+      "timestamp": "2026-09-08T19:12:33.118Z",
+      "errorMessage": "JSON-RPC error: Unknown name",
+      "specReferences": [
+        {
+          "id": "SEP-2322",
+          "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+        }
+      ],
+      "details": {}
+    },
+    {
+      "id": "sep-2322-multiple-inputs-incomplete",
+      "name": "InputRequiredResultMultipleInputsIncomplete",
+      "description": "Server returns InputRequiredResult with multiple inputRequests of different types",
+      "status": "FAILURE",
+      "timestamp": "2026-09-08T19:12:33.154Z",
+      "errorMessage": "JSON-RPC error: Unknown name",
+      "specReferences": [
+        {
+          "id": "SEP-2322",
+          "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+        }
+      ],
+      "details": {}
+    },
+    {
+      "id": "sep-2322-ignore-unexpected-params",
+      "name": "IgnoreUnexpectedParams",
+      "description": "Server ignores extra unrecognized keys in inputResponses",
+      "status": "WARNING",
+      "timestamp": "2026-09-08T19:12:33.321Z",
+      "errorMessage": "Server returned JSON-RPC error when extra params were included: Input responses require a continuation. Servers SHOULD ignore unrecognized information.",
+      "specReferences": [
+        {
+          "id": "SEP-2322",
+          "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+        }
+      ],
+      "details": {}
+    },
+    {
+      "id": "sep-2322-sampling-incomplete",
+      "name": "InputRequiredResultSamplingIncomplete",
+      "description": "Server returns InputRequiredResult with sampling inputRequest",
+      "status": "FAILURE",
+      "timestamp": "2026-09-08T19:12:33.114Z",
+      "errorMessage": "JSON-RPC error: Unknown name",
+      "specReferences": [
+        {
+          "id": "SEP-2322",
+          "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+        }
+      ],
+      "details": {}
+    },
+    {
+      "id": "sep-2322-respect-client-capabilities",
+      "name": "RespectClientCapabilities",
+      "description": "Server only includes inputRequests for declared client capabilities",
+      "status": "FAILURE",
+      "timestamp": "2026-09-08T19:12:33.318Z",
+      "errorMessage": "JSON-RPC error: Unknown name",
+      "specReferences": [
+        {
+          "id": "SEP-2322",
+          "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+        }
+      ],
+      "details": {}
+    }
+  ]
+}

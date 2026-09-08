@@ -1,0 +1,30 @@
+{
+  "server": [
+    "racket",
+    "/srv/data/code/racket-mcp/mcp/command.rkt",
+    "--transport",
+    "http",
+    "--port",
+    "35931",
+    "--state",
+    "/tmp/mcp-conformance-state-jktbhcvo/state.sqlite",
+    "serve",
+    "/srv/data/code/racket-mcp/dev/conformance-tasks.rkt"
+  ],
+  "harness": [
+    "/tmp/racket-mcp-conformance-elicitation-20260907/node_modules/.bin/tsx",
+    "/tmp/racket-mcp-conformance-elicitation-20260907/src/index.ts",
+    "server",
+    "--url",
+    "http://127.0.0.1:35931/mcp",
+    "--scenario",
+    "tasks-*",
+    "--spec-version",
+    "2026-07-28",
+    "--force",
+    "--output-dir",
+    "/srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results",
+    "--timeout",
+    "60000"
+  ]
+}

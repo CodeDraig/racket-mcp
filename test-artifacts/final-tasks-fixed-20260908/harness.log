@@ -1,0 +1,30 @@
+(node:900) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-lifecycle' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:1205) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-capability-negotiation' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:1640) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-wire-fields' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:2162) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-request-state-removal' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:2697) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-mrtr-input' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:2970) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-request-headers' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:3317) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-dispatch-and-envelope' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:3646) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-status-notifications' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:3946) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-required-task-error' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.
+(node:4357) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+SKIPPED: scenario 'tasks-mrtr-composition' is not applicable at spec version 2026-07-28 (extension scenario, not on the spec timeline). Use --force to run it anyway.

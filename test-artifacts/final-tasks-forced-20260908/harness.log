@@ -1,0 +1,158 @@
+(node:36590) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-lifecycle' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-lifecycle-2026-09-08T19-15-41-872Z
+Checks:
+[90m2026-09-08T19:15:42.031Z[0m [tasks-sync-tool-call                     ] [32mSUCCESS[0m Sync tool returns ToolResult (resultType:"complete"), no taskId at top level
+[90m2026-09-08T19:15:42.037Z[0m [sep-2663-result-type-task-on-create      ] [32mSUCCESS[0m Task-supporting tool returns flat CreateTaskResult (no nested `task` wrapper)
+[90m2026-09-08T19:15:42.042Z[0m [sep-2663-tasks-get-status-working        ] [32mSUCCESS[0m tasks/get returns status + metadata for an active task
+[90m2026-09-08T19:15:44.103Z[0m [sep-2663-tasks-get-status-completed      ] [32mSUCCESS[0m Completed task tasks/get inlines result with content[] (no separate tasks/result method)
+[90m2026-09-08T19:15:44.111Z[0m [sep-2663-tool-error-uses-completed-status] [32mSUCCESS[0m Tool execution error reports as completed + result.isError (NOT failed)
+[90m2026-09-08T19:15:44.119Z[0m [sep-2663-tasks-get-status-failed         ] [32mSUCCESS[0m Protocol-level error reports as failed + inlined error{code,message}, no result
+[90m2026-09-08T19:15:44.131Z[0m [sep-2663-cancel-ack-empty-result         ] [32mSUCCESS[0m tasks/cancel returns {resultType:"complete"} ack; status settles to cancelled
+[90m2026-09-08T19:15:45.164Z[0m [tasks-cancel-terminal-idempotent-ack     ] [32mSUCCESS[0m tasks/cancel on a terminal task returns the same empty-ack as on an active task (idempotent)
+[90m2026-09-08T19:15:45.164Z[0m [wire-schema-valid                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings
+(node:38618) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-capability-negotiation' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-capability-negotiation-2026-09-08T19-15-45-694Z
+Checks:
+[90m2026-09-08T19:15:45.743Z[0m [tasks-extension-advertised               ] [32mSUCCESS[0m Server advertises io.modelcontextprotocol/tasks under capabilities.extensions (and not capabilities.tasks)
+[90m2026-09-08T19:15:45.753Z[0m [sep-2663-tasks-methods-non-declaring     ] [32mSUCCESS[0m tasks/get, tasks/update, tasks/cancel return -32021 when the client did not negotiate the tasks extension (SEP-2575 Missing Required Capabilities)
+[90m2026-09-08T19:15:45.774Z[0m [sep-2663-server-rejects-undeclared-client] [32mSUCCESS[0m tools/call from a session without the extension MUST fall through to sync (no CreateTaskResult, even for task-supporting tools)
+[90m2026-09-08T19:15:45.784Z[0m [tasks-per-request-meta-opt-in            ] [32mSUCCESS[0m tools/call with extension declared in _meta.io.modelcontextprotocol/clientCapabilities produces a CreateTaskResult even when the session did not negotiate the extension
+[90m2026-09-08T19:15:45.784Z[0m [wire-schema-valid                        ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 5/5, 0 failed, 0 warnings
+(node:38979) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-wire-fields' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-wire-fields-2026-09-08T19-15-46-335Z
+Checks:
+[90m2026-09-08T19:15:46.394Z[0m [tasks-wire-field-renames                    ] [32mSUCCESS[0m CreateTaskResult uses ttlMs + pollIntervalMs (integer milliseconds); legacy ttl / pollInterval keys absent
+[90m2026-09-08T19:15:47.931Z[0m [tasks-no-early-ttl-expiry                   ] [32mSUCCESS[0m Task remains accessible via tasks/get for the duration of its ttlMs
+[90m2026-09-08T19:15:48.962Z[0m [tasks-no-related-task-meta-on-inlined-result] [32mSUCCESS[0m tasks/get inlined result MUST NOT include the v1 io.modelcontextprotocol/related-task _meta key (taskId is at the root)
+[90m2026-09-08T19:15:48.962Z[0m [wire-schema-valid                           ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/4, 0 failed, 0 warnings
+(node:40645) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-request-state-removal' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-request-state-removal-2026-09-08T19-15-49-500Z
+Checks:
+[90m2026-09-08T19:15:49.561Z[0m [tasks-create-result-no-request-state] [32mSUCCESS[0m CreateTaskResult MUST NOT carry `requestState` (SEP-2663 does not define the field on the Task base interface)
+[90m2026-09-08T19:15:49.568Z[0m [tasks-get-detailed-no-request-state ] [32mSUCCESS[0m tasks/get response (DetailedTask) MUST NOT carry `requestState` for any status (per SEP-2663)
+[90m2026-09-08T19:15:49.573Z[0m [wire-schema-valid                   ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 3/3, 0 failed, 0 warnings
+(node:40993) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-mrtr-input' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-mrtr-input-2026-09-08T19-15-50-115Z
+Checks:
+[90m2026-09-08T19:15:50.396Z[0m [sep-2663-tasks-get-status-input-required] [32mSUCCESS[0m tasks/get on an input_required task MUST surface a non-empty inputRequests map
+[90m2026-09-08T19:15:50.863Z[0m [tasks-mrtr-tasks-update-resumes         ] [32mSUCCESS[0m tasks/update with matching inputResponses MUST be acked with {resultType:"complete"} and resume the task to a terminal state
+[90m2026-09-08T19:15:51.213Z[0m [tasks-mrtr-partial-fulfillment          ] [32mSUCCESS[0m tasks/update with a subset of keys MUST keep the task in input_required with only the unanswered key remaining
+[90m2026-09-08T19:15:51.214Z[0m [wire-schema-valid                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/4, 0 failed, 0 warnings
+(node:41829) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-request-headers' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-request-headers-2026-09-08T19-15-51-749Z
+Checks:
+[90m2026-09-08T19:15:51.806Z[0m [tasks-headers-tolerate-mcp-method-on-tools-call         ] [32mSUCCESS[0m Server tolerates Mcp-Method request header on tools/call (sync tool dispatch unaffected)
+[90m2026-09-08T19:15:51.820Z[0m [sep-2663-routing-headers-accepted-on-tasks-get          ] [32mSUCCESS[0m Server accepts matched Mcp-Method + Mcp-Name request headers on tasks/get and dispatches normally
+[90m2026-09-08T19:15:51.824Z[0m [tasks-headers-reject-mismatched-method                  ] [32mSUCCESS[0m When Mcp-Method header disagrees with body on a tools/call, server MUST reject with -32020 HeaderMismatch (SEP-2243 §Server Validation)
+[90m2026-09-08T19:15:51.828Z[0m [sep-2663-server-rejects-mismatched-mcp-name-on-tasks-get] [31mFAILURE[0m When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch
+[90m2026-09-08T19:15:51.832Z[0m [wire-schema-valid                                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 4/5, 1 failed, 0 warnings
+
+=== Failed Checks ===
+
+  - Sep2663ServerRejectsMismatchedMcpNameOnTasksGet: When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch
+    Error: tasks/get with mismatched Mcp-Name returned a result; SEP-2243 requires -32020 rejection
+
+Test SEP-2243 Mcp-Method / Mcp-Name request-header validation, tasks surface.
+
+[1mServer Implementation Requirements:[0m
+
+SEP-2243 defines two required request headers that mirror body fields
+into the HTTP layer for routing intermediaries:
+
+- [2mMcp-Method: <jsonrpc-method>[0m — REQUIRED on every JSON-RPC request,
+  matching the body [2mmethod[0m.
+- [2mMcp-Name: <name-shaped-identifier>[0m — REQUIRED on requests with a
+  name-shaped body field. Per SEP-2243 §"Standard Headers" this covers
+  [2mtools/call[0m ([2mparams.name[0m), [2mresources/read[0m ([2mparams.uri[0m), and
+  [2mprompts/get[0m ([2mparams.name[0m). SEP-2663 §"Streamable HTTP: Routing
+  Headers" extends the requirement to tasks-namespace methods:
+  [2mtasks/get[0m, [2mtasks/update[0m, and [2mtasks/cancel[0m MUST carry
+  [2mMcp-Name: <taskId>[0m matching [2mparams.taskId[0m.
+
+Per SEP-2243 §"Server Behavior", servers that process the request body
+MUST validate that header values match the body. Per its "Validation
+Failure Conditions", both missing required headers and mismatched
+values trigger rejection with JSON-RPC error code [2m-32020[0m
+(HeaderMismatch) and HTTP 400.
+
+[1mRequired server fixtures ([2mtools/list[0m MUST include all):[0m
+- [2mgreet[0m — sync-only, returns [2mHello, {name}![0m.
+- [2mslow_compute[0m — task-supporting, [2mseconds[0m-second sleep then a
+  result.
+(node:42177) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-dispatch-and-envelope' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-dispatch-and-envelope-2026-09-08T19-15-52-376Z
+Checks:
+[90m2026-09-08T19:15:52.417Z[0m [sep-2663-tasks-result-removed-method-not-found  ] [32mSUCCESS[0m tasks/result is removed in v2 and MUST reject with -32601
+[90m2026-09-08T19:15:52.422Z[0m [tasks-removed-tasks-list                        ] [32mSUCCESS[0m tasks/list is removed in v2 and MUST reject with -32601
+[90m2026-09-08T19:15:52.451Z[0m [tasks-server-directed-creation-no-hint          ] [32mSUCCESS[0m tools/call with no client `task` hint param MUST still produce CreateTaskResult for task-supporting tools
+[90m2026-09-08T19:15:52.457Z[0m [sep-2663-legacy-task-param-ignored              ] [32mSUCCESS[0m tools/call with legacy `task` param against a sync tool MUST NOT error and MUST NOT be promoted to a task
+[90m2026-09-08T19:15:52.464Z[0m [tasks-immediate-result-shortcut                 ] [32mSUCCESS[0m For a fast operation, a task-supporting tool MAY skip task creation and return a sync ToolResult; either path is valid
+[90m2026-09-08T19:15:52.931Z[0m [tasks-result-type-complete-on-non-task-responses] [32mSUCCESS[0m Sync tools/call, tasks/get, tasks/update ack, and tasks/cancel ack MUST all carry resultType:"complete"
+[90m2026-09-08T19:15:52.944Z[0m [sep-2663-durable-create-strong-consistency      ] [32mSUCCESS[0m tasks/get issued immediately after CreateTaskResult arrives MUST resolve (server MUST NOT return CreateTaskResult before the task is durably created)
+[90m2026-09-08T19:15:52.947Z[0m [sep-2663-tasks-get-invalid-task-id-32602        ] [32mSUCCESS[0m tasks/get for a taskId the server does not recognize MUST return -32602
+[90m2026-09-08T19:15:52.947Z[0m [wire-schema-valid                               ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings
+(node:42838) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-status-notifications' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-status-notifications-2026-09-08T19-15-53-481Z
+Checks:
+[90m2026-09-08T19:15:53.482Z[0m [tasks-status-notifications] [0mSKIPPED[0m Status notifications conformance, pending subscriptions/listen rewrite.
+
+Test Results:
+Passed: 0/0, 0 failed, 0 warnings
+(node:43119) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-required-task-error' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-required-task-error-2026-09-08T19-15-54-018Z
+Checks:
+[90m2026-09-08T19:15:54.072Z[0m [sep-2663-server-returns-missing-capability-when-required] [32mSUCCESS[0m tools/call for a TaskSupport=required tool MUST reject with code -32021 (Missing Required Client Capability) when the client did not declare io.modelcontextprotocol/tasks
+[90m2026-09-08T19:15:54.072Z[0m [sep-2663-server-returns-missing-capability-data-shape   ] [32mSUCCESS[0m Error data for -32021 SHOULD carry data.requiredCapabilities.extensions["io.modelcontextprotocol/tasks"]
+[90m2026-09-08T19:15:54.072Z[0m [wire-schema-valid                                       ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 3/3, 0 failed, 0 warnings
+(node:43445) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'tasks-mrtr-composition' against server: http://127.0.0.1:35931/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-tasks-forced-20260908/results/server-tasks-mrtr-composition-2026-09-08T19-15-54-602Z
+Checks:
+[90m2026-09-08T19:15:54.702Z[0m [sep-2663-mrtr-synchronous-before-task-creation] [32mSUCCESS[0m MRTR loop gathers input then escalates to a task on the final round (SEP-2322 + SEP-2663 451f5e1).
+[90m2026-09-08T19:15:54.702Z[0m [wire-schema-valid                             ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 2/2, 0 failed, 0 warnings

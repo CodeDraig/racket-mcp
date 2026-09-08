@@ -1,0 +1,20 @@
+(node:26932) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: request-metadata
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/dev/conformance-client.rkt http://localhost:34075
+(node:26932) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-clients-20260908/results/request-metadata-2026-09-08T19-15-24-398Z
+Checks:
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-http-client-sends-version-header      ] [32mSUCCESS[0m Client sends MCP-Protocol-Version header on every POST
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-client-populates-meta                 ] [32mSUCCESS[0m Client populates _meta on every request with the required fields (protocolVersion, clientCapabilities)
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-client-sends-client-info              ] [32mSUCCESS[0m Client SHOULD include io.modelcontextprotocol/clientInfo in every request's _meta (spec PR #3002)
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-http-version-header-matches-meta      ] [32mSUCCESS[0m MCP-Protocol-Version header matches _meta.protocolVersion
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-client-declares-roots-capability      ] [0mSKIPPED[0m Client declares valid roots capability if present
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-client-declares-sampling-capability   ] [0mSKIPPED[0m Client declares valid sampling capability if present
+[90m2026-09-08T19:15:25.149Z[0m [sep-2575-client-declares-elicitation-capability] [32mSUCCESS[0m Client declares valid elicitation capability if present
+[90m2026-09-08T19:15:25.145Z[0m [sep-2575-client-retry-supported-version        ] [32mSUCCESS[0m Client retries with a supported version when first choice is rejected
+
+Test Results:
+Passed: 6/6, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

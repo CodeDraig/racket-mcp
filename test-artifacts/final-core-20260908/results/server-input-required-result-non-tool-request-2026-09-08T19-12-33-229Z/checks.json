@@ -1,0 +1,86 @@
+[
+  {
+    "id": "sep-2322-non-tool-incomplete",
+    "name": "InputRequiredResultNonToolIncomplete",
+    "description": "prompts/get returns InputRequiredResult with inputRequests",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:12:33.251Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "user_context": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What context should the prompt use?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "context"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "c7c5fc58ae58f2ec37ff22704ec9062cd785887ca6397344675564a866e4856f",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "sep-2322-non-tool-complete",
+    "name": "InputRequiredResultNonToolComplete",
+    "description": "prompts/get returns complete GetPromptResult after retry with inputResponses",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:12:33.256Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "messages": [
+          {
+            "content": {
+              "text": "Discuss #hasheq((context . test context))",
+              "type": "text"
+            },
+            "role": "user"
+          }
+        ],
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:12:33.256Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 4,
+      "violations": []
+    }
+  }
+]

@@ -5624,3 +5624,23 @@ credential, recovery and translation tests are mapped in
 
 UPSTREAM is removed from REMAINING.md. No SDK implementation changed in this
 closure. BUILD, CONFORMANCE, PLATFORM and RELEASE remain.
+
+## Qualified conformance closure (2026-09-08)
+
+Final core/client/Tasks runs and exact SDK-source comparison to the Go run are
+recorded in test-artifacts/conformance-closure-20260908. Core has 144 successful
+checks outside the inapplicable Tasks-on-core-fixture results; four failures need
+excluded roots/sampling diagnostics and one MRTR warning is the recorded input
+interpretation. Dedicated Tasks has 43 successful checks, the recorded taskId
+header disagreement, and the harness's notification-channel skip. Client has 62
+successful checks and four expected deprecated/initialization skips; real HTTPS
+CIMD/offline-access has a 12/12 terminal pass. All 14 Go probes use identical SDK
+source. No unqualified conformance pass is claimed.
+
+The list-changing diagnostic fixture now explicitly accepts its configured
+localhost Origin; the full harness verifies the fix. Invalid wildcard selection
+and extension applicability skips are retained alongside corrected exact forced
+Tasks runs. No upstream harness or SDK runtime was changed. CONFORMANCE is removed
+with the documented interpretations/exclusions. BUILD, PLATFORM and RELEASE remain.
+The latest inspected GitHub run, 34267316205, has startup_failure and zero jobs;
+no platform success or startup cause is inferred.

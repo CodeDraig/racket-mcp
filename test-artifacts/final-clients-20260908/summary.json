@@ -1,0 +1,76 @@
+{
+  "counts": {
+    "SUCCESS": 62,
+    "SKIPPED": 4
+  },
+  "exceptions": [
+    {
+      "artifact": "results/request-metadata-2026-09-08T19-15-24-398Z/checks.json",
+      "check": {
+        "id": "sep-2575-client-declares-roots-capability",
+        "name": "ClientDeclaresRootsCapability",
+        "description": "Client declares valid roots capability if present",
+        "status": "SKIPPED",
+        "timestamp": "2026-09-08T19:15:25.149Z",
+        "specReferences": [
+          {
+            "id": "SEP-2575",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/index#capabilities"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/request-metadata-2026-09-08T19-15-24-398Z/checks.json",
+      "check": {
+        "id": "sep-2575-client-declares-sampling-capability",
+        "name": "ClientDeclaresSamplingCapability",
+        "description": "Client declares valid sampling capability if present",
+        "status": "SKIPPED",
+        "timestamp": "2026-09-08T19:15:25.149Z",
+        "specReferences": [
+          {
+            "id": "SEP-2575",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/index#capabilities"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/http-standard-headers-2026-09-08T19-15-27-192Z/checks.json",
+      "check": {
+        "id": "sep-2243-client-includes-standard-headers",
+        "name": "ClientMcpMethodHeader_initialize",
+        "description": "Client sends correct Mcp-Method header on initialize request",
+        "status": "SKIPPED",
+        "timestamp": "2026-09-08T19:15:27.955Z",
+        "errorMessage": "Client did not send a initialize request; Mcp-Method header was not exercised for this method.",
+        "specReferences": [
+          {
+            "id": "SEP-2243-Standard-Headers",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/http-standard-headers-2026-09-08T19-15-27-192Z/checks.json",
+      "check": {
+        "id": "sep-2243-client-includes-standard-headers",
+        "name": "ClientMcpMethodHeader_notifications_initialized",
+        "description": "Client sends correct Mcp-Method header on notifications/initialized request",
+        "status": "SKIPPED",
+        "timestamp": "2026-09-08T19:15:27.955Z",
+        "errorMessage": "Client did not send a notifications/initialized request; Mcp-Method header was not exercised for this method.",
+        "specReferences": [
+          {
+            "id": "SEP-2243-Standard-Headers",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#standard-mcp-request-headers"
+          }
+        ]
+      }
+    }
+  ]
+}

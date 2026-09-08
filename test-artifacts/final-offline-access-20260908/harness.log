@@ -1,0 +1,50 @@
+(node:59316) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: auth/offline-access-scope
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt http://localhost:41473/mcp
+(node:59316) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/final-offline-access-20260908/results/auth/offline-access-scope-2026-09-08T19-16-24-454Z
+Checks:
+[90m2026-09-08T19:16:25.256Z[0m [incoming-request                    ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-09-08T19:16:25.257Z[0m [outgoing-response                   ] [36mINFO   [0m Sent 401 response for POST /mcp (method: server/discover)
+
+[90m2026-09-08T19:16:25.259Z[0m [incoming-request                    ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource/mcp
+[90m2026-09-08T19:16:25.259Z[0m [prm-pathbased-requested             ] [32mSUCCESS[0m Client requested PRM metadata at path-based location
+[90m2026-09-08T19:16:25.259Z[0m [outgoing-response                   ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-protected-resource/mcp
+
+[90m2026-09-08T19:16:25.260Z[0m [incoming-auth-request               ] [36mINFO   [0m Received GET request for /.well-known/oauth-authorization-server
+[90m2026-09-08T19:16:25.260Z[0m [authorization-server-metadata       ] [32mSUCCESS[0m Client requested authorization server metadata
+[90m2026-09-08T19:16:25.260Z[0m [outgoing-auth-response              ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-authorization-server
+
+[90m2026-09-08T19:16:25.261Z[0m [incoming-auth-request               ] [36mINFO   [0m Received GET request for /authorize
+[90m2026-09-08T19:16:25.261Z[0m [authorization-request               ] [32mSUCCESS[0m Client made authorization request
+[90m2026-09-08T19:16:25.261Z[0m [pkce-code-challenge-sent            ] [32mSUCCESS[0m Client sent code_challenge in authorization request
+[90m2026-09-08T19:16:25.261Z[0m [pkce-s256-method-used               ] [32mSUCCESS[0m Client used S256 code challenge method
+[90m2026-09-08T19:16:25.261Z[0m [sep-2207-offline-access-requested   ] [36mINFO   [0m Client MAY include offline_access in scope when AS metadata lists it in scopes_supported (SEP-2207). Client chose not to request it.
+[90m2026-09-08T19:16:25.262Z[0m [outgoing-auth-response              ] [36mINFO   [0m Sent 302 response for GET /authorize
+
+[90m2026-09-08T19:16:25.263Z[0m [incoming-auth-request               ] [36mINFO   [0m Received POST request for /token
+[90m2026-09-08T19:16:25.263Z[0m [token-request                       ] [32mSUCCESS[0m Client requested access token
+[90m2026-09-08T19:16:25.263Z[0m [pkce-code-verifier-sent             ] [32mSUCCESS[0m Client sent code_verifier in token request
+[90m2026-09-08T19:16:25.263Z[0m [pkce-verifier-matches-challenge     ] [32mSUCCESS[0m code_verifier correctly matches code_challenge (S256)
+[90m2026-09-08T19:16:25.264Z[0m [outgoing-auth-response              ] [36mINFO   [0m Sent 200 response for POST /token
+
+[90m2026-09-08T19:16:25.264Z[0m [incoming-request                    ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-09-08T19:16:25.264Z[0m [valid-bearer-token                  ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-08T19:16:25.265Z[0m [outgoing-response                   ] [36mINFO   [0m Sent 200 response for POST /mcp (method: server/discover)
+
+[90m2026-09-08T19:16:25.266Z[0m [incoming-request                    ] [36mINFO   [0m Received POST request for /mcp (method: tools/list)
+[90m2026-09-08T19:16:25.266Z[0m [valid-bearer-token                  ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-08T19:16:25.266Z[0m [outgoing-response                   ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/list)
+
+[90m2026-09-08T19:16:25.266Z[0m [incoming-request                    ] [36mINFO   [0m Received POST request for /mcp (method: tools/call)
+[90m2026-09-08T19:16:25.266Z[0m [valid-bearer-token                  ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-08T19:16:25.267Z[0m [outgoing-response                   ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/call)
+
+[90m2026-09-08T19:16:25.285Z[0m [sep-2207-client-metadata-grant-types] [36mINFO   [0m Client did not use DCR or fetchable CIMD — grant_types could not be inspected
+[90m2026-09-08T19:16:25.301Z[0m [sep-2207-client-metadata-grant-types] [32mSUCCESS[0m Client metadata document includes refresh_token in grant_types
+
+Test Results:
+Passed: 12/12, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "tool-add-numbers",
+    "name": "ToolAddNumbers",
+    "description": "Validates that the add_numbers tool works correctly",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:23.866Z",
+    "specReferences": [
+      {
+        "id": "MCP-Tools",
+        "url": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools#calling-tools"
+      }
+    ],
+    "details": {
+      "a": 1,
+      "b": 1,
+      "result": 2
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:23.866Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 10,
+      "violations": []
+    }
+  }
+]

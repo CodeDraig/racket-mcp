@@ -1,0 +1,78 @@
+[
+  {
+    "id": "sep-2322-client-request-state-echoed",
+    "name": "MRTRClientRequestStateEchoed",
+    "description": "Client MUST echo back the exact value of requestState when retrying",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:26.611Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "requestStateSent": "{\"nonce\":\"9fb1f452-d7a5-4e79-adb2-b4bef1fe56de\",\"originalId\":3}",
+      "requestStateReceived": "{\"nonce\":\"9fb1f452-d7a5-4e79-adb2-b4bef1fe56de\",\"originalId\":3}",
+      "originalId": 3
+    }
+  },
+  {
+    "id": "sep-2322-client-jsonrpc-id-different",
+    "name": "MRTRClientJsonRpcIdDifferent",
+    "description": "The JSON-RPC id MUST be different between the initial request and the retry",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:26.611Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "originalId": 3,
+      "retryId": 4
+    }
+  },
+  {
+    "id": "sep-2322-client-no-state-omitted",
+    "name": "MRTRClientNoStateOmitted",
+    "description": "If InputRequiredResult does not contain requestState, client MUST NOT include one in the retry",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:26.631Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {}
+  },
+  {
+    "id": "sep-2322-client-parallel-isolation",
+    "name": "MRTRClientParallelIsolation",
+    "description": "inputRequests and requestState MUST NOT be used for any other request the client may be sending",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:26.633Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {}
+  },
+  {
+    "id": "sep-2322-default-result-type-complete",
+    "name": "DefaultResultTypeComplete",
+    "description": "Client MUST assume resultType \"complete\" when not specified",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:15:26.634Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322-MRTR",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ]
+  }
+]

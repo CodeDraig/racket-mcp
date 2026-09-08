@@ -51,6 +51,9 @@
           ;; struct-copy of the public parent drops the private clock subtype;
           ;; explicitly restore this fixture's captured clock around each request.
           (define handler (make-http-handler (struct-copy runtime rt [subscriptions hub])
+                                             #:origins (if (positive? port)
+                                               (list (format "http://127.0.0.1:~a" port)
+                                                     (format "http://localhost:~a" port)) '())
                                              #:keepalive-seconds 0.1))
           (lambda (request) (parameterize ([current-mcp-clock clock]) (handler request)))))
       (define dispatcher
