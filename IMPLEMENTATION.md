@@ -5536,3 +5536,13 @@ coverage supplies the other mapped requirements. Evidence is under
  test-artifacts/shared-resource-policy-20260908. CACHE is removed from
 REMAINING.md. No SDK runtime behavior changed, so the already passing broad suite
 was not repeated for this policy documentation and its focused regression.
+
+## Wire acceptance audit closure (2026-09-08)
+
+WIRE is removed from REMAINING.md after mapping the approved envelope, ID,
+metadata, framing, Unicode/header, cancellation, subscription and cleanup cases
+to inspected existing tests and independent wire results. The mapping and source
+hashes are in test-artifacts/wire-acceptance-20260908. All named native test files
+are unchanged from the passing ed75ea8 full Linux 9.3 run. No redundant tests or
+transport changes were added. Final independent conformance, upstream integration
+and native platform requirements remain in their own rows.

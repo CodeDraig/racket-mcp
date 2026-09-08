@@ -1,0 +1,94 @@
+[
+  {
+    "file": "tests/discovery-capabilities.rkt",
+    "sha256": "182bcee31da883968d0aa620143c62598faf8513444cb45f33ae2792a31b42b3"
+  },
+  {
+    "file": "tests/headers.rkt",
+    "sha256": "3c5671f49e06fc5fc5de91e025c2a12d5dd151cccfea7638889b586d8a36b56c"
+  },
+  {
+    "file": "tests/http-adaptive.rkt",
+    "sha256": "8d24d2061043359729ff5470eed97a58ec598226dd8bb7a136f05e24a6a1ecf3"
+  },
+  {
+    "file": "tests/http-lifecycle.rkt",
+    "sha256": "ced7848c69cebf5291807650f0f793ce3bbf7dfdc3483ae3f271dd57a43444f3"
+  },
+  {
+    "file": "tests/http-streams.rkt",
+    "sha256": "d047426c8f08b54f3d6c23bd34162900712383574e389132209bd05d8500acd0"
+  },
+  {
+    "file": "tests/http-wire.rkt",
+    "sha256": "f45581ed04d3a891919c84151db3acc16172f4513cd932bf462f0c58679e92d1"
+  },
+  {
+    "file": "tests/http.rkt",
+    "sha256": "52f199614e3a1c0acb3cedb465868e2912e57adbbca27a0cd6564ac9ca7ef4d3"
+  },
+  {
+    "file": "tests/json-decoding.rkt",
+    "sha256": "426d3c343d6b11b754f83e93673f7f1c804315a4c0b79e184d3e60440e5b6ccb"
+  },
+  {
+    "file": "tests/request-envelopes.rkt",
+    "sha256": "124fc4fe359310667c59000b28a7990eef15db33eda83a930eb97394297ba997"
+  },
+  {
+    "file": "tests/scenario-disconnect.rkt",
+    "sha256": "a02fcd58045ac790de3846b28264a5334eea3a908cf9e71d0860de55f90f4378"
+  },
+  {
+    "file": "tests/scenario-requests.rkt",
+    "sha256": "2764805db7b204ca3eebd535e18592c06600cd5c5cef44fcf2bbd0d8b58fda14"
+  },
+  {
+    "file": "tests/scenario-subscriptions.rkt",
+    "sha256": "2d63c969ccc7df057103230da990fc6593e79f5ce1e23934748a0b1b46ccfa5a"
+  },
+  {
+    "file": "tests/stdio-cancellation.rkt",
+    "sha256": "853b0af9c56595861ab8ba06f4972175408a5ee4baec70a892a26d0757bc0b32"
+  },
+  {
+    "file": "tests/stdio-lifecycle.rkt",
+    "sha256": "38d5654863cab0c0220ce3a1fe6660d3643500a41c2aa7241cd4c1471d0d3120"
+  },
+  {
+    "file": "tests/stdio-output-failure.rkt",
+    "sha256": "8a6f7eaacceeb545611958fd0f60858181db10bbc73c0b48f038b8eb66541cf3"
+  },
+  {
+    "file": "tests/stdio-overflow.rkt",
+    "sha256": "ba8c98677fabd52c01b8011a03cf1e5f353446bbd1877eae73bd56666a7afc1b"
+  },
+  {
+    "file": "tests/stdio-timeouts.rkt",
+    "sha256": "ff1fc104354c08c629b14fe74c98546cfb158b72b56bba30847e8471d5dab257"
+  },
+  {
+    "file": "tests/subscription-client-validation.rkt",
+    "sha256": "cf23ee199d6c13c5ff16e6bd2233113a099fd623de64f322a1cfe6d7083ea897"
+  },
+  {
+    "file": "tests/subscription-concurrency.rkt",
+    "sha256": "844922d2303e01cff9f2a9e86bd734f9de5eca6b2d44a8b59a774e1f3226a9e8"
+  },
+  {
+    "file": "tests/subscription-http-scopes.rkt",
+    "sha256": "056188af0937ce1050bcf11e95d89ccd02670ff2dd61f40d28260b4f72f59b2b"
+  },
+  {
+    "file": "tests/subscription-policy.rkt",
+    "sha256": "d3f4c85d21a731cb6575812670930ecb1cd80dc0350ff7233e16f91352f6c335"
+  },
+  {
+    "file": "tests/subscription.rkt",
+    "sha256": "2d6576d46174a3032423805b9cc26e2d6c9e8d2f2cfbaaebe2d60b22f4e88dd6"
+  },
+  {
+    "file": "tests/wire-messages.rkt",
+    "sha256": "993d8ff4aa63e7e90f82ae85973f56eb22b6d888bc8cd2c685ac1193c89f0d5a"
+  }
+]
