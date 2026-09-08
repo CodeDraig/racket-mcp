@@ -1,4 +1,6 @@
 #lang racket/base
+;; These protocol fixtures own downstream listener lifetimes explicitly.
+;; Default loss propagation is covered by upstream-resource-loss/upstream-task-loss.
 (require rackunit racket/async-channel mcp mcp/upstream mcp/upstream-subscription
          mcp/scenario mcp/stdio mcp/subscription)
 (define caps (hasheq 'elicitation (hasheq) 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
@@ -36,23 +38,23 @@
           (define requests 0)
           (define (request m p) (set! requests (add1 requests)) (scenario-request upstream m p))
           (check-exn exn:fail? (lambda ()
-            (call-with-upstream-task-subscription rt snapshot request (list id) void #:principal "foreign" #:capabilities caps)))
+            (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id) void #:principal "foreign" #:capabilities caps)))
           (check-equal? requests 0)
           (set! credential "changed-credential")
           (check-exn exn:fail? (lambda ()
-            (call-with-upstream-task-subscription rt snapshot request (list id) void #:principal "local-owner" #:capabilities caps)))
+            (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id) void #:principal "local-owner" #:capabilities caps)))
           (set! credential "remote-owner")
           (check-equal? requests 0)
           (check-exn exn:fail? (lambda ()
-            (call-with-upstream-task-subscription rt (hash-set snapshot 'tools/list (hasheq 'tools '())) request (list id) void
+            (call-with-upstream-task-subscription #:propagate-loss? #f rt (hash-set snapshot 'tools/list (hasheq 'tools '())) request (list id) void
               #:principal "local-owner" #:capabilities caps)))
           (check-equal? requests 0)
           (check-exn exn:fail? (lambda ()
-            (call-with-upstream-task-subscription rt snapshot request (list id) void #:principal "local-owner" #:capabilities (hasheq))))
+            (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id) void #:principal "local-owner" #:capabilities (hasheq))))
           (check-equal? requests 0)
           (define retained #f)
           (define terminal
-            (call-with-upstream-task-subscription rt snapshot request (list id id)
+            (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id id)
               (lambda (subscription)
                 (set! retained subscription)
                 (check-true (upstream-task-subscription? subscription))
@@ -79,14 +81,14 @@
           (check-equal? (hash-ref (hash-ref (scenario-call local "tasks/get" (hasheq 'taskId id)) 'result) 'status) "completed")
           (check-equal? polls 0)
           ;; Fresh subscription and local cancellation leave the stored task intact.
-          (call-with-upstream-task-subscription rt snapshot request (list id)
+          (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id)
             (lambda (subscription)
               (stop-upstream-task-subscription! subscription)
               (check-true (exn:fail:request-cancelled? (sync/timeout 3 subscription))))
             #:principal "local-owner" #:capabilities caps #:timeout 3)
           (check-false (sync/timeout 0 local-listener))
           ;; A connection's continued availability does not bypass credential checks.
-          (call-with-upstream-task-subscription rt snapshot request (list id)
+          (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request (list id)
             (lambda (subscription)
               (set! credential "revoked")
               (define detail (hash-ref (scenario-call upstream "tasks/get" (hasheq 'taskId remote-id)) 'result))

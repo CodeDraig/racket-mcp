@@ -511,6 +511,13 @@ acknowledgement remain bounded by the hub queue capacity; overflow produces the
 subscription error after acknowledgement, without draining stale queued events.
 Every hub access removes listeners whose threads were forcibly terminated.
 
+@tt{close-subscriptions!} accepts a hub and optional @tt{#:matches?} predicate
+receiving each listener's principal and accepted filter. The default selects all
+listeners. An optional @tt{#:error-message} string closes selected listeners with
+error @tt{-32000}; the default @racket[#f] produces graceful completion. The first
+recorded failure reason is retained, including queue overflow. Selection executes
+outside the hub lock; closure signals listeners without performing transport I/O.
+
 @subsection{List pagination}
 Tools, resources, resource templates, and prompts use opaque continuation cursors.
 @racket[make-runtime] accepts @racket[#:page-size] (default 100),
@@ -948,8 +955,20 @@ the forwarding worker while preserving the consumer's result or raised value.
 Explicit stop and scope exit abandon queued changes. A forwarding pass already
 executing may finish, but the worker observes its local stop signal before starting
 another pass. Normal upstream completion continues to drain queued changes.
-The borrowed upstream client and local listeners retain their own lifetimes.
+The borrowed upstream client retains its own lifetime.
 Nest this scope inside the lifetime of the local runtime and upstream client.
+
+By default, ending an acknowledged feed also terminates matching local listeners
+for the supplied principal, using only the accepted upstream filter and the
+installed resource mappings. Graceful completion and explicit stop produce a
+completion result; unexpected loss produces error @tt{-32000}, instructing the
+client to re-listen and refresh. Affected private cache entries are invalidated
+without inventing committed-change notifications. An empty accepted filter
+affects no local listeners or cache entries. If application dependency calculation
+fails or exceeds worker cleanup time, termination conservatively closes all
+resource listeners for that principal. Cleanup does not repeat an interrupted
+dependency callback. Set @tt{#:propagate-loss? #f} when the application owns
+downstream listener recovery and termination itself.
 
 @tt{#:timeout} defaults to five seconds and bounds each snapshot request,
 acknowledgement wait and worker cleanup. It is not the lifetime of an acknowledged
@@ -957,8 +976,8 @@ subscription. Transport loss and native queue overflow remain observable failure
 The application handles the terminal event, refreshes its state as appropriate,
 and explicitly starts a new scope to listen again. Reconnection does not replay
 subscriptions automatically. This runner handles resource updates. The task runner
-below shares its stream lifecycle. Upstream list changes and automatic downstream
-failure propagation require separate integration.
+below shares its stream lifecycle. Upstream list changes require separate
+integration.
 
 @subsubsection{Scoped upstream task subscriptions}
 
@@ -986,9 +1005,14 @@ poll the peer. Invalid methods, tags, filters, details or revoked access termina
 the forwarder with an exception outcome and cancel its upstream subscription.
 
 @tt{stop-upstream-task-subscription!}, scope exit, graceful completion, transport
-loss and queue overflow have the same behavior as the resource runner. Stopping
-the subscription does not cancel a task or close local listeners. Applications
-must handle its terminal event and explicitly refresh/re-listen after loss.
+loss and queue overflow have the same behavior as the resource runner. By default,
+termination closes local listeners whose accepted task filters overlap the
+accepted translated IDs, for the same principal. It does not cancel tasks,
+change their persisted states or revisions, or fabricate task notifications.
+An empty accepted filter affects no local listeners. The same
+@tt{#:propagate-loss? #f} option leaves downstream listener lifetimes under
+application control. Applications must handle the terminal event and explicitly
+refresh/re-listen after loss.
 Independent control requests and notification streams have no shared protocol
 sequence number: applications must coordinate them and reconcile uncertain or
 stale observations. This runner does not retry task mutations or silently repair

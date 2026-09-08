@@ -57,7 +57,7 @@ complete coverage of its surrounding milestone.
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
-| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`, `upstream-subscription.rkt`; upstream, bridge and subscription tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and explicit task observations translate; observed-outcome task replacement and explicit mutation retry are implemented; scoped resource forwarding has official Go peers in both directions; scoped task forwarding has local/stdio/HTTP native coverage; terminal/expiry competition is covered across memory and separate SQLite connections; loss propagation policy and remaining task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
+| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`, `upstream-subscription.rkt`; upstream, bridge and subscription tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and explicit task observations translate; observed-outcome task replacement and explicit mutation retry are implemented; scoped resource forwarding has official Go peers in both directions; scoped task forwarding has local/stdio/HTTP native coverage; terminal/expiry competition is covered across memory and separate SQLite connections; accepted resource/task feed termination now propagates to matching local listeners with a documented opt-out; remaining task failure coverage is incomplete; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`, `scenario-session.rkt`, `scenario-process.rkt`; scenario and process tests, executable examples | Local/stdio/HTTP sessions, asynchronous handles, cancellation, disconnect/reconnect and process kill/restart implemented; complete authored fault scheduling and acceptance matrix remain |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
@@ -4565,3 +4565,43 @@ compile error are in `test-artifacts/upstream-task-races-20260908`. This closes
 these particular task control cases, not the remaining process-loss, subscription
 loss, remote-expiry translation or full task failure matrix. The full suite was
 not repeated for a tests-only change; the runtime baseline remains ad09e96.
+
+
+## Upstream subscription termination propagation (2026-09-08)
+
+Acknowledged upstream resource and task feeds now propagate termination to local
+listeners by default. Only accepted filters and the same principal are selected;
+resource identities resolve through installed mappings and task IDs through the
+stored translation. Empty acceptance affects nothing. Graceful completion and
+explicit cancellation complete selected local listeners; unexpected loss produces
+-32000 with a refresh/re-listen instruction. Resource cache entries are invalidated
+without fabricating committed-change notifications. Task states and revisions do
+not change. The borrowed client remains application-owned and reconnect/replay is
+not automatic. Applications owning downstream recovery can opt out explicitly
+with #:propagate-loss? #f.
+
+Dependency callbacks execute outside subscription locks. A failed or forcibly
+interrupted resource dependency calculation conservatively closes resource
+listeners for that principal. Bounded cleanup retains the original peer outcome
+and does not repeat an interrupted callback. The subscription hub supports scoped
+closure with a copied error reason and preserves the first recorded failure.
+
+The new resource/task suites passed 25 cases across local, stdio and HTTP for
+loss, completion, cancellation, empty acceptance, unrelated filters, principal
+isolation, cache invalidation and unchanged task revisions. A stalled dependency
+fixture checks bounded cleanup and single callback execution. The broader eight
+file suite passed 354 checks on Racket 9.2. Initial verification caught an extra
+parenthesis in the new fixture; the corrected run passed. The official Go fixture
+also exposed its old reuse of a downstream listener across cancelled forwarding
+scopes. It now asserts completion and explicitly creates a fresh local listener
+on reconnection. All 14 Go probes passed with that behavior. The two Go-server
+probes then gained actual peer-process termination and passed on both Racket 9.2
+and 9.3, for upstream stdio and HTTP. Installed package dependency setup and 62
+installed checks also passed; the 573 SDK/documentation/test source files matched
+the verified distribution byte for byte.
+
+Full Racket 9.3 verification passed compilation, 5,921 native checks, all 1,301
+core schema cases, all 86 optional regex cases and Scribble. Evidence, including
+the initial fixture failures, is retained in
+`test-artifacts/upstream-subscription-loss-20260908`. This change does not complete the remaining upstream process-loss/task matrix, automatic executable
+provenance, compiler/API audit or full release gates.

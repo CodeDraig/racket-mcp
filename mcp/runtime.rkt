@@ -16,7 +16,7 @@
 (define (runtime-clock rt)
   (if (clocked-runtime? rt) (clocked-runtime-clock rt) (current-mcp-clock)))
 (module* upstream-task-subscriptions #f
-  (provide runtime-upstream-task-target))
+  (provide runtime-upstream-task-target runtime-upstream-subscription-ended!))
 (define (runtime-upstream-task-target rt id snapshot principal capabilities)
   (parameterize ([current-upstream-task-observation (cons id (task-subscription-target snapshot))])
     (dispatch rt "tasks/get" (hasheq 'taskId id '_meta (request-meta #:capabilities capabilities)) #:principal principal)))
@@ -169,18 +169,13 @@
 (define (resource-notification-authorized? rt principal uri)
   (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (mcp-current-seconds)))
        ((runtime-authorize rt) principal "resources/read" (hasheq 'uri uri '_meta (request-meta)))))
-(define/clock (runtime-report-change! rt principal keys)
-  (change-keys! keys)
-  (define owner (principal-key principal))
-  ;; Invalidation precedes publication, including changes arriving externally.
-  (define cached (invalidate-keys! (runtime-cache rt) keys #:principal owner))
-  (define affected
+(define (affected-resource-uris rt owner keys cached authorized?)
     (for/list ([target (in-list (subscription-resource-targets (runtime-subscriptions rt)))]
                #:when (equal? owner (principal-key (car target)))
                #:do [(define uri (cdr target))
                      (define reader (car target))
                      (define params (hasheq 'uri uri '_meta (request-meta))) ]
-               #:when (resource-notification-authorized? rt reader uri)
+               #:when (authorized? reader uri)
                #:when
                (or (member uri cached)
                    (for/or ([d (in-list (interface-descriptor-resources (runtime-interface rt)))])
@@ -192,11 +187,39 @@
                               (change-keys! ((resource-descriptor-depends-on d) (bind-arguments (resource-descriptor-arguments d) args))))
                             (ormap (lambda (key) (member key keys)) dependencies))))))
       uri))
+(define/clock (runtime-report-change! rt principal keys)
+  (change-keys! keys)
+  (define owner (principal-key principal))
+  ;; Invalidation precedes publication, including changes arriving externally.
+  (define cached (invalidate-keys! (runtime-cache rt) keys #:principal owner))
+  (define affected (affected-resource-uris rt owner keys cached
+                     (lambda (reader uri) (resource-notification-authorized? rt reader uri))))
   (for ([uri (in-list (remove-duplicates affected))])
     (publish-change! (runtime-subscriptions rt) "notifications/resources/updated" (hasheq 'uri uri)
                      #:principal principal #:principal-key principal-key
                      #:authorized? (lambda (reader) (resource-notification-authorized? rt reader uri))))
   (remove-duplicates (append cached affected)))
+(define/clock (runtime-upstream-subscription-ended! rt principal keys ids failed? fallback?)
+  (change-keys! keys)
+  (define owner (principal-key principal))
+  ;; A missing feed makes cached reads uncertain; it is not a committed mutation
+  ;; and must not fabricate resources/updated or task-state notifications.
+  (define cached (if (null? keys) '() (invalidate-keys! (runtime-cache rt) keys #:principal owner)))
+  (define affected
+    (if (null? keys) '()
+        (if fallback? #f
+        (with-handlers ([(lambda (_) #t) (lambda (_) #f)])
+          (affected-resource-uris rt owner keys cached (lambda (_reader _uri) #t))))))
+  (close-subscriptions! (runtime-subscriptions rt)
+    #:matches? (lambda (reader filter)
+      (and (equal? owner (principal-key reader))
+           (or (ormap (lambda (id) (member id ids)) (hash-ref filter 'taskIds '()))
+               (if affected
+                   (ormap (lambda (uri) (member uri affected)) (hash-ref filter 'resourceSubscriptions '()))
+                   ;; Failed dependency calculation cannot justify retaining a
+                   ;; resource listener for this principal with unknown coverage.
+                   (pair? (hash-ref filter 'resourceSubscriptions '()))))))
+    #:error-message (and failed? "Upstream subscription lost; re-listen and refresh cached data")))
 (define/clock (runtime-drain-changes! rt)
   (unless (runtime-store rt) (error 'freshness "outbox storage is not configured"))
   (drain-change-outbox! (runtime-store rt)

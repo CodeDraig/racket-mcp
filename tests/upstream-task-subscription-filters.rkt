@@ -1,4 +1,6 @@
 #lang racket/base
+;; These protocol fixtures own downstream listener lifetimes explicitly.
+;; Default loss propagation is covered by upstream-resource-loss/upstream-task-loss.
 (require rackunit racket/list racket/async-channel mcp mcp/upstream
          mcp/upstream-subscription mcp/stdio)
 (define caps (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
@@ -44,7 +46,7 @@
           [else (request-handle 1 (make-semaphore 1) (box (hasheq 'result (hash-ref snapshot (string->symbol method))))
                   void (make-async-channel))]))
   (dynamic-wind void
-    (lambda () (call-with-upstream-task-subscription rt snapshot request ids proc #:principal "owner" #:capabilities caps))
+    (lambda () (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot request ids proc #:principal "owner" #:capabilities caps))
     (lambda () (check-true (> cancelled 0)))))
 (define accepted (ack (hasheq 'taskIds '("a"))))
 (dynamic-wind void
@@ -103,7 +105,7 @@
     (manual-clock-advance! clock 61)
     (define requests 0)
     (check-exn exn:fail? (lambda ()
-      (call-with-upstream-task-subscription rt snapshot (lambda (_m _p) (set! requests (add1 requests))) ids void
+      (call-with-upstream-task-subscription #:propagate-loss? #f rt snapshot (lambda (_m _p) (set! requests (add1 requests))) ids void
         #:principal "owner" #:capabilities caps)))
     (check-equal? requests 0))
   (lambda () (custodian-shutdown-all (runtime-custodian rt)) (close-store! store)))

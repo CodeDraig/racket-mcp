@@ -1,4 +1,6 @@
 #lang racket/base
+;; These protocol fixtures own downstream listener lifetimes explicitly.
+;; Default loss propagation is covered by upstream-resource-loss/upstream-task-loss.
 (require rackunit racket/async-channel mcp mcp/upstream mcp/upstream-subscription mcp/scenario mcp/stdio mcp/subscription)
 (for ([transport '(local stdio http)])
   (define version "old")
@@ -21,7 +23,7 @@
                         "notifications/subscriptions/acknowledged")
           (define retained #f)
           (define terminal
-            (call-with-upstream-resource-subscription (scenario-session-runtime local) source snapshot request
+            (call-with-upstream-resource-subscription #:propagate-loss? #f (scenario-session-runtime local) source snapshot request
               '("remote:///doc" "remote:///doc")
               (lambda (subscription)
                 (set! retained subscription)
@@ -43,7 +45,7 @@
           (check-equal? listens 1)
           (unless (eq? transport 'local)
             (define lost
-              (call-with-upstream-resource-subscription (scenario-session-runtime local) source snapshot request '("remote:///doc")
+              (call-with-upstream-resource-subscription #:propagate-loss? #f (scenario-session-runtime local) source snapshot request '("remote:///doc")
                 (lambda (subscription)
                   (scenario-disconnect! upstream)
                   (sync/timeout 2 subscription))
@@ -91,7 +93,7 @@
     (if (equal? method "subscriptions/listen") peer
         (request-handle 1 (make-semaphore 1)
           (box (hasheq 'result (hash-ref snapshot (string->symbol method)))) void (make-async-channel))))
-  (define returned (call-with-upstream-resource-subscription target source snapshot request uris proc
+  (define returned (call-with-upstream-resource-subscription #:propagate-loss? #f target source snapshot request uris proc
                      #:principal "owner" #:timeout timeout))
   (check-true (> cancellations 0))
   returned)
@@ -138,7 +140,7 @@
       (hash-set (hash-ref snapshot 'server/discover) 'supportedVersions '("different"))))
     (check-exn #rx"pinned discovery changed"
       (lambda ()
-        (call-with-upstream-resource-subscription local source mismatched
+        (call-with-upstream-resource-subscription #:propagate-loss? #f local source mismatched
           (lambda (method _arguments)
             (when (equal? method "subscriptions/listen") (set! opened? #t))
             (request-handle 1 (make-semaphore 1)
@@ -148,7 +150,7 @@
     (define cancelled 0)
     (check-exn #rx"snapshot request timed out"
       (lambda ()
-        (call-with-upstream-resource-subscription local source snapshot
+        (call-with-upstream-resource-subscription #:propagate-loss? #f local source snapshot
           (lambda (_method _arguments)
             (request-handle 1 (make-semaphore 0) (box #f)
               (lambda () (set! cancelled (add1 cancelled))) (make-async-channel)))

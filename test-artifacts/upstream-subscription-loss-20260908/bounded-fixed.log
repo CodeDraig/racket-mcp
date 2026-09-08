@@ -1,0 +1,3 @@
+raco test: (file "tests/upstream-resource-loss.rkt")
+raco test: (file "tests/upstream-task-loss.rkt")
+25 tests passed

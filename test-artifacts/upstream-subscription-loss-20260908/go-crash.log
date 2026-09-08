@@ -1,0 +1,2 @@
+Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation, fresh subscriptions and process-loss propagation passed (HTTP=#f).
+Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation, fresh subscriptions and process-loss propagation passed (HTTP=#t).

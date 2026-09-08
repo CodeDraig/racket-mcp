@@ -1,0 +1,9 @@
+raco test: (file "tests/upstream-resource-loss.rkt")
+raco test: (file "tests/upstream-task-loss.rkt")
+raco test: (file "tests/upstream-subscription.rkt")
+raco test: (file "tests/upstream-task-subscription.rkt")
+raco test: (file "tests/upstream-task-subscription-filters.rkt")
+raco test: (file "tests/subscription.rkt")
+raco test: (file "tests/subscription-concurrency.rkt")
+raco test: (file "tests/upstream-freshness.rkt")
+354 tests passed

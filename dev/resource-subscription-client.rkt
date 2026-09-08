@@ -15,11 +15,11 @@
     (define source (make-upstream-interface snapshot call))
     (call-with-scenario-session (view source #:uris (hash "go:///doc" "local:///doc"))
       (lambda (local)
-        (define listener (scenario-request local "subscriptions/listen"
-          (hasheq 'notifications (hasheq 'resourceSubscriptions '("local:///doc")))))
-        (define notices (request-handle-notifications listener))
-        (check-equal? (hash-ref (sync/timeout 3 notices) 'method) "notifications/subscriptions/acknowledged")
         (for ([expected '("1" "2")])
+          (define listener (scenario-request local "subscriptions/listen"
+            (hasheq 'notifications (hasheq 'resourceSubscriptions '("local:///doc")))))
+          (define notices (request-handle-notifications listener))
+          (check-equal? (hash-ref (sync/timeout 3 notices) 'method) "notifications/subscriptions/acknowledged")
           (define retained #f)
           (define terminal
             (call-with-upstream-resource-subscription (scenario-session-runtime local) source snapshot request '("go:///doc")
@@ -40,10 +40,28 @@
               #:principal "owner" #:timeout 3))
           (check-true (exn:fail:request-cancelled? terminal))
           (check-eq? (sync/timeout 0 retained) terminal)
+          ;; The forwarding scope ended, so its downstream listener completes.
+          ;; Reconnection explicitly creates both listeners on the next pass.
+          (check-equal? (hash-ref (hash-ref (sync/timeout 3 listener) 'result) 'resultType) "complete")
           (check-equal? (length (hash-ref (hash-ref (call "tools/list" (hasheq)) 'result) 'tools)) 1))
         (check-equal? (length ids) 2)
         (check-not-equal? (car ids) (cadr ids))
-        (request-cancel! listener))
+        (define lost-listener (scenario-request local "subscriptions/listen"
+          (hasheq 'notifications (hasheq 'resourceSubscriptions '("local:///doc")))))
+        (check-equal? (hash-ref (sync/timeout 3 (request-handle-notifications lost-listener)) 'method)
+                      "notifications/subscriptions/acknowledged")
+        (call-with-upstream-resource-subscription (scenario-session-runtime local) source snapshot request '("go:///doc")
+          (lambda (subscription)
+            ;; Kill the actual independent server after its acknowledgement.
+            ;; Both stdio EOF and HTTP stream loss must end the local listener.
+            (scenario-process-kill! peer)
+            (define outcome (sync/timeout 3 subscription))
+            (check-true (exn:fail? outcome))
+            (check-false (exn:fail:request-cancelled? outcome))
+            (define failure (hash-ref (sync/timeout 3 lost-listener) 'error))
+            (check-equal? (hash-ref failure 'code) -32000)
+            (check-regexp-match #rx"re-listen and refresh" (hash-ref failure 'message)))
+          #:principal "owner" #:timeout 3))
       #:transport 'stdio #:principal "owner"))
   #:transport (if http? 'http 'stdio))
-(printf "Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation and fresh subscriptions passed (HTTP=~a).\n" (and http? #t))
+(printf "Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation, fresh subscriptions and process-loss propagation passed (HTTP=~a).\n" (and http? #t))

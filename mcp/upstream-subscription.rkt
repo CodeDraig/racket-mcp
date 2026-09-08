@@ -18,7 +18,9 @@
   ((upstream-subscription-cancel subscription)))
 (define stop-upstream-task-subscription! stop-upstream-resource-subscription!)
 (define (call-with-upstream-resource-subscription rt source snapshot request uris proc
-          #:principal principal #:timeout [timeout 5])
+          #:principal principal #:timeout [timeout 5] #:propagate-loss? [propagate? #t])
+  (unless (boolean? propagate?)
+    (raise-argument-error 'call-with-upstream-resource-subscription "boolean?" propagate?))
   (unless (runtime? rt) (raise-argument-error 'call-with-upstream-resource-subscription "runtime?" rt))
   (unless (and (procedure? request) (procedure-arity-includes? request 2))
     (raise-argument-error 'call-with-upstream-resource-subscription "request procedure accepting method and parameters" request))
@@ -36,10 +38,17 @@
   (call-with-upstream-subscription pinned request requested proc timeout
     'resourceSubscriptions "notifications/resources/updated" 'uri
     (lambda (uri _) (runtime-report-change! rt principal (hash-ref keys uri)))
-    upstream-resource-subscription values))
+    upstream-resource-subscription values
+    (lambda (accepted failed? fallback?)
+      (when propagate?
+        (runtime-upstream-subscription-ended! rt principal
+          (append-map (lambda (uri) (hash-ref keys uri)) accepted) '() failed? fallback?)))))
 
 (define (call-with-upstream-task-subscription rt snapshot request ids proc
-          #:principal principal #:capabilities capabilities #:timeout [timeout 5])
+          #:principal principal #:capabilities capabilities #:timeout [timeout 5]
+          #:propagate-loss? [propagate? #t])
+  (unless (boolean? propagate?)
+    (raise-argument-error 'call-with-upstream-task-subscription "boolean?" propagate?))
   (unless (runtime? rt) (raise-argument-error 'call-with-upstream-task-subscription "runtime?" rt))
   (unless (and (list? ids) (pair? ids) (andmap string? ids))
     (raise-argument-error 'call-with-upstream-task-subscription "nonempty list of local task ID strings" ids))
@@ -63,10 +72,12 @@
         (runtime-observe-upstream-task! rt id detail #:principal principal #:capabilities caps)))
     upstream-task-subscription
     (lambda (accepted) (filter (lambda (id)
-      (for/or ([remote (in-list accepted)]) (member id (hash-ref mapping remote)))) local-ids))))
+      (for/or ([remote (in-list accepted)]) (member id (hash-ref mapping remote)))) local-ids))
+    (lambda (accepted failed? fallback?)
+      (when propagate? (runtime-upstream-subscription-ended! rt principal '() accepted failed? fallback?)))))
 
 (define (call-with-upstream-subscription pinned request requested proc timeout
-          filter-key change-method change-key forward make-subscription accepted->local)
+          filter-key change-method change-key forward make-subscription accepted->local ended)
   (define (send method params)
     (define handle (request method params))
     (unless (request-handle? handle)
@@ -98,12 +109,25 @@
   (define worker #f)
   (define subscription #f)
   (define lock (make-semaphore 1))
-  (define (finish! value)
-    (call-with-semaphore lock
-      (lambda ()
-        (unless (sync/timeout 0 (semaphore-peek-evt (upstream-subscription-ready subscription)))
-          (set-box! (upstream-subscription-outcome subscription) value)
-          (semaphore-post (upstream-subscription-ready subscription))))))
+  (define finalizing? #f)
+  (define (finish! value #:fallback? [fallback? #f])
+    (define claimed?
+      (call-with-semaphore lock
+        (lambda ()
+          (cond [(sync/timeout 0 (semaphore-peek-evt (upstream-subscription-ready subscription))) #f]
+                [finalizing? fallback?]
+                [else (set! finalizing? #t)
+                      (set-box! (upstream-subscription-outcome subscription) value) #t]))))
+    (when claimed?
+      (define outcome (unbox (upstream-subscription-outcome subscription)))
+      (dynamic-wind void
+        (lambda ()
+          (ended (upstream-subscription-accepted subscription)
+                 (or fallback?
+                     (not (or (exn:fail:request-cancelled? outcome)
+                              (and (hash? outcome) (not (hash-has-key? outcome 'error))
+                                   (hash-has-key? outcome 'result))))) fallback?))
+        (lambda () (semaphore-post (upstream-subscription-ready subscription))))))
   (define (tagged-params message)
     (unless (hash? message) (error 'upstream-subscription "expected a notification object"))
     (define params (hash-ref message 'params #f))
@@ -189,4 +213,6 @@
         (when worker (sync/timeout timeout worker))
         (custodian-shutdown-all owner)
         (when subscription
-          (finish! cancellation))))))
+          ;; The worker is gone. Do not repeat application dependency callbacks
+          ;; that may have been interrupted during forward/termination handling.
+          (finish! cancellation #:fallback? #t))))))
