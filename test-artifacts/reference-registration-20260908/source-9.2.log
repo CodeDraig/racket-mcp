@@ -1,0 +1,4 @@
+raco test: (file "tests/workflow-extension-bindings.rkt")
+raco test: (file "tests/domain-bindings.rkt")
+raco test: (file "tests/reference-registration.rkt")
+32 tests passed

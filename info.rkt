@@ -2,7 +2,7 @@
 (define collection 'multi)
 (define version "0.1")
 (define deps '("base" "compiler-lib" "db-lib" "web-server-lib" "net-lib"
-               ("syntax-spec-v3" #:version "0.1.0.1")))
+               ("syntax-spec-v3" #:version "0.1.0.2")))
 (define build-deps '("rackunit-lib" "racket-doc" "scribble-lib"))
 (define test-omit-paths '("vendor" ".racket" ".cache" "test-artifacts"))
 (define compile-omit-paths '("vendor" ".racket" ".cache" "test-artifacts"))

@@ -1,0 +1,19 @@
+raco test: (file "tests/reference-registration.rkt")
+raco test: (file "tests/domain-bindings.rkt")
+raco test: (file "tests/workflow-effect-bindings.rkt")
+raco test: (file "tests/workflow-extension-bindings.rkt")
+raco test: (file "tests/phases.rkt")
+syntax-spec-phase-0: exit 0
+1
+syntax-spec-phase-1: exit 0
+1
+syntax-spec-phase-2: exit 0
+1
+mcp-phase-0: exit 0
+string
+mcp-phase-1: exit 0
+string
+mcp-phase-2: exit 0
+string
+raco test: (file "tests/phase-exports.rkt")
+45 tests passed

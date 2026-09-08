@@ -1,0 +1,5 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/reference-registration.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/domain-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/workflow-effect-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/workflow-extension-bindings.rkt")
+43 tests passed

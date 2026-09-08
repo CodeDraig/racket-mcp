@@ -1,0 +1,13 @@
+{
+  "upstream_commit": "4ae36610804b58e8f023574bfdcba1b5ae4f7bcd",
+  "patch": "mcp-phase-and-reference-bindings-v2",
+  "upstream_compiler_sha256": "cf4eb3fb6c10c416d93c9e87a593f0a4cdbd2e17db0113369790d5d52c029239",
+  "patched_compiler_sha256": "df7de68b06153a551e5d2c7975e103e152d017414017206775dacadaaca7f23a",
+  "upstream_table_sha256": "a71df7ad64c324d26b5f2951b1a9c43f5e3e798eb2e68e7cc3420a5d164f6c92",
+  "patched_table_sha256": "0207c4c9b60a374a285b61fd467ba8e08eb39b921c60d975fe48265d90b36a27",
+  "upstream_reference_sha256": "35cd68c59f4be763077b994e53257c4c94e3fb76df6d96e18d4030eaed3013d9",
+  "patched_reference_sha256": "41b9977ae58621e4606c927bd446a9162ba7c04d5345ecc952f854bcdf90a436",
+  "upstream_interface_sha256": "14f06bcd8c5029b544b9635f18ed0f4ba6c5b08bb2cd573cad80d0608f1c10ec",
+  "patched_interface_sha256": "8078c593cdc34e525ed5bf17f5d549f77d14bdca726ac7bcbaf7f1278294c34b",
+  "version": "0.1.0.2"
+}

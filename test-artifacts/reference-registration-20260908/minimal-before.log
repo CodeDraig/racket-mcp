@@ -1,0 +1,8 @@
+value: item may not be used as a racket expression
+  in: value
+  context...:
+   /usr/share/racket/collects/syntax/private/id-table.rkt:77:2: do-ref
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/compile.rkt:106:4
+   /srv/data/code/racket-mcp/.cache/probes/reference-minimal/run-thread.rkt:4:0
+   body of "/srv/data/code/racket-mcp/.cache/probes/reference-minimal/run-thread.rkt"
+7

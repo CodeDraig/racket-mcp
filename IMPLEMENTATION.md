@@ -4434,8 +4434,43 @@ alone passes. This pre-existing source-only test-order issue remains a separate
 compiler investigation. Installed dependency setup and 40 installed checks passed.
 A separate four-check language probe passed, including manifest access without
 parent instantiation. Full 9.3 validation passed 5,789 native checks, 1,301
-core schema cases, 86 optional regex cases and Scribble. A full 9.2 run is active
-in an isolated source copy; all 608 copied source inputs were hash-checked against
-the worktree. This is not yet a passing full 9.2 result.
+core schema cases, 86 optional regex cases and Scribble. The isolated full 9.2 run
+at 017af62 passed 5,785 native checks, 1,301 core cases, 86 optional regex cases
+and Scribble; all 608 copied source inputs matched that revision. These results
+precede the subsequent reference-compiler dependency change.
 Evidence and unsuccessful probes are retained in
 `test-artifacts/workflow-effect-query-20260908`. The full SDK goal remains open.
+
+
+## Reference defaults across visiting threads (2026-09-08)
+
+A source-only SDK test order lost schema and operation reference compilers after
+their initial registration. The standalone reduction reads a syntax-backed export
+in a worker and then the main thread: the worker succeeds, while the later read
+fails because reference defaults were stored in the visiting thread's parameter.
+
+The syntax-spec preparation patch now passes a delayed default directly into the
+binding-class transformer. Scoped overrides retain precedence; defaults travel
+with lexical bindings and require no new shared registration table. Version
+0.1.0.2 retains the earlier module-temporary and persistent-table phase fixes.
+The unchanged vendor snapshot is hash-verified, and MCP-PATCH.json records the
+additional reference-compiler and binding-generator hashes. A module-local table
+prototype also passed but was replaced by the lexical implementation.
+
+The new thread-boundary regression fails two of three checks before the fix and
+passes all three afterward. The final patch passed 434 pinned dependency tests,
+45 focused SDK checks on 9.3 including shifted phases, and the previously failing
+32-check source-only order on 9.2. All 14 Go probes, installed dependency setup
+and 43 installed checks passed. Full SDK verification on 9.3 passed 5,792 native
+checks, 1,301 core schema cases, 86 optional regex cases and Scribble. Evidence is in `test-artifacts/reference-registration-20260908`.
+The full SDK goal and remaining compiler/provenance/integration/release gates
+remain open.
+
+
+OAuth conformance preparation identified the next integration work in
+`test-artifacts/oauth-conformance-readiness-20260908`: the existing conformance
+client does not exercise OAuth; the pinned fixtures use HTTP localhost, rejected
+before metadata fetch by the authorizer; and native pre-registration token
+requests need configurable issuer-scoped client authentication. Applications can
+currently replace the token-exchange callback. These are not passing conformance
+claims or evidence against normal native HTTPS authorization.

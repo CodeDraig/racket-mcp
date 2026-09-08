@@ -34,7 +34,8 @@ env -u PLTCOLLECTS raco pkg install --name racket-mcp --no-setup \
 ```
 
 The preparation command verifies the vendored upstream hashes and applies the
-SDK's module-binding phase fix to a separate local copy (version 0.1.0.1). It
+SDK's module-binding phase and reference-registration fixes to a separate local
+copy (version 0.1.0.2). It
 does not fetch sources or modify a globally installed package. If this checkout
 already has the original dependency installed, use `env -u PLTCOLLECTS raco pkg update --batch
 --no-setup --name syntax-spec-v3 --link
@@ -62,14 +63,13 @@ passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
 Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 5,789 native checks, 1,301 pinned core schema cases,
+Racket 9.3 run passed 5,792 native checks, 1,301 pinned core schema cases,
 86 optional regex cases, documentation, package checks and all fourteen Go probes;
-see `test-artifacts/workflow-effect-query-20260908`. The last full 9.2 run passed
-4,928 native checks. Subsequent changes have focused 9.2 evidence, including
-448 checks for elicitation formats, durable input and interaction behavior, and
-31 checks for durable match bindings and fresh-source restart, and 40 compiled
-checks for workflow effect/value bindings; this is not
-a new full 9.2 run. The native total includes 242 pinned format cases tested
+see `test-artifacts/reference-registration-20260908`. The full 9.2 run at
+017af62 passed 5,785 native checks, the core and optional regex suites, and
+Scribble. The subsequent reference-compiler dependency fix passed the full 9.3
+run and focused source-only checks on 9.2; no newer full 9.2 run is claimed.
+The native total includes 242 pinned format cases tested
 through the separate MCP elicitation assertions. Five targeted independent MCP
 scenarios also passed all 16 checks; this is not full conformance.
 The earlier fresh 9.3 dependency bootstrap exposed an omitted development fixture

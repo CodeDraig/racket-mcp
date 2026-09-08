@@ -1,0 +1,232 @@
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/bind-syntax.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/block.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/define-star.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/define.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/expr.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/mutual-recursion.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/racket-macro.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/racket-var.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/basic-langs/simple-match.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/binding-operations.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/colon-form.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/datum-matching.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/definition-interface.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/baby-peg.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/cmdline/cmdline.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/cmdline/example.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/cmdline/sugar.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/cmdline/tests.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/js/js.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/match.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/matthews-findler/lump-inferred.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/matthews-findler/lump.rkt")
+0
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/matthews-findler/ml.rkt")
+0
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/miniclass/class.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/miniclass/test.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-binding-space-compile.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-binding-space.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-compile-defs-min.rkt")
+'(1 g561)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-compile-defs.rkt")
+'(1 g561)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-compile.rkt")
+'(1 g561)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-rs2e/example.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren-rs2e/mk.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/minikanren.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/multipass.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/core.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/main.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/compile-alt-str.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/compile.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/forms.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/leftrec-check.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/runtime.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/private/test/case.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/binops.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/colon-bind-shorthand.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/core-basic-tokens.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/core-text.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/define-in-let.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/define-peg-ast.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/figure-7.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/leftrec-oopsla.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/leftrec.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/lift-error.rkt") test)
+(parse-result (text-rep "a\nb" #f 3 2 1) "b")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/many-until.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/optimization.rkt")
+'(module example racket/base
+   (#%module-begin
+    (module configure-runtime '#%kernel
+      (#%module-begin (#%require racket/runtime-config) (#%app configure '#f)))
+    (#%require "../main.rkt")
+    (#%provide comp-op)
+    (define-syntaxes (comp-op) (#%app nonterm-var3))
+    (define-values (lifted/1) (#%app void))
+    (define-values
+     (comp-op)
+     (lambda (in)
+       (let-values (((in-v) in))
+         (let-values (((in^-tmp result-tmp)
+                       (let-values (((s) (#%app text-rep-str in-v))
+                                    ((init-ix) (#%app text-rep-ix in-v)))
+                         (let-values (((tail-len)
+                                       (#%app
+                                        -
+                                        (#%app string-length s)
+                                        init-ix)))
+                           (let-values (((has-c)
+                                         (lambda (offset)
+                                           (#%app < offset tail-len)))
+                                        ((c)
+                                         (lambda (offset)
+                                           (#%app
+                                            string-ref
+                                            s
+                                            (#%app + init-ix offset))))
+                                        ((succeed)
+                                         (lambda (offset)
+                                           (#%app
+                                            values
+                                            (#%app step-input* in-v offset)
+                                            (#%app void)))))
+                             (if (#%app has-c '0)
+                               (let-values (((c-int)
+                                             (#%app
+                                              char->integer
+                                              (#%app c '0))))
+                                 (if (#%app < c-int '62)
+                                   (if (#%app eq? c-int '33)
+                                     (#%app
+                                      string-rt
+                                      '"="
+                                      (#%app step-input* in-v '1))
+                                     (if (#%app eq? c-int '60)
+                                       (if (#%app has-c '1)
+                                         (let-values (((c-int)
+                                                       (#%app
+                                                        char->integer
+                                                        (#%app c '1))))
+                                           (if (#%app eq? c-int '61)
+                                             (#%app succeed '2)
+                                             (#%app succeed '1)))
+                                         (#%app succeed '1))
+                                       (if (#%app eq? c-int '61)
+                                         (#%app
+                                          string-rt
+                                          '"="
+                                          (#%app step-input* in-v '1))
+                                         (#%app fail))))
+                                   (if (#%app eq? c-int '62)
+                                     (if (#%app has-c '1)
+                                       (let-values (((c-int)
+                                                     (#%app
+                                                      char->integer
+                                                      (#%app c '1))))
+                                         (if (#%app eq? c-int '61)
+                                           (#%app succeed '2)
+                                           (#%app succeed '1)))
+                                       (#%app succeed '1))
+                                     (if (#%app eq? c-int '105)
+                                       (if (#%app has-c '1)
+                                         (let-values (((c-int)
+                                                       (#%app
+                                                        char->integer
+                                                        (#%app c '1))))
+                                           (if (#%app eq? c-int '110)
+                                             (#%app succeed '2)
+                                             (if (#%app eq? c-int '115)
+                                               (#%app succeed '2)
+                                               (#%app fail))))
+                                         (#%app fail))
+                                       (if (#%app eq? c-int '110)
+                                         (#%app
+                                          string-rt
+                                          '"ot"
+                                          (#%app step-input* in-v '1))
+                                         (#%app fail))))))
+                               (#%app fail)))))))
+           (if (#%app failure? in^-tmp)
+             (#%app fail)
+             (let-values (((in^) in^-tmp) ((result) result-tmp))
+               (#%app values in^ result)))))))
+    (begin-for-syntax
+     (#%app
+      do-extension!
+      id-table
+      (#%app list (#%app cons (t-quote-syntax comp-op) 'not-nullable))))
+    (begin-for-syntax
+     (#%app
+      do-extension!
+      id-table
+      (#%app
+       list
+       (#%app
+        cons
+        (t-quote-syntax comp-op)
+        (#%app
+         deserialize-syntax-props
+         (t-quote-syntax #s(serialized-syntax comp-op #hasheq())))))))))
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/optional.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/raise-1.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/raise-2.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/return-example.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/sexpr.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/srcloc.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/sugar.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg/test/test-alt-str.rkt")
+cpu time: 763 real time: 769 gc time: 34
+cpu time: 275 real time: 277 gc time: 3
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/peg2.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/qi-core.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/simply-typed-lambda-calculus.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/state-machine-for-tutorial.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/state-machine-oo/state-machine-compiler.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/state-machine-oo/state-machine.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/statecharts/statecharts.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/stlc-lang/main.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/stlc-lang/program.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/stlc-lang/test.rkt") test)
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/stlc-on-typed-racket.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/tiny-hdl/full-adder.rkt")
+(a b ci -> s co)
+(#f #f #f -> #f #f)
+(#f #f #t -> #t #f)
+(#f #t #f -> #t #f)
+(#f #t #t -> #f #t)
+(#t #f #f -> #t #f)
+(#t #f #t -> #f #t)
+(#t #t #f -> #f #t)
+(#t #t #t -> #t #t)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/tiny-hdl/half-adder.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/tiny-hdl/hdl.rkt")
+raco test: (submod (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/typed-peg/core.rkt") test)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/typed-peg/private/compile.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/typed-peg/private/forms.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/dsls/typed-peg/private/runtime.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/errors.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/global-reference-compiler.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/group-ellipsis.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/multi-import.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/multi-nest.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/nest-use-site-scope.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/nonterminal-prop.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/props.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/racket-body.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/racket-references.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/reference-compiler-with-application.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/rewrite-hygiene.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/symbol-collections.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/tests/variants.rkt")
+'fanout
+'(fanout 5)
+'(fanout 5 6)
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/private/test/rebind-pattern-vars.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/private/test/sequence.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/private/test/set-bang.rkt")
+raco test: (file ".cache/patched-dependencies/syntax-spec-v3/private/test/simple-bspec.rkt")
+434 tests passed

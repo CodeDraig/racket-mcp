@@ -36,8 +36,9 @@ when workflow-extension-bindings runs before domain-bindings in a source-only
 source-only test-order issue, not established as a regression from this patch. Installed dependency setup and 40 installed checks passed. The separate language
 probe passed four checks, including manifest access without parent instantiation.
 Full 9.3 validation passed 5,789 native checks, 1,301 core schema cases,
-86 optional regex cases and Scribble. Full 9.2 validation is running in a separate
-source copy whose 608 source inputs match the worktree (source-inputs-9.2.json).
+86 optional regex cases and Scribble. Full 9.2 validation at 017af62 passed 5,785 native checks, 1,301 core schema
+cases, 86 optional regex cases and Scribble in the separate source copy whose
+608 source inputs matched that revision (source-inputs-9.2.json).
 Saved logs have trailing whitespace trimmed.
 
 Unsuccessful logs include a generated adapter reference missing its former

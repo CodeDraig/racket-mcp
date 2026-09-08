@@ -1,0 +1,29 @@
+raco test: (file "tests/reference-registration.rkt")
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/reference-registration.rkt:16:2
+actual:
+  '(error
+  ".cache/probes/reference-lexical/syntax-spec-v3/private/runtime/compile.rkt:147:108: read-syntax: unexpected `)`")
+expected:   '(ok 7)
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/reference-registration.rkt:17:2
+actual:
+  '(error
+  ".cache/probes/reference-lexical/syntax-spec-v3/private/runtime/compile.rkt:147:108: read-syntax: unexpected `)`")
+expected:   '(ok 7)
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/reference-registration.rkt:18:2
+actual:
+  '(error
+  ".cache/probes/reference-lexical/syntax-spec-v3/private/runtime/compile.rkt:147:108: read-syntax: unexpected `)`")
+expected:   '(ok 7)
+--------------------
+3/3 test failures

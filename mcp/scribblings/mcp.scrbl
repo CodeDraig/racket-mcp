@@ -1634,10 +1634,18 @@ the @tt{id} arguments of unrelated resource and prompt declarations.
 
 @tt{scripts/prepare-syntax-spec.py} verifies the unchanged vendored snapshot and
 prepares the patched dependency at @tt{.cache/patched-dependencies/syntax-spec-v3}.
-The patch has local version @tt{0.1.0.1}, required by the SDK package. Preparation
+The reference-compiler patch attaches each delayed default directly to its
+binding-class transformer, while retaining thread-local scoped overrides. A class first visited in
+one worker must remain usable when another worker or the main thread accesses
+its exported binding. Defaults previously stored only in a parameter could be
+lost across that boundary. Defaults now travel with lexical bindings, without
+registration in a mutable table. The promise preserves forward references and
+evaluates a default only when it is first used. Scoped overrides take precedence.
+
+The patch has local version @tt{0.1.0.2}, required by the SDK package. Preparation
 performs no network access or package installation. The generated
 @tt{MCP-PATCH.json} records the upstream commit and original/patched compiler and
-binding-table hashes. See the README for isolated installation and update commands.
+binding-table, reference-compiler and binding-generator hashes. See the README for isolated installation and update commands.
 
 @tt{dev/check-phase-references.rkt} tests declarations and ordinary references at
 phases 0, 1 and 2 in both MCP and a minimal syntax-spec language that imports no
