@@ -1,6 +1,8 @@
 #lang racket/base
 (require rackunit mcp/interaction)
-(define request (hasheq 'method "elicitation/create" 'params (hasheq 'mode "form")))
+(define request (hasheq 'method "elicitation/create" 'params
+                       (hasheq 'mode "form" 'message "Continue?"
+                               'requestedSchema (hasheq 'type "object" 'properties (hasheq)))))
 (define rounds (list (hasheq 'resultType "input_required" 'requestState "opaque-not-json" 'inputRequests (hasheq 'first request))
                      (hasheq 'resultType "input_required" 'inputRequests (hasheq 'second request))
                      (hasheq 'resultType "input_required" 'requestState "state-only")

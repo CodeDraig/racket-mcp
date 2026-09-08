@@ -1,0 +1,4 @@
+raco test: (file "tests/elicitation-format-suite.rkt")
+raco test: (file "tests/interaction.rkt")
+raco test: (file "test-artifacts/elicitation-formats-probe-20260907/probe.rkt")
+270 tests passed

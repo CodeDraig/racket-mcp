@@ -1,0 +1,5 @@
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, lstat '/srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/iconv-lite/encodings'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, lstat '/srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/@octokit/plugin-paginate-rest/dist-bundle'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, lstat '/srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/qs/lib'
+
+added 300 packages in 2s

@@ -1,5 +1,5 @@
 #lang racket/base
-(require "json.rkt")
+(require "json.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide run-interaction)
 ;; request is supplied by the caller and must issue a fresh JSON-RPC ID each time.
 ;; No request is retried after an exception or uncertain initial response.
@@ -17,7 +17,11 @@
              (for/hasheq ([(id request) (in-hash requests)])
                (unless (equal? (hash-ref request 'method) "elicitation/create") (error 'run-interaction "unsupported input method"))
                (define input (hash-ref request 'params))
-               (values id ((if (equal? (hash-ref input 'mode "form") "url") navigate elicit) input))))
+               (unless (elicitation-request-valid? input)
+                 (error 'run-interaction "Invalid elicitation request; refusing callback and automatic retry"))
+               (define answer ((if (equal? (hash-ref input 'mode "form") "url") navigate elicit) input))
+               (validate-input-response input answer)
+               (values id answer)))
            (case (string->symbol (hash-ref result 'resultType "complete"))
              [(input_required)
               (unless (and (or (hash-has-key? result 'requestState) (hash-has-key? result 'inputRequests))

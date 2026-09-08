@@ -1,0 +1,5 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/elicitation-format-suite.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/elicitation-formats.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/elicitation-format-state.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/interaction.rkt")
+448 tests passed

@@ -1,0 +1,19 @@
+raco test: (file "tests/elicitation-format-state.rkt")
+make-workflow: input group requires named response schemas
+  context...:
+   /srv/data/code/racket-mcp/mcp/private/workflow-contract.rkt:6:0: check-workflow-program!
+   /srv/data/code/racket-mcp/mcp/workflow.rkt:40:0: make-workflow
+   /srv/data/code/racket-mcp/tests/elicitation-format-state.rkt:64:0
+   body of "/srv/data/code/racket-mcp/tests/elicitation-format-state.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+elicitation-format-state.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/elicitation-formats.rkt")
+raco test: (file "tests/elicitation-format-suite.rkt")
+raco test: (file "tests/interaction.rkt")
+raco test: (file "tests/input-groups.rkt")
+raco test: (file "tests/input-stage-lock.rkt")
+raco test: (file "tests/tasks.rkt")
+raco test: (file "tests/task-boundary-language.rkt")
+1/483 test failures

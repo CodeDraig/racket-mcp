@@ -36,6 +36,7 @@ complete coverage of its surrounding milestone.
 | References and annotations | Local registry, anchors, dynamic refs, unevaluated properties/items | Covered by official core cases, including local remote fixtures; no network fetching |
 | Schema dialect/vocabulary rejection | Native evaluator and core tests | Pinned 2020-12 metaschema construction validation implemented; URI/pattern syntax coverage remains separate |
 | Regex and optional format assertions | Private pattern compatibility layer; schema-patterns and schema-unicode-ranges regressions | 86 pinned optional regex cases pass separately from 1,301 core cases; complete ECMAScript regex and optional format assertions remain outside the tested profile |
+| MCP elicitation formats | Private elicitation-format/input-response validators; 242 pinned format cases and authored integration tests | Date, date-time, email and URI assertions apply to form responses; workflow/client requests checked before persistence/callbacks; ordinary schema format remains annotation-only |
 | Shapes and codecs | Generated constructor/accessors/JSON codecs; domain tests | Required fields and generated shape codecs implemented; checkpoint/effect codec registry and restart tests added |
 | Resources, RFC 6570, links, embeds | `descriptor.rkt`, `uri-template.rkt`, `runtime.rkt`; domain tests and MCP fixtures | Text/binary and remapped reference identity covered; ambiguous URI overlap analysis incomplete |
 | Prompts and completion | Runtime, composition, completion descriptors; domain and MCP fixtures | Wire strings and multi-content role lowering; renamed/removed completion targets covered; explicit string-codec syntax and JSON domain values implemented |
@@ -4331,3 +4332,41 @@ interaction runner also needs response validation before sending callback output
 The four failing assertions are evidence of unfinished work, not conformance
 passes. Ordinary JSON Schema format annotations must remain unchanged when this
 separate MCP validation is implemented.
+
+
+## Native MCP elicitation format validation (2026-09-07)
+
+The shared response validator now enforces date, date-time, email and URI formats
+after ordinary schema validation. Workflow, Tasks and upstream responses use this
+path. The explicit interaction runner validates each input request before its
+callback and validates callback output before retrying or updating a task. Both
+individual and grouped workflow input requests are checked against the pinned
+elicitation schema before pending-state persistence; URL requests also require
+generic URI syntax.
+
+The native checker uses RFC 3339 calendar and offset rules, RFC 3986 URI grammar,
+and RFC 5321 mailbox syntax with IP literals. It performs no network, DNS or local
+time-zone operations. Leap-second checking covers possible UTC month-end position,
+not an external historical/future bulletin. General JSON Schema format remains
+an annotation. All 242 selected pinned optional format cases pass through the
+elicitation assertion layer and are included in the native test count. This is
+not implementation of the full optional format-assertion vocabulary.
+
+Authored cases cover empty authorities, IPv6 compression, mailbox quoting, missing
+and non-string values, decline/cancel, no retry after invalid callback output,
+no callback for invalid requests, SQLite reopen after rejected responses, unchanged
+task state, and no pending-state persistence for invalid requests. An empty URI
+authority exception was found outside the pinned suite and corrected. Three
+durable fixture construction mistakes and early reader errors were corrected;
+failed fixture logs are retained.
+
+Linux/Racket 9.3 focused validation passed 533 checks; the focused 9.2 selection
+and installed package each passed 448 checks. All 14 Go probes and installed
+package dependency checks passed. Five pinned independent MCP scenarios passed
+16 checks with zero conformance warnings or failures. The harness's 279 vendored
+files were hash-verified; a failed project-filesystem npm extraction was retried
+successfully in a fresh temporary copy. Final full validation via
+`sh scripts/check.sh` passed 5,747 native checks, all 1,301 core schema cases,
+86 optional regex cases and Scribble on Racket 9.3.
+Evidence is in `test-artifacts/elicitation-formats-20260907`. The SDK goal and
+full conformance/platform release gates remain open.

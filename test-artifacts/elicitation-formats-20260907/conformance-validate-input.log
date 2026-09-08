@@ -1,0 +1,11 @@
+(node:348909) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Running client scenario 'input-required-result-validate-input' against server: http://127.0.0.1:18837/mcp
+Results saved to /srv/data/code/racket-mcp/test-artifacts/elicitation-formats-20260907/conformance-validate-input/server-input-required-result-validate-input-2026-09-08T03-38-42-786Z
+Checks:
+[90m2026-09-08T03:38:42.835Z[0m [sep-2322-validate-input-responses] [32mSUCCESS[0m Server validates InputResponses structure
+[90m2026-09-08T03:38:42.840Z[0m [sep-2322-error-on-protocol-error ] [32mSUCCESS[0m Server returns JSON-RPC error for protocol-level input errors
+[90m2026-09-08T03:38:42.840Z[0m [wire-schema-valid                ] [32mSUCCESS[0m Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version
+
+Test Results:
+Passed: 3/3, 0 failed, 0 warnings

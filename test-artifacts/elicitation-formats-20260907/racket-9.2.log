@@ -1,0 +1,5 @@
+raco test: (file "tests/elicitation-format-suite.rkt")
+raco test: (file "tests/elicitation-formats.rkt")
+raco test: (file "tests/elicitation-format-state.rkt")
+raco test: (file "tests/interaction.rkt")
+448 tests passed

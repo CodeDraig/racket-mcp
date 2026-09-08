@@ -1,10 +1,11 @@
 #lang racket/base
-(require racket/runtime-path "../json.rkt" "../schema.rkt")
+(require racket/runtime-path "../json.rkt" "../schema.rkt" "elicitation-format.rkt")
 (provide elicitation-request-valid?)
 (define-runtime-path schema-path "elicitation-schema.json")
 (define schema (call-with-input-file schema-path read-json))
 (define (elicitation-request-valid? request)
   (and (valid? schema request)
-       (or (equal? (hash-ref request 'mode "form") "url")
+       (if (equal? (hash-ref request 'mode "form") "url")
+           (elicitation-format-valid? "uri" (hash-ref request 'url))
            (with-handlers ([exn:fail? (lambda (_) #f)])
              (check-schema! (hash-ref request 'requestedSchema)) #t))))

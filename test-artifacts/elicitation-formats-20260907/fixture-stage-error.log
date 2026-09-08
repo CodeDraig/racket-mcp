@@ -1,0 +1,23 @@
+tests/elicitation-format-state.rkt:9:9: workflow: expected a persistent stage or final result
+  at: (set! completions (add1 completions))
+  in: (workflow (collect-format (kind String)) #:version "1" (await-input (answer Any) (form kind)) (begin (set! completions (add1 completions)) (structured-result answer)))
+  compilation context...:
+   /srv/data/code/racket-mcp/tests/elicitation-format-state.rkt
+  location...:
+   tests/elicitation-format-state.rkt:9:9
+  context...:
+   .../private/parse-interp.rkt:654:50
+   [repeats 2 more times]
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/wrap-modbeg.rkt:46:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:461:15
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:447:12: build
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:418:0: maybe-compile-zo
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:221:0: compile-root
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:109:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt:69:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

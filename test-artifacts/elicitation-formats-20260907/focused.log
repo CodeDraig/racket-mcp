@@ -1,0 +1,9 @@
+raco test: (file "tests/elicitation-format-state.rkt")
+raco test: (file "tests/elicitation-formats.rkt")
+raco test: (file "tests/elicitation-format-suite.rkt")
+raco test: (file "tests/interaction.rkt")
+raco test: (file "tests/input-groups.rkt")
+raco test: (file "tests/input-stage-lock.rkt")
+raco test: (file "tests/tasks.rkt")
+raco test: (file "tests/task-boundary-language.rkt")
+533 tests passed

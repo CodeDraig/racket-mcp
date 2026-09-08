@@ -754,6 +754,10 @@ Low-level client calls return protocol outcomes directly; only this explicit run
 performs follow-up requests. Supply @racket[#:elicit] and @racket[#:navigate]
 callbacks returning input responses. Decline and cancellation responses are retained.
 Exceptions and protocol errors stop the interaction without replaying the request.
+Each elicitation request is validated before invoking its callback. Accepted form
+responses are checked against their schema and the declared @tt{date},
+@tt{date-time}, @tt{email}, and @tt{uri} formats before sending a retry or task
+update. Invalid callback output raises an error without sending that response.
 
 The runner echoes opaque request state exactly, omits it when absent, and replaces
 previous-round input responses. It supports input-only and state-only results;
@@ -995,10 +999,25 @@ have executed but its result was not saved, an
 No uncertain call is automatically retried.
 
 Elicitation request structure is validated using a mechanically extracted subset
-of the pinned MCP schema and the native validator. This is structural validation;
-it does not add full optional format assertions. The offline command
+of the pinned MCP schema and the native validator. Workflow inputs receive the
+same check before being persisted. URL-mode requests require URI syntax, and
+accepted form responses enforce the four supported string formats. The offline command
 @tt{python3 scripts/extract-elicitation-schema.py} refreshes the extraction after
 an explicit pin change; @tt{--check} verifies it during the regular test command.
+
+These elicitation checks use native Racket code and the syntax rules from
+@hyperlink["https://www.rfc-editor.org/rfc/rfc3339.html"]{RFC 3339},
+@hyperlink["https://www.rfc-editor.org/rfc/rfc3986.html"]{RFC 3986}, and
+@hyperlink["https://www.rfc-editor.org/rfc/rfc5321.html"]{RFC 5321}.
+They do not query DNS, navigate to a URI, or verify mailbox existence. Date-time
+validation checks leap-second placement at a UTC month-end with offset conversion;
+it does not consult historical or future leap-second bulletins. URI validation
+uses the generic RFC 3986 grammar, including IPv6 and IPvFuture literals;
+scheme-specific navigation and authorization policies remain application concerns.
+General JSON Schema @tt{format} retains annotation semantics. The separate
+@tt{tests/elicitation-format-suite.rkt} runs 242 pinned optional format cases
+against these elicitation assertions; this does not enable the full optional
+JSON Schema format-assertion vocabulary.
 
 Upstream tool Tasks are translated when the pinned discovery advertises the
 Tasks extension and a bridge is configured, as described below. Other unsupported

@@ -1,6 +1,6 @@
 #lang racket/base
 (require "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
-(require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
+(require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
          current-workflow-change-publisher current-workflow-store current-workflow-adapters current-workflow-state current-workflow-responses current-workflow-invocation-key
@@ -255,6 +255,10 @@
          (unless (and (hash? requests) (= (hash-count requests) (length ids))
                       (andmap (lambda (id) (hash-has-key? requests id)) ids))
            (error 'run-workflow "input group requests do not match declared identities")))
+       (for ([request (in-list (if (eq? (workflow-stage-kind stage) 'input-group)
+                                  (hash-values requests) (list requests)))])
+         (unless (elicitation-request-valid? request)
+           (error 'run-workflow "invalid elicitation request at stage ~a" (workflow-stage-id stage))))
        (store-transaction store
          (lambda ()
            (when (cancelled?) (error 'run-workflow "execution cancelled"))
