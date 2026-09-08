@@ -5,6 +5,10 @@
 (define document (client-id-metadata-document url "Racket MCP" (list redirect "com.example.app:/callback")))
 (check-equal? (hash-ref document 'client_id) url)
 (check-equal? (hash-ref document 'token_endpoint_auth_method) "none")
+(check-equal? (hash-ref document 'grant_types) '("authorization_code" "refresh_token"))
+(check-equal? (hash-ref (client-id-metadata-document url "Without refresh" (list redirect)
+                         #:extra (hasheq 'grant_types '("authorization_code"))) 'grant_types)
+              '("authorization_code"))
 (check-equal? (check-client-id-metadata! document url) document)
 (for ([bad '("https://client.example" "http://client.example/id" "https://user@client.example/id"
               "https://client.example/id#fragment" "https://client.example/a/../id"

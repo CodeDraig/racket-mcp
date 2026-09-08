@@ -4505,3 +4505,19 @@ Full Racket 9.3 validation passed 5,881 native checks, 1,301 core schema cases,
 checks and installed package dependency setup passed. All 279 harness files match
 the pin. Complete OAuth/provider conformance and the other SDK release gates
 remain open.
+
+## Refresh-token client metadata (2026-09-08)
+
+The client metadata constructor now advertises authorization_code and refresh_token
+by default, following the pinned refresh guidance for clients that want refresh
+tokens. Applications can retain authorization-code-only metadata through the
+existing explicit grant_types override. This does not require token issuance or
+automatically request optional offline_access scope.
+
+Focused Racket 9.3 registration/flow/authentication/policy checks passed 163 tests
+and Scribble; Racket 9.2 registration/flow checks passed 74. The unmodified CIMD
+conformance scenario passed all 12 checks. Authored tests establish the metadata
+contents; the CIMD harness establishes the flow, not hosted metadata contents.
+Evidence is in `test-artifacts/oauth-refresh-metadata-20260908`. The full suite was
+not repeated for this default-only follow-up; the preceding full OAuth validation
+remains scoped to its recorded source. Other SDK release gates remain open.

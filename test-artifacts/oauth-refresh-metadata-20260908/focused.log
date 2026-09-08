@@ -1,0 +1,6 @@
+raco test: (file "tests/client-registration.rkt")
+raco test: (file "tests/oauth-flow.rkt")
+raco test: (file "tests/oauth-client-authentication.rkt")
+raco test: (file "tests/oauth-authorizer-policy.rkt")
+163 tests passed
+ [Output to .cache/manual/mcp/index.html]

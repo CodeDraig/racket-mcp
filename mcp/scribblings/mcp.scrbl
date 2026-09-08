@@ -728,6 +728,13 @@ scopes; additional scopes and insufficient-scope challenges use the browser.
 Refresh responses omitting scope retain the previous grant. Empty requested scopes
 omit the authorization URL's scope parameter. Malformed token responses are rejected.
 
+@racket[client-id-metadata-document] advertises both @tt{authorization_code} and
+@tt{refresh_token} grants by default. Applications that do not want refresh tokens
+can set @tt{grant_types} to only @tt{authorization_code} through @racket[#:extra].
+Advertising support does not guarantee issuance; responses without refresh tokens
+remain valid. The runner does not automatically add the optional
+@tt{offline_access} scope.
+
 An exchange failure is surfaced and further exchanges require explicit
 @racket[#:reauthorize? #t], which starts a fresh browser flow. A successful exchange
 whose save callback fails remains in memory; the next call retries persistence

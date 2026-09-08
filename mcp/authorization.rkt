@@ -177,7 +177,7 @@
     (when (hash-has-key? extra key) (error 'client-id-metadata-document "duplicate core metadata field")))
   (define document
     (for/fold ([result (hasheq 'client_id url 'client_name name 'redirect_uris redirects
-                               'grant_types '("authorization_code") 'response_types '("code")
+                               'grant_types '("authorization_code" "refresh_token") 'response_types '("code")
                                'token_endpoint_auth_method "none")]) ([(key value) (in-hash extra)])
       (hash-set result key value)))
   (check-client-id-metadata! document url))

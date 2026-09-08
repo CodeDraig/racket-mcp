@@ -1,0 +1,3 @@
+raco test: (file "tests/client-registration.rkt")
+raco test: (file "tests/oauth-flow.rkt")
+74 tests passed
