@@ -1,0 +1,2 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/discovery-capabilities.rkt")
+3 tests passed

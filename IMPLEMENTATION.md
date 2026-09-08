@@ -41,7 +41,7 @@ complete coverage of its surrounding milestone.
 | Resources, RFC 6570, links, embeds | `descriptor.rkt`, `uri-template.rkt`, `runtime.rkt`; domain tests and MCP fixtures | Text/binary and remapped reference identity covered; ambiguous URI overlap analysis incomplete |
 | Prompts and completion | Runtime, composition, completion descriptors; domain and MCP fixtures | Wire strings and multi-content role lowering; renamed/removed completion targets covered; explicit string-codec syntax and JSON domain values implemented |
 | Nested input-required rendering | `rendering.rkt`, tool/prompt dispatch; embedded-workflow tests | Persistent content layouts, child namespaces, source order and retained results implemented; nested text/JSON/binary presentations now supported; full crash/compatibility matrix remains open |
-| Discovery and capability/version metadata | `runtime.rkt`; core and official stateless checks | Covered tested paths; no initialization/session state; complete facility-derived advertisement audit outstanding |
+| Discovery and capability/version metadata | `runtime.rkt`; core and official stateless checks | No initialization/session state; discovery-capabilities covers 12 core declaration combinations, view removal and the storage/workflow Tasks boundary; broader upstream facility advertisement audit remains |
 | JSON-RPC envelopes and errors | Runtime and transport modules; core and wire-schema checks | Tested envelopes and current error allocations; full notification direction and malformed-envelope matrix outstanding |
 | Stdio concurrency/cancellation | `stdio.rkt`; core tests, official Go SDK probe | Bounded reader/workers/writer; stdio-lifecycle, cancellation, timeout and overflow tests cover EOF cleanup, owned/borrowed ports and progress demultiplexing; broader transport race coverage remains open |
 | HTTP JSON/SSE and headers | `http.rkt`, `header-schema.rkt`; HTTP/header tests, independent scenarios | Tested versions/names/Unicode/annotated parameters and root URLs; Keep-alives, bounded decoded SSE events, and request cleanup implemented; Native bounded HTTP framing and TLS probes added; full disconnect/cancellation race matrix and timeout policy outstanding |
@@ -4850,3 +4850,17 @@ is in `test-artifacts/stdio-raised-values-20260908`. The fix is now applied here
 installed-package dependency checks, 130 installed tests and all 14 official Go
 probes passed. Full 9.3 verification passed compilation, 5,969 native checks, all
 1,301 core schema cases, all 86 optional regex cases and Scribble.
+
+## Discovery capability acceptance matrix (2026-09-08)
+
+Three authored cases cover all twelve valid combinations of tools, resources,
+prompts and prompt completion; view removal including dependent completion; and
+Tasks advertisement with a workflow versus storage alone. Discovery does not
+invoke the ordinary handlers or create stored workflow/task instances. Requests
+pass through the JSON-RPC dispatch path.
+
+Compilation and all three cases passed in the main worktree on Linux Racket 9.2
+and 9.3, and from the installed source distribution on 9.3. Evidence is retained
+in `test-artifacts/discovery-capabilities-20260908`. Runtime code is unchanged
+from the preceding full run; the broad crash suite was not repeated for this
+test-only addition. Upstream capability and complete-release audits remain open.

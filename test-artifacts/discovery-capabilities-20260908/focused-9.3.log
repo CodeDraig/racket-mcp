@@ -1,0 +1,2 @@
+raco test: (file "tests/discovery-capabilities.rkt")
+3 tests passed
