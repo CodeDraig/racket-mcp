@@ -4108,3 +4108,21 @@ commands are retained under test-artifacts/linux-9.3-current-20260907. The older
 9.3 evidence remains intact. git diff --check passed. These results establish
 Linux x86_64/Racket 9.3 verification for the current runtime; they do not establish
 macOS/Windows coverage or close the remaining full SDK release gates.
+
+## Deferred command entry point (2026-09-07)
+
+`raco mcp` now enters `mcp/command`, whose import does not load the CLI,
+SDK runtime, descriptors or language. Invocation resolves the deferred CLI
+relative to the same package. This provides an earlier boundary for future
+executable observation; it does not implement automatic capture or close the
+recorded default/direct imported-helper compatibility gap.
+
+Focused command/compiler/manifest/loader validation passed 73 checks on Linux
+Racket 9.3, including an actual stdio tool call, original/new command output
+parity and inspection of a manifest whose application body intentionally raises.
+Two initial test selections mistakenly ran intentionally omitted throwing fixtures
+directly; corrected selections passed. Distribution construction and installed
+package dependency setup completed, and installed `raco mcp inspect` returned the
+greeter manifest with workspace collection overrides absent. `git diff --check`
+passed. The previously recorded full 4,928-check run predates this entry-point
+change; it was not repeated for this wrapper.
