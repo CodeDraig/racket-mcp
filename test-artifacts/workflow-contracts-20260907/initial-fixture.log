@@ -1,0 +1,13 @@
+tests/workflow-construction.rkt:15:133: read-syntax: missing `]` to close preceding `[`, found instead `)`
+  context...:
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/module-reader.rkt:214:17: body
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/module-reader.rkt:211:2: wrap-internal
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/../syntax/module-reader.rkt:76:9: wrap-internal/wrapper
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:428:27
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:430:0: call-with-summary
+   .../private/map.rkt:40:19: loop
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:1165:1: test
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

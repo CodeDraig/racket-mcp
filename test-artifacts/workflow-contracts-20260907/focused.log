@@ -1,0 +1,8 @@
+raco test: (file "tests/workflow-construction.rkt")
+raco test: (file "tests/workflow.rkt")
+raco test: (file "tests/branches.rkt")
+raco test: (file "tests/control-flow.rkt")
+raco test: (file "tests/codecs.rkt")
+raco test: (file "tests/prompt-codecs.rkt")
+raco test: (file "tests/task-boundary-language.rkt")
+119 tests passed

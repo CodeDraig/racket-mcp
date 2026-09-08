@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
+(require "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
@@ -38,44 +38,7 @@
 (define (recovery instance stage message)
   (raise (exn:fail:recovery message (current-continuation-marks) (stored-instance-handle instance) stage)))
 (define (make-workflow name version fingerprint stages #:key [key #f] #:changes [changes (lambda (_arguments _result) '())])
-  (unless (and (procedure? changes) (procedure-arity-includes? changes 2)) (error 'make-workflow "changes must accept arguments and completed result"))
-  (unless (= (length stages) (length (remove-duplicates (map workflow-stage-id stages)))) (error 'make-workflow "duplicate stage IDs"))
-  (define effect-policies (make-hasheq))
-  (for ([s (in-list stages)])
-    (when (eq? (workflow-stage-kind s) 'effect)
-      (define adapter (workflow-stage-adapter s))
-      (define policy (workflow-stage-policy s))
-      (unless (and (symbol? adapter) (memq policy '(transactional idempotent manual)))
-        (error 'make-workflow "effect requires a named adapter and supported policy"))
-      (when (and (hash-has-key? effect-policies adapter) (not (eq? policy (hash-ref effect-policies adapter))))
-        (error 'make-workflow "conflicting policies for the same effect adapter"))
-      (hash-set! effect-policies adapter policy))
-    (unless (memq (workflow-stage-kind s) '(checkpoint input input-group effect complete branch jump task-boundary)) (error 'make-workflow "invalid stage kind"))
-    (define schema (workflow-stage-schema s))
-    (when (and (value-codec? schema) (not (memq (workflow-stage-kind s) '(checkpoint effect))))
-      (error 'make-workflow "value codecs belong on checkpoint or effect stages"))
-    (check-schema! (if (value-codec? schema) (value-codec-schema schema) schema)))
-  (define identities
-    (append-map (lambda (s)
-                  (if (eq? (workflow-stage-kind s) 'input-group)
-                      (let ([ids (workflow-stage-adapter s)])
-                        (unless (and (list? ids) (pair? ids) (andmap symbol? ids)
-                                     (hash? (workflow-stage-schema s))
-                                     (hash? (hash-ref (workflow-stage-schema s) 'properties #f))
-                                     (andmap (lambda (id) (hash-has-key? (hash-ref (workflow-stage-schema s) 'properties) id)) ids))
-                          (error 'make-workflow "input group requires named response schemas"))
-                        (cons (workflow-stage-id s) ids))
-                      (list (workflow-stage-id s)))) stages))
-  (unless (= (length identities) (length (remove-duplicates identities))) (error 'make-workflow "duplicate persistent value identity"))
-  (for ([s (in-list stages)])
-    (define targets (case (workflow-stage-kind s)
-                      [(branch) (workflow-stage-adapter s)]
-                      [(jump) (list (workflow-stage-adapter s))]
-                      [else '()]))
-    (unless (and (list? targets) (for/and ([target (in-list targets)]) (member target (map workflow-stage-id stages))))
-      (error 'make-workflow "unresolved control-flow destination")))
-  (define codecs (filter value-codec? (map workflow-stage-schema stages)))
-  (make-codec-registry codecs)
+  (define codecs (check-workflow-program! name version fingerprint stages key changes))
   (define executable-fingerprint
     (if (null? codecs) fingerprint
         (string-append fingerprint ":codecs:" (json->string (for/list ([codec (in-list codecs)])
@@ -111,6 +74,7 @@
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
+  (check-workflow-descriptor! workflow 'run-workflow)
   (define requested-handoff (current-workflow-task-handoff))
   (define (run)
     ;; The entry point names one workflow. Nested local workflows must not

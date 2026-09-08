@@ -1,0 +1,107 @@
+raco test: (file "tests/workflow-construction.rkt")
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:8:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:9:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:10:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:11:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:12:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:13:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:14:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:15:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:17:42
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:16:8>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:24:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:24:23>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:24:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:24:23>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:24:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:24:23>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:24:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:24:23>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:24:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:24:23>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/workflow-construction.rkt:27:0
+params:     '(#<procedure:exn:fail?> #<procedure:...ow-construction.rkt:27:21>)
+message:    "No exception raised"
+--------------------
+15/16 test failures

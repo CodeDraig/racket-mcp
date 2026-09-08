@@ -27,7 +27,7 @@ complete coverage of its surrounding milestone.
 | Reader, module imports/exports, executable server, fragment | `mcp/lang.rkt`, `mcp/lang/reader.rkt`; `tests/core.rkt`, executable examples | Covered basic behavior and extension-generated server entry points |
 | Required/optional/default arguments; omitted/null/false | `descriptor.rkt`, `forms.rkt`; `tests/core.rkt` | Covered defaults, order/count, distinct representations |
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
-| Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; deeper workflow/codec constructor parity remains |
+| Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
 | Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; full domain binding API remains open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
@@ -4204,3 +4204,30 @@ Racket 9.2 passed 103 focused declaration/wire-binding checks using source-only
 passed. Evidence is in `test-artifacts/declaration-contracts-20260907`.
 Deeper workflow/codec constructor parity, complete domain binding/extension APIs,
 and the other full SDK release gates remain unfinished.
+
+
+## Workflow and codec construction contracts (2026-09-07)
+
+A shared private validator now checks workflow factories, raw descriptors during
+installation, and direct execution before a stored instance can be created.
+It validates nonempty identities, interned stage/input identities, positional
+callback arities, stage fields, schemas/codecs, effect policies and declared
+control-flow edges. Reachable fallthrough and programs with no reachable
+completion are rejected without evaluating selectors. This does not prove
+termination of arbitrary host code.
+
+Codec factories, registries and encoding/decoding entry points share field
+validation, including raw structures. Prompt installation checks its string
+codec fields. Tests assert no callback invocation or stored instance on rejected
+programs, and successful execution/round trips for valid raw values. The initial
+regression reproduced 15 accepted-invalid cases among 16 checks; preliminary
+test-file parenthesis errors are recorded separately from runtime evidence.
+
+Final Linux/Racket 9.3 verification: `sh scripts/check.sh` passed 5,109 native
+checks, all 1,301 pinned core schema cases and Scribble. All 13 official Go probes
+passed. Distribution construction, installed package dependency setup and
+installed `raco mcp check` passed. The focused selection passed 119 checks on
+9.3; the new regression passed 43 source-only checks on 9.2. This is not a new
+full 9.2 run or native macOS/Windows verification. Evidence is retained in
+`test-artifacts/workflow-contracts-20260907`. Complete API parity, compiler and
+extension semantics, executable provenance and the other release gates remain.

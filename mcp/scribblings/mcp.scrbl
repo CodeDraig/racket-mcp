@@ -40,6 +40,28 @@ values. The hints do not grant authority or establish effect guarantees.
 Description and stored MIME-type fields are strings. Matchers and dependency
 callbacks accept one argument, and committed-change callbacks accept two.
 
+@section{Durable program construction contracts}
+
+@tt{make-workflow}, declaration installation, and @tt{run-workflow} use the same
+workflow checks before execution can create an instance. Names, versions and
+fingerprints are nonempty strings. Stage identities are interned symbols; stage
+procedures and an optional invocation-key procedure accept one environment or
+argument map. A changes procedure accepts arguments and the completed result.
+
+The checks validate schemas/codecs, distinct persistent identities, effect
+policies, input-group names and declared control-flow destinations. Branches need
+a destination. A reachable path cannot fall off the stage list, and completion
+must be reachable from the first stage. This structural check does not execute
+selectors or prove termination of arbitrary Racket computations. Effect policies
+belong only on effect stages; adapter/destination fields must match their stage
+kind.
+
+Codec factories, registries and encode/decode entry points check identities,
+versions, schemas and unary callbacks, including raw codec structures. Prompt
+installation checks string codecs too. Checking a codec never calls its encoder
+or decoder. Runtime encoding and decoding still validate the resulting data;
+construction cannot establish arbitrary callback behavior.
+
 @section{A first server}
 @tt{#lang mcp}
 @racketmod[

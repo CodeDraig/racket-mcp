@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/workflow-types.rkt" "completion.rkt" "private/handler-info.rkt" "private/adapter-policy.rkt")
+(require "private/workflow-contract.rkt" (submod "codec.rkt" private) "private/workflow-types.rkt" "completion.rkt" "private/handler-info.rkt" "private/adapter-policy.rkt")
 (require racket/list racket/match "schema.rkt" "json.rkt" "uri-template.rkt" "header-schema.rkt" "rendering.rkt" "codec.rkt" "error.rkt" "presentation.rkt" "effect.rkt" (only-in "authorization.rkt" check-scopes!))
 (provide (struct-out server-descriptor) (struct-out argument) (struct-out prompt-argument) (struct-out tool-descriptor)
          (struct-out resource-descriptor) (struct-out prompt-descriptor)
@@ -100,7 +100,8 @@
     (error who "~a must accept ~a positional argument(s) without required keywords" role arity)))
 (define (check-workflow! who workflow)
   (unless (or (not workflow) (workflow-descriptor? workflow))
-    (error who "workflow must be a workflow descriptor or #f")))
+    (error who "workflow must be a workflow descriptor or #f"))
+  (when workflow (check-workflow-descriptor! workflow who)))
 (define (check-annotations! who annotations)
   (unless (hash? annotations) (error who "annotations must be a JSON object"))
   ;; Bound host-value traversal before encoding: mutable cyclic hashes must not
@@ -164,7 +165,8 @@
     (check-procedure! who "prompt handler" (prompt-descriptor-handler prompt) 1))
   (for ([a (in-list (prompt-descriptor-arguments prompt))])
     (cond [(prompt-argument? a)
-           (unless (string-codec? (prompt-argument-codec a)) (error who "expected an explicit string codec"))]
+           (unless (string-codec? (prompt-argument-codec a)) (error who "expected an explicit string codec"))
+           (check-string-codec! (prompt-argument-codec a) who)]
           [else
            (define type (and (hash? (argument-schema a)) (hash-ref (argument-schema a) 'type #f)))
            (when (and type (not (member "string" (if (list? type) type (list type)))))
