@@ -1,0 +1,4 @@
+raco test: (file "tests/schema-patterns.rkt")
+raco test: (file "tests/schema-construction.rkt")
+raco test: (file "tests/schema-unicode-ranges.rkt")
+225 tests passed

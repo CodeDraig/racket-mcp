@@ -1,0 +1,4 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/schema-patterns.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/schema-construction.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/schema-unicode-ranges.rkt")
+225 tests passed

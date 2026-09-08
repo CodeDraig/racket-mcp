@@ -1,0 +1,35 @@
+FAIL ecmascript-regex.json: ECMA 262 regex converts \t to horizontal tab / does not match (pregexp: illegal alphabetic escape
+  pattern: "^\\t$")
+FAIL ecmascript-regex.json: ECMA 262 regex converts \t to horizontal tab / matches (pregexp: illegal alphabetic escape
+  pattern: "^\\t$")
+FAIL ecmascript-regex.json: ECMA 262 regex escapes control codes with \c and upper letter / does not match (pregexp: illegal alphabetic escape
+  pattern: "^\\cC$")
+FAIL ecmascript-regex.json: ECMA 262 regex escapes control codes with \c and upper letter / matches (pregexp: illegal alphabetic escape
+  pattern: "^\\cC$")
+FAIL ecmascript-regex.json: ECMA 262 regex escapes control codes with \c and lower letter / does not match (pregexp: illegal alphabetic escape
+  pattern: "^\\cc$")
+FAIL ecmascript-regex.json: ECMA 262 regex escapes control codes with \c and lower letter / matches (pregexp: illegal alphabetic escape
+  pattern: "^\\cc$")
+FAIL ecmascript-regex.json: ECMA 262 \s matches whitespace / Line tabulation matches (#f)
+FAIL ecmascript-regex.json: ECMA 262 \s matches whitespace / latin-1 non-breaking-space matches (#f)
+FAIL ecmascript-regex.json: ECMA 262 \s matches whitespace / zero-width whitespace matches (#f)
+FAIL ecmascript-regex.json: ECMA 262 \s matches whitespace / paragraph separator matches (line terminator) (#f)
+FAIL ecmascript-regex.json: ECMA 262 \s matches whitespace / EM SPACE matches (Space_Separator) (#f)
+FAIL ecmascript-regex.json: ECMA 262 \S matches everything but whitespace / Line tabulation does not match (#t)
+FAIL ecmascript-regex.json: ECMA 262 \S matches everything but whitespace / latin-1 non-breaking-space does not match (#t)
+FAIL ecmascript-regex.json: ECMA 262 \S matches everything but whitespace / zero-width whitespace does not match (#t)
+FAIL ecmascript-regex.json: ECMA 262 \S matches everything but whitespace / paragraph separator does not match (line terminator) (#t)
+FAIL ecmascript-regex.json: ECMA 262 \S matches everything but whitespace / EM SPACE does not match (Space_Separator) (#t)
+FAIL ecmascript-regex.json: pattern with non-ASCII digits / ascii digits (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+FAIL ecmascript-regex.json: pattern with non-ASCII digits / ascii non-digits (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+FAIL ecmascript-regex.json: pattern with non-ASCII digits / non-ascii digits (BENGALI DIGIT FOUR, BENGALI DIGIT TWO) (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+FAIL ecmascript-regex.json: patternProperties with non-ASCII digits / ascii digits (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+FAIL ecmascript-regex.json: patternProperties with non-ASCII digits / ascii non-digits (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+FAIL ecmascript-regex.json: patternProperties with non-ASCII digits / non-ascii digits (BENGALI DIGIT FOUR, BENGALI DIGIT TWO) (pregexp: unrecognized property name in `\p{}`: `digit`
+  pattern: "^\\p{digit}+$")
+64 optional regex cases passed; 22 failed or unsupported

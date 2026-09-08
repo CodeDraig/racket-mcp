@@ -12,7 +12,8 @@
         (hasheq 'contentMediaType #f) (hasheq 'contentSchema 2)
         (hasheq 'properties (hasheq 'nested (hasheq 'required '("x" "x"))))))
 (for ([schema (in-list malformed)])
-  (check-exn exn:fail:schema? (lambda () (check-schema! schema))))
+  (with-check-info (['schema schema])
+    (check-exn exn:fail:schema? (lambda () (check-schema! schema)))))
 (define error
   (with-handlers ([exn:fail:schema? values])
     (check-schema! (hasheq 'properties (hasheq 'nested (hasheq 'required '("x" "x")))))))

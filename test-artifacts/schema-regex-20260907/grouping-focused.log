@@ -1,0 +1,6 @@
+raco test: (file "tests/schema-patterns.rkt")
+raco test: (file "tests/schema-construction.rkt")
+raco test: (file "tests/schema-unicode-ranges.rkt")
+225 tests passed
+86 optional regex cases passed; 0 failed or unsupported
+1301 passed; 0 failed or unsupported

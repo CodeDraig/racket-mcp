@@ -1,0 +1,3 @@
+whitespace: mismatch at U+ff40
+  context...:
+   body of "/srv/data/code/racket-mcp/.cache/tmp/check-regex-whitespace.rkt"

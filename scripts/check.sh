@@ -7,4 +7,5 @@ python3 scripts/extract-task-schema.py --check
 raco make mcp/*.rkt examples/*.rkt tests/*.rkt dev/*.rkt
 raco test tests
 racket tests/schema-suite.rkt
+racket tests/schema-regex-suite.rkt
 raco scribble +m --htmls --dest .cache/manual mcp/scribblings/mcp.scrbl

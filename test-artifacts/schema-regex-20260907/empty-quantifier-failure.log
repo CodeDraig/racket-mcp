@@ -1,0 +1,6 @@
+"[]*" error: pregexp: `*`, `+`, or `{...}` operand could be empty
+  pattern: "(?!)*"
+"[]?" empty: #t
+"[]+" error: pregexp: `*`, `+`, or `{...}` operand could be empty
+  pattern: "(?!)+"
+"[^]*" empty: #t

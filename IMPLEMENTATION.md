@@ -35,7 +35,7 @@ complete coverage of its surrounding milestone.
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
 | References and annotations | Local registry, anchors, dynamic refs, unevaluated properties/items | Covered by official core cases, including local remote fixtures; no network fetching |
 | Schema dialect/vocabulary rejection | Native evaluator and core tests | Pinned 2020-12 metaschema construction validation implemented; URI/pattern syntax coverage remains separate |
-| Regex and optional format assertions | Private pattern compatibility layer | Partial; official optional cases not counted in the 1,301 result |
+| Regex and optional format assertions | Private pattern compatibility layer; schema-patterns and schema-unicode-ranges regressions | 86 pinned optional regex cases pass separately from 1,301 core cases; complete ECMAScript regex and optional format assertions remain outside the tested profile |
 | Shapes and codecs | Generated constructor/accessors/JSON codecs; domain tests | Required fields and generated shape codecs implemented; checkpoint/effect codec registry and restart tests added |
 | Resources, RFC 6570, links, embeds | `descriptor.rkt`, `uri-template.rkt`, `runtime.rkt`; domain tests and MCP fixtures | Text/binary and remapped reference identity covered; ambiguous URI overlap analysis incomplete |
 | Prompts and completion | Runtime, composition, completion descriptors; domain and MCP fixtures | Wire strings and multi-content role lowering; renamed/removed completion targets covered; explicit string-codec syntax and JSON domain values implemented |
@@ -4293,3 +4293,41 @@ source-only checks on 9.2. Evidence is in
 workflow-argument query defect; the complete domain API audit, executable
 provenance, other integration/release gates and native macOS/Windows verification
 remain unfinished.
+
+
+## Native schema regex compatibility (2026-09-07)
+
+The pattern frontend now parses escapes and character classes before lowering to
+Racket regular expressions. It supports the pinned optional suite's control,
+hexadecimal, Unicode, whitespace and category-alias cases without changing
+escaped literal text. Both check runners execute the 86 optional regex cases
+separately from the 1,301 core cases; unsupported cases count as failures.
+
+An exhaustive Unicode probe found a Racket 9.2/9.3 range-compilation defect at
+U+FF40. Positive ranges are split at UTF-8 suffix boundaries and wrapped atomically
+to prevent optimizer recombination. Negation uses a grouped exclusion assertion
+and one-character consumption. Follow-up regressions caught empty classes losing
+consuming width and ungrouped complements applying repetition to consumption
+only. The latter caused the metaschema to accept a forbidden fragment in `$id`;
+the full-run failure and corrected construction diagnostic are retained.
+
+The corrected focused run passed 225 checks on Linux/Racket 9.2 and 9.3, including
+whitespace/complement checks over all 1,112,064 Unicode scalar values. The 9.3
+run also passed 86 optional and 1,301 core schema cases. All 14 Go probes and
+installed package dependency checks passed. Final full validation via
+`sh scripts/check.sh` passed 5,323 native checks, 1,301 core cases, 86 optional
+regex cases and Scribble on Racket 9.3. The installed package separately passed
+the 225 focused checks and 86 optional cases.
+Evidence is in `test-artifacts/schema-regex-20260907`. This remains a documented
+compatibility profile: backreferences, named groups, script/binary properties,
+non-scalar escapes and some lookbehind forms are not implemented. The complete
+SDK and native macOS/Windows release gates remain open.
+
+A separate retained probe in `test-artifacts/elicitation-formats-probe-20260907`
+confirms a remaining requirement: four invalid date/date-time/email/URI responses
+are accepted because elicitation currently uses only annotation-mode general
+schema validation. Workflow, Tasks and upstream paths share that validator; the
+interaction runner also needs response validation before sending callback output.
+The four failing assertions are evidence of unfinished work, not conformance
+passes. Ordinary JSON Schema format annotations must remain unchanged when this
+separate MCP validation is implemented.

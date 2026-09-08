@@ -1,0 +1,4 @@
+raco test: (file "tests/schema-patterns.rkt")
+92 tests passed
+86 optional regex cases passed; 0 failed or unsupported
+1301 passed; 0 failed or unsupported

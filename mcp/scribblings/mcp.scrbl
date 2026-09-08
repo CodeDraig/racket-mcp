@@ -1357,6 +1357,29 @@ wrapped in an existing transaction on the same store.
 @section{Verification boundary}
 The pinned core JSON Schema suite has 1,301 cases. Passing it does not establish
 optional format assertion or complete ECMAScript pattern compatibility.
+The separate @tt{tests/schema-regex-suite.rkt} runner checks 86 pinned optional
+ECMAScript/non-BMP cases; both local and portable CI run it independently of the
+core suite. Unsupported cases count as failures, not skips.
+
+The native pattern translator handles control/hex/Unicode escapes, scalar
+surrogate pairs, ASCII digit/word classes, Unicode whitespace and its complement,
+empty classes, dot's line-terminator exclusions, and the supported Unicode
+category aliases (including @tt{Letter} and @tt{digit}). Translation respects
+escaped literals and character-class boundaries. Unicode whitespace follows the
+@hyperlink["https://tc39.es/ecma262/multipage/text-processing.html#sec-patterns"]{ECMAScript
+WhiteSpace and LineTerminator rules}. This is a tested compatibility profile,
+not a complete ECMAScript regex implementation: backreferences, named groups,
+script/binary property families, non-scalar
+Unicode escapes and some lookbehind forms are unsupported. Racket-only escapes,
+group modifiers and malformed brace syntax do not silently gain native meanings.
+Regex work remains subject to the documented CPU-budget limitation.
+The native regressions check whitespace and its complement across all 1,112,064
+Unicode scalar values. Character-class unions and negation are compiled
+explicitly; positive ranges are split at UTF-8 suffix boundaries to avoid a
+reproduced Racket 9.2/9.3 range-compilation defect (for example, native
+@tt{[U+FF00-U+FFFF]} excludes U+FF40). Supported category escapes also work inside
+these character classes.
+
 Independent MCP evidence and exclusions are recorded under @tt{test-artifacts}
 and in @tt{IMPLEMENTATION.md}. Run @tt{sh scripts/check-interop.sh} to reproduce
 pinned Go SDK discovery/tool, pagination, and bidirectional progress/cancellation

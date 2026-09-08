@@ -63,6 +63,7 @@ def main():
         run("compile", ["raco", "make", *sources])
         run("native-tests", ["raco", "test", "tests"])
         run("schema-suite", ["racket", "tests/schema-suite.rkt"])
+        run("schema-regex-suite", ["racket", "tests/schema-regex-suite.rkt"])
         run("manual", ["raco", "scribble", "+m", "--htmls", "--dest", ".cache/manual", "mcp/scribblings/mcp.scrbl"])
         run("package-dependencies", ["raco", "setup", "--check-pkg-deps", "--pkgs", "racket-mcp"], installed=True)
         report["success"] = True

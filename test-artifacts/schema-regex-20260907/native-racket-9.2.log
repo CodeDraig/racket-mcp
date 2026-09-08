@@ -1,0 +1,4 @@
+Racket 9.2
+wide-range matches U+FF40: #f
+merged-intervals matches U+FF40: #f
+protected-intervals matches U+FF40: #t

@@ -1,0 +1,30 @@
+raco test: (file "test-artifacts/elicitation-formats-probe-20260907/probe.rkt")
+--------------------
+FAILURE
+name:       check-exn
+location:   test-artifacts/elicitation-formats-probe-20260907/probe.rkt:12:2
+params:     '(#<procedure:exn:fail?> #<procedure:...-20260907/probe.rkt:12:23>)
+message:    "Reject invalid date value \"2026-02-30\""
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   test-artifacts/elicitation-formats-probe-20260907/probe.rkt:12:2
+params:     '(#<procedure:exn:fail?> #<procedure:...-20260907/probe.rkt:12:23>)
+message:    "Reject invalid date-time value \"not-a-timestamp\""
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   test-artifacts/elicitation-formats-probe-20260907/probe.rkt:12:2
+params:     '(#<procedure:exn:fail?> #<procedure:...-20260907/probe.rkt:12:23>)
+message:    "Reject invalid email value \"not-an-email\""
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   test-artifacts/elicitation-formats-probe-20260907/probe.rkt:12:2
+params:     '(#<procedure:exn:fail?> #<procedure:...-20260907/probe.rkt:12:23>)
+message:    "Reject invalid uri value \"not a URI\""
+--------------------
+4/4 test failures

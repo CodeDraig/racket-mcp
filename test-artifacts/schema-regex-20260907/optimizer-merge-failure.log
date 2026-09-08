@@ -1,0 +1,26 @@
+raco test: (file "tests/schema-patterns.rkt")
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/schema-patterns.rkt:46:2
+message:    "pattern \"^[\\uFF00-\\uFFFF]$\" / \"｀\""
+actual:     #f
+expected:   #t
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/schema-patterns.rkt:47:2
+message:    "patternProperties \"^[\\uFF00-\\uFFFF]$\" / \"｀\""
+actual:     #f
+expected:   #t
+--------------------
+raco test: (file "tests/schema-unicode-ranges.rkt")
+--------------------
+FAILURE
+name:       check-false
+location:   tests/schema-unicode-ranges.rkt:26:2
+params:     '(65344)
+message:    "Unicode interval (65280 65535)"
+--------------------
+3/156 test failures
