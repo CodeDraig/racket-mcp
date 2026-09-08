@@ -1,0 +1,30 @@
+[
+  {
+    "file": "tests/scenario.rkt",
+    "sha256": "18e35216346f1dac0cdab803db326491a845ff36aee45dac4da7a7e9a284be82"
+  },
+  {
+    "file": "tests/scenario-session.rkt",
+    "sha256": "2e8272365b0d76adba15ca5828074914cfb2e72b41075f054c9f3e66ef78023b"
+  },
+  {
+    "file": "tests/scenario-requests.rkt",
+    "sha256": "2764805db7b204ca3eebd535e18592c06600cd5c5cef44fcf2bbd0d8b58fda14"
+  },
+  {
+    "file": "tests/scenario-disconnect.rkt",
+    "sha256": "a02fcd58045ac790de3846b28264a5334eea3a908cf9e71d0860de55f90f4378"
+  },
+  {
+    "file": "tests/scenario-process.rkt",
+    "sha256": "45af2ffb72b134ab8f91fddc7b8ed1857fdbc09a7c2ee3449a5a287a6c564be9"
+  },
+  {
+    "file": "tests/scenario-effect-crashes.rkt",
+    "sha256": "f82e0747d2a2d63cd7fde46ef2d5241066dacb129be400ee013c320f9109b63d"
+  },
+  {
+    "file": "tests/scenario-conflicting-inputs.rkt",
+    "sha256": "58dca6210ad6c3e4ed7e69a1d5ad5c611802018de3ff8f517319bb64390fb57e"
+  }
+]

@@ -1,0 +1,54 @@
+[
+  {
+    "file": "tests/resource-reference-contract.rkt",
+    "sha256": "57a553f574d9882691ca8eaf36e9ed352257c2e023e0d736434a5221c49d7f92"
+  },
+  {
+    "file": "tests/inferred-references.rkt",
+    "sha256": "0d2c72a770a2cd91b00e3ced75637eb8d7290320e8eb4b0470d4c66d698aea53"
+  },
+  {
+    "file": "tests/reference-manifest.rkt",
+    "sha256": "b4a98fb11c0b11a4c2da059bca2cd26480564c792954ce2149269a5f6c80b4b2"
+  },
+  {
+    "file": "tests/workflow-references.rkt",
+    "sha256": "ab42cef8857bd800531aac82e9e5ca33c13f4c6406d8afec251705230572719a"
+  },
+  {
+    "file": "tests/interface-references.rkt",
+    "sha256": "f01956aa8d768f0482025358973ec178dfaeb7415aabe0d3d4272e9c713d8e16"
+  },
+  {
+    "file": "tests/composed-reference-checks.rkt",
+    "sha256": "9da82843e4e9e87e18701b19248118d171f78a48082db22b0db2b9f0fc89596f"
+  },
+  {
+    "file": "tests/manifest-composition.rkt",
+    "sha256": "a0e631eb69a095bd6c04a04115dc969d305001a14dccbde90b4e89cd5262e388"
+  },
+  {
+    "file": "tests/manifest-reference-bindings.rkt",
+    "sha256": "15e4cbe561a80facc7e00e0d5e4fb9b5ddc99a7500a90782eb5f7df2f04ebba9"
+  },
+  {
+    "file": "tests/completion-references.rkt",
+    "sha256": "a1207c210342c027d15e98f125a0f9bbfd236a53d0a6ac5b858a8a8b79e49049"
+  },
+  {
+    "file": "tests/prompt-completion-composition.rkt",
+    "sha256": "6deb4ac6e6c3ae1f83c6c7e5e63ac8d988686257978bd388fd213cca028af6c9"
+  },
+  {
+    "file": "tests/collection-extension.rkt",
+    "sha256": "aebc25eff3ccdbad4800bc27f9daa3dcd526c10ccbb5c4768ecfdf06d07946ee"
+  },
+  {
+    "file": "tests/extension-bindings.rkt",
+    "sha256": "7effdab578da39ab680ad243c21031e719b3802312a95980414de233d45cc8b5"
+  },
+  {
+    "file": "tests/reference-registration.rkt",
+    "sha256": "9191cc08516def262adcb1b4cea38bd31ab7a88f06b67fe7ec579c83a497f28a"
+  }
+]

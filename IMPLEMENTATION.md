@@ -5492,3 +5492,28 @@ REMAINING.md. Evidence and the initial test-envelope mistake are retained under
  test-artifacts/conformance-list-changes-20260908. Diagnostic log trailing
 whitespace was normalized before SHA-256 recording. The full suite was not
 repeated for this dev fixture and its focused regression.
+
+## Scenario and reference acceptance closure (2026-09-08)
+
+The current-state audit maps the actual approved scenario and reference
+requirements to inspected tests and their full-run evidence, rather than carrying
+forward broad historical open-gate labels. The mappings and source hashes are in
+ test-artifacts/scenario-acceptance-20260908 and
+ test-artifacts/reference-acceptance-20260908.
+
+Existing scenario controls already demonstrate deterministic configuration,
+input callbacks, asynchronous cancellation, disconnect/reconnect, process restart
+and explicitly scheduled uncertain effects. The one missing authored scenario
+case was conflicting partial input submissions. The new local/stdio/HTTP tests
+all pass on Linux 9.2 and 9.3: one response wins, the other is rejected, identical
+retry retains the pending result and final completion preserves the winner.
+SCENARIOS is removed. The separate durability-transition audit remains.
+
+Reference checking is already demonstrated across lexical/macro-generated/imported
+references, workflows, explicit dynamic maps, fragments, views, completions and
+the collection extension. The audit also checked absence/ambiguity errors for
+dynamically produced references and manifest inspection without instantiation.
+REFERENCES is removed. This does not claim inference through arbitrary host
+procedures, which remain dynamic under the approved plan, or complete the
+separate language/API parity audit. No existing SDK or test source changed during
+these audits; only the conflicting-input regression was added.
