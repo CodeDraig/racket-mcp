@@ -1,0 +1,22 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+tests/manifest-examples.rkt:48:49: read-syntax: unexpected `)`
+  compilation context...:
+   /srv/data/code/racket-mcp/tests/manifest-examples.rkt
+  context...:
+   /usr/share/racket/collects/syntax/module-reader.rkt:214:17: body
+   /usr/share/racket/collects/syntax/module-reader.rkt:211:2: wrap-internal
+   /usr/share/racket/collects/racket/../syntax/module-reader.rkt:76:9: wrap-internal/wrapper
+   /usr/share/racket/collects/syntax/private/modcode-noctc.rkt:37:2: reader
+   /usr/share/racket/collects/syntax/private/modcode-noctc.rkt:193:5: compile-one
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:461:15
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:447:12: build
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:418:0: maybe-compile-zo
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:221:0: compile-root
+   /usr/share/racket/collects/compiler/private/cm-minimal.rkt:109:4
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/make.rkt:69:0
+   body of "/usr/share/racket/pkgs/compiler-lib/compiler/commands/make.rkt"
+   /usr/share/racket/collects/raco/raco.rkt:41:0
+   body of "/usr/share/racket/collects/raco/raco.rkt"
+   ...

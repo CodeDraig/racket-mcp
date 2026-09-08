@@ -1,0 +1,11 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/cli-artifacts.rkt")
+raco test: (file "tests/manifest-examples.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+raco test: (file "tests/scenario.rkt")
+raco test: (file "tests/scenario-session.rkt")
+1 test passed
+raco test: (file "tests/scenario-process.rkt")
+raco test: (file "tests/manifest-composition.rkt")
+174 tests passed

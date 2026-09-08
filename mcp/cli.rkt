@@ -1,9 +1,11 @@
 #lang racket/base
 (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
          "loader.rkt" "scenario.rkt" "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
-(provide run-scenarios main serve-interface serve-interface-command read-manifest manifest-diff manifest->mermaid manifest->markdown)
+(provide run-scenarios main serve-interface serve-interface-command read-manifest read-manifest-examples manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
 (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
+(define (read-manifest-examples path)
+  (dynamic-require `(submod ,(module-path path) manifest) 'manifest-examples (lambda () '())))
 (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
   (unless (interface-descriptor-server interface) (error 'serve "an executable interface requires a server declaration"))
   (when (and (interface-requires-state? interface) (not state))
@@ -70,7 +72,8 @@
                #:transport transport #:state state #:port port)]
     [(inspect) (pretty-write (read-manifest path))]
     [(diagram) (display (manifest->mermaid (read-manifest path)))]
-    [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)))]
+    [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)
+                                       #:examples (read-manifest-examples path)))]
     [(check) (define source (path->complete-path path))
              (parameterize ([current-namespace (make-base-namespace)]
                             [current-load-relative-directory (path-only source)])

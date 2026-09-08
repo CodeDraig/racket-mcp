@@ -1,0 +1,299 @@
+diff --git a/mcp/cli.rkt b/mcp/cli.rkt
+index b5d910e..7a93e64 100644
+--- a/mcp/cli.rkt
++++ b/mcp/cli.rkt
+@@ -1,9 +1,11 @@
+ #lang racket/base
+ (require racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
+          "loader.rkt" "scenario.rkt" "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
+-(provide run-scenarios main serve-interface serve-interface-command read-manifest manifest-diff manifest->mermaid manifest->markdown)
++(provide run-scenarios main serve-interface serve-interface-command read-manifest read-manifest-examples manifest-diff manifest->mermaid manifest->markdown)
+ (define (module-path path) `(file ,(path->string (path->complete-path path))))
+ (define (read-manifest path) (dynamic-require `(submod ,(module-path path) manifest) 'manifest))
++(define (read-manifest-examples path)
++  (dynamic-require `(submod ,(module-path path) manifest) 'manifest-examples (lambda () '())))
+ (define (serve-interface interface #:transport [transport "stdio"] #:state [state #f] #:port [port 8000])
+   (unless (interface-descriptor-server interface) (error 'serve "an executable interface requires a server declaration"))
+   (when (and (interface-requires-state? interface) (not state))
+@@ -70,7 +72,8 @@
+                #:transport transport #:state state #:port port)]
+     [(inspect) (pretty-write (read-manifest path))]
+     [(diagram) (display (manifest->mermaid (read-manifest path)))]
+-    [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)))]
++    [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)
++                                       #:examples (read-manifest-examples path)))]
+     [(check) (define source (path->complete-path path))
+              (parameterize ([current-namespace (make-base-namespace)]
+                             [current-load-relative-directory (path-only source)])
+diff --git a/mcp/forms.rkt b/mcp/forms.rkt
+index 37ea47e..aac876a 100644
+--- a/mcp/forms.rkt
++++ b/mcp/forms.rkt
+@@ -210,13 +210,15 @@
+         (~optional (~seq #:directory directory:expr) #:defaults ([directory #'(current-directory)]))
+         (~optional (~seq #:environment environment:expr) #:defaults ([environment #'(current-environment-variables)]))
+         body:expr ...+)
+-     #'(module+ test
++     #`(begin
++        (register-declaration #f #:scenario name #,stx)
++        (module+ test
+          (require rackunit)
+          (test-case (symbol->string 'name)
+            (call-with-scenario-process command
+              (lambda (process) body ...)
+              #:transport transport #:capabilities capabilities #:timeout timeout
+-             #:shutdown-timeout shutdown #:stderr-limit limit #:directory directory #:environment environment)))]
++             #:shutdown-timeout shutdown #:stderr-limit limit #:directory directory #:environment environment))))]
+     [(_ (name:id session:id) #:interface interface:expr
+         (~optional (~seq #:transport transport:expr) #:defaults ([transport #''local]))
+         (~optional (~seq #:clock clock:expr) #:defaults ([clock #'(make-manual-clock)]))
+@@ -228,14 +230,19 @@
+         (~optional (~seq #:timeout timeout:expr) #:defaults ([timeout #'5]))
+         (~optional (~seq #:sse? sse:expr) #:defaults ([sse #'#f]))
+         body:expr ...+)
+-     #'(module+ test
++     #`(begin
++        (register-declaration #f #:scenario name #,stx)
++        (module+ test
+          (require rackunit)
+          (test-case (symbol->string 'name)
+            (call-with-scenario-session interface
+              (lambda (session) body ...)
+              #:transport transport #:clock clock #:principal principal #:adapters adapters
+-             #:capabilities capabilities #:state state #:authorize authorize #:timeout timeout #:sse? sse)))]
+-    [(_ name:id body ...+) #'(module+ test (require rackunit) (test-case (symbol->string 'name) body ...))]))
++             #:capabilities capabilities #:state state #:authorize authorize #:timeout timeout #:sse? sse))))]
++    [(_ name:id body ...+)
++     #`(begin
++         (register-declaration #f #:scenario name #,stx)
++         (module+ test (require rackunit) (test-case (symbol->string 'name) body ...)))]))
+ (define-syntax (define-mcp-extension stx)
+   (syntax-parse stx
+     [(_ name:id #:workflow transformer:expr)
+diff --git a/mcp/private/manifest-docs.rkt b/mcp/private/manifest-docs.rkt
+index 638bcde..07a5efb 100644
+--- a/mcp/private/manifest-docs.rkt
++++ b/mcp/private/manifest-docs.rkt
+@@ -19,9 +19,14 @@
+   (if (hash-ref value 'known? #f)
+       (code (representation (hash-ref value 'value)))
+       (format "dynamic expression ~a" (code (hash-ref value 'expression "unknown")))))
+-(define (manifest->markdown manifest #:title [title "MCP interface"])
++(define (manifest->markdown manifest #:title [title "MCP interface"] #:examples [examples '()])
+   (unless (and (list? manifest) (andmap hash? manifest))
+     (raise-argument-error 'manifest->markdown "(listof hash?)" manifest))
++  (unless (and (list? examples)
++               (for/and ([example (in-list examples)])
++                 (and (hash? example) (hash-has-key? example 'name)
++                      (string? (hash-ref example 'code #f)))))
++    (raise-argument-error 'manifest->markdown "examples containing names and source-code strings" examples))
+   (define out (open-output-string))
+   (define (paragraph format-string . values) (apply fprintf out (string-append format-string "\n\n") values))
+   (define (schema-section heading description)
+@@ -100,4 +105,14 @@
+           [(branch jump) (fprintf out "; targets ~a" (code (hash-ref stage 'adapter-or-targets)))])
+         (fprintf out "; schema: ~a.\n" (described (hash-ref stage 'schema))))
+       (newline out)))
++  (unless (null? examples)
++    (paragraph "## Authored interaction examples")
++    (paragraph "These scenarios are source examples, not results of a test run.")
++    (for ([example (in-list examples)])
++      (paragraph "### ~a" (code (hash-ref example 'name)))
++      (paragraph "Source: ~a." (code (format "~a:~a" (hash-ref example 'source "unknown")
++                                               (hash-ref example 'line "unknown"))))
++      (define text (hash-ref example 'code))
++      (define fence (make-string (max 3 (add1 (backtick-count text))) #\`))
++      (paragraph "~aracket\n~a\n~a" fence text fence)))
+   (get-output-string out))
+diff --git a/mcp/private/module-compiler.rkt b/mcp/private/module-compiler.rkt
+index cd68e2a..e59ffb5 100644
+--- a/mcp/private/module-compiler.rkt
++++ b/mcp/private/module-compiler.rkt
+@@ -1,5 +1,5 @@
+ #lang racket/base
+-(require racket/list "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
++(require racket/list racket/pretty "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
+ (provide make-module-compilers)
+ ;; Preserve the defining module, not an import alias or generated binding name.
+ ;; Resolving an already expanded binding does not instantiate its provider.
+@@ -20,9 +20,21 @@
+ (define (make-module-compilers runtime-register interface-runtime)
+   (define entries '())
+   (define references '())
++  (define examples '())
+   (values
+    (lambda (stx)
+      (syntax-case stx ()
++       [(_ descriptor #:scenario name source)
++        (begin
++          (set! examples
++            (cons (hasheq 'name (syntax-e #'name)
++                          'source (format "~a" (syntax-source #'source))
++                          'line (syntax-line #'source)
++                          'column (syntax-column #'source)
++                          'position (syntax-position #'source)
++                          'code (pretty-format (syntax->datum #'source) #:mode 'write))
++                  examples))
++          #'(void))]
+        [(_ descriptor #:mount (expression ...) source view-id mount-id unconditional?)
+         (begin (set! entries (cons (mounted-node (syntax->list #'(expression ...)) #'source #'view-id #'mount-id (syntax-e #'unconditional?)) entries))
+                #`(#,runtime-register descriptor))]
+@@ -121,9 +133,10 @@
+      (when (ormap mounted-node? ordered)
+        (check-composed-manifest manifest (mounted-node-source (findf mounted-node? ordered))))
+      (syntax-local-lift-module
+-      #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions)
++      #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions manifest-examples)
+           (define manifest-version 2)
+           (define manifest-provider '#,(reference-provider interface-runtime))
+           (define manifest-exclusions '#,(remove-duplicates (reverse exclusions) equal?))
++          (define manifest-examples '#,(reverse examples))
+           (define manifest '#,manifest)))
+      #'(void))))
+diff --git a/mcp/scribblings/mcp.scrbl b/mcp/scribblings/mcp.scrbl
+index 08c58ad..aafcc0d 100644
+--- a/mcp/scribblings/mcp.scrbl
++++ b/mcp/scribblings/mcp.scrbl
+@@ -13,6 +13,109 @@ This package targets MCP 2026-07-28 and Racket 9.2. It is an implementation in
+ progress, not a completed conformant release. The repository implementation
+ ledger is the authority for missing behavior and executed verification.
+
++@section{Ordinary SDK values and constructors}
++
++@tt{mcp} exports the ordinary descriptor API alongside the declaration forms.
++The focused modules are @tt{mcp/descriptor}, @tt{mcp/schema}, @tt{mcp/workflow},
++@tt{mcp/runtime}, @tt{mcp/stdio}, @tt{mcp/http}, and @tt{mcp/interaction}.
++The following records have their usual Racket predicates and field accessors
++(for example, @tt{tool-descriptor-name}). Descriptor construction does not start
++transports, open application storage, or call handlers.
++
++@tabular[#:sep @hspace[1]
++ (list
++  (list @bold{Value} @bold{Fields / representation})
++  (list @tt{server-descriptor} @tt{name version instructions})
++  (list @tt{argument} @tt{name schema optional? default})
++  (list @tt{prompt-argument} @elem{The @tt{argument} fields plus @tt{codec}.})
++  (list @tt{tool-descriptor} @tt{name description arguments input-schema output-schema handler annotations workflow execution raw? changes})
++  (list @tt{resource-descriptor} @tt{name uri description mime-type handler arguments matcher identity workflow renderer depends-on ttl-ms})
++  (list @tt{prompt-descriptor} @tt{name description arguments handler workflow})
++  (list @tt{interface-descriptor} @tt{server tools resources prompts completions})
++  (list @tt{resource-ref} @tt{declaration arguments})
++  (list @tt{request-context} @tt{principal capabilities request-id cancelled? notify})
++  (list @tt{workflow-descriptor} @tt{name version fingerprint stages key changes})
++  (list @tt{workflow-stage} @tt{id kind schema procedure adapter policy})
++  (list @elem{Schema} @elem{A JSON object hash or Boolean schema; @tt{schema} binds one of these values.})
++  (list @elem{Result} @elem{A JSON hash produced by explicit content/result constructors.}))]
++
++Use the checked factories for dynamic interfaces. Raw record constructors remain
++available, but @tt{make-interface} and @tt{make-runtime} recheck their contracts.
++Resource and prompt declaration identities survive views; display names are not
++substitutes for those identities. Interface policy and reference maps are obtained
++with @tt{interface-requirements}, @tt{interface-adapter-bindings},
++@tt{interface-adapter-restrictions}, and @tt{interface-resource-references}; they
++are not extra positional fields in the public five-field interface record.
++
++@itemlist[
++ @item{@tt{(make-interface #:server server #:tools tools #:resources resources
++ #:prompts prompts #:completions completions #:requirements requirements
++ #:adapter-bindings adapters #:references references #:adapter-restrictions restrictions)}.
++ Every keyword is optional: server defaults to @tt{#f}, declaration collections to
++ empty lists, and policy/reference collections to empty hashes. It returns a
++ checked interface, resolving declaration identities and rejecting duplicates,
++ missing references and ambiguous mappings.}
++ @item{@tt{(make-tool name arguments handler)} accepts optional
++ @tt{#:description} (empty string), @tt{#:output} (absent), @tt{#:annotations}
++ (empty JSON hash), @tt{#:workflow} (@tt{#f}), @tt{#:execution} (@tt{'mrtr}),
++ @tt{#:input-schema} (derived from arguments), @tt{#:raw?} (@tt{#f}), and
++ @tt{#:changes} (a two-argument callback returning no keys by default).
++ The unary handler receives the bound argument map. With @tt{#:raw? #t}, it
++ instead receives the validated wire argument object without applying argument
++ defaults. Successful structured output is validated against @tt{#:output}.}
++ @item{@tt{(make-resource name uri handler)} accepts optional @tt{#:description},
++ @tt{#:mime-type}, @tt{#:render}, @tt{#:arguments}, @tt{#:matcher},
++ @tt{#:workflow}, @tt{#:depends-on}, and @tt{#:ttl-ms}. Defaults are an empty
++ description/argument list, no explicit renderer/workflow, generated URI matcher,
++ no dependency keys, and zero TTL. MIME type comes from the renderer or defaults
++ to @tt{"text/plain"}. Its handler receives positional bound URI arguments.}
++ @item{@tt{(make-prompt name arguments handler)} accepts @tt{#:description}
++ (empty string) and @tt{#:workflow} (@tt{#f}). Its unary handler receives a bound
++ argument map. Prompt wire values remain strings; @tt{prompt-argument} supplies
++ the explicit string codec for a different domain value.}
++ @item{@tt{(make-workflow name version fingerprint stages)} accepts @tt{#:key}
++ (@tt{#f}) and @tt{#:changes} (a two-argument callback returning no keys).
++ It validates the explicit execution-stage program and its codecs. The durable
++ execution chapter defines stage kinds, effects and resumption; compiler IR is
++ private and is not a substitute for these runtime stage records.}]
++
++Argument names are symbols, schemas are native schema values, and @tt{optional?}
++is a Boolean. A @tt{default} is @tt{#f} or a unary procedure receiving the map of
++previously bound arguments. It runs only when that optional argument is absent.
++The @tt{missing} sentinel, @tt{json-null}, and @tt{#f} remain distinct. Calling a
++resource descriptor or @tt{(resource-ref descriptor values)} constructs a checked
++reference without I/O; @tt{link} serializes a link and @tt{embed} resolves content
++through the current interface and authorization context.
++
++During a handler, @tt{(current-request-context)} is the request's context record.
++Its @tt{principal} is the configured local principal or verified HTTP identity;
++@tt{capabilities} contains this request's advertised client capabilities;
++@tt{request-id} identifies the current request. @tt{cancelled?} is a zero-argument
++cooperative cancellation query and @tt{notify} is the active notification sink.
++Use protocol helpers such as @tt{progress!} to enforce their notification contracts.
++The parameter defaults to @tt{#f} outside dispatch. A context contains live
++procedures and must not be persisted as a workflow value.
++
++@tt{(make-runtime interface)} installs storage, adapters, authorization and request
++facilities. Optional @tt{#:store}, @tt{#:adapters}, @tt{#:authorize},
++@tt{#:required-scopes}, @tt{#:clock}, @tt{#:recover-tasks?} and
++@tt{#:restore-principal} configure those facilities; the pagination and freshness
++chapters document the cache/cursor settings. @tt{#:store} defaults to @tt{#f};
++durable serving requires an explicit store path. @tt{#:recover-tasks?} defaults
++to true, so creating a configured runtime may start persisted task recovery.
++That is distinct from constructing its descriptors.
++
++@tt{(dispatch runtime method params #:principal principal #:id id #:notify notify)}
++returns a protocol result body and raises @tt{exn:fail:mcp} for a protocol error.
++Principal defaults to @tt{'local}, ID to @tt{#f}, and notification sink to
++@tt{void}. Supply per-request metadata with @tt{request-meta}.
++@tt{(dispatch-message runtime message #:principal principal #:notify notify)}
++uses the same validation and policy path, accepts a complete JSON-RPC request,
++and returns the JSON-RPC outcome (or no response for a valid notification).
++Both transports use this dispatch path. The transport chapters describe event
++handles and synchronous client calls; only the explicit @tt{run-interaction}
++runner follows MRTR/Tasks outcomes using the supplied callbacks.
++
+ @section{Declaration construction contracts}
+
+ The @tt{make-tool}, @tt{make-resource}, and @tt{make-prompt} factories check
+@@ -1999,7 +2102,7 @@ separately defined helpers or dynamic composition expressions.
+
+ @tt{raco mcp docs module.rkt} generates Markdown from the static manifest.
+ @tt{manifest->markdown}, exported by @tt{mcp/cli}, accepts an already read manifest
+-and an optional @tt{#:title}. The result includes known descriptions and metadata,
++and optional @tt{#:title} and @tt{#:examples} arguments. The result includes known descriptions and metadata,
+ argument requirements/defaults/codecs, input/output and reusable schemas, completion
+ targets, resource references, workflow stages, adapter policies, and runtime
+ requirements. Schema examples remain present in the emitted schema JSON.
+@@ -2011,6 +2114,23 @@ as text; schema code fences expand when necessary to preserve literal backticks.
+ Generated documentation describes what the static manifest establishes, including
+ its documented limits on helper analysis and dynamic composition.
+
++The manifest submodule separately exports @tt{manifest-examples}, a list of
++locally authored @tt{scenario} source records in declaration order. Each record
++contains @tt{name}, @tt{code}, and source coordinates. Renamed and macro-generated
++scenario forms use the same compiler collector. These records contain printed
++syntax; collecting or reading them does not evaluate configuration expressions,
++start process scenarios, or execute assertions. They do not enter the published
++interface declaration list or change wire-compatibility reports.
++
++@tt{read-manifest-examples} from @tt{mcp/cli} reads this export without
++instantiating the parent application. Older manifest modules without the export
++return an empty list. Pass its result as @tt{#:examples} to
++@tt{manifest->markdown}; @tt{raco mcp docs} does this automatically. The resulting
++section labels the scenarios as source examples, not test-run results. Code fences
++are extended when source contains backticks. These local examples are not rewritten
++through mounted views: run the source module's scenarios to exercise their actual
++configuration. Compiling the module still executes trusted Racket transformers.
++
+ @section{Static compatibility reports}
+
+ @tt{raco mcp diff before.rkt after.rkt} and @tt{manifest-diff} compare published

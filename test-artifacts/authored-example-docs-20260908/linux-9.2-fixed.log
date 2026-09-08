@@ -1,0 +1,21 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/manifest-examples.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+instantiate-linklet: mismatch;
+ reference to a variable that is not exported
+  name: manifest->markdown4.1
+  exporting instance: "/srv/data/code/racket-mcp/mcp/private/manifest-docs.rkt"
+  importing instance: "/srv/data/code/racket-mcp/tests/manifest-docs.rkt"
+  possible reason: modules need to be recompiled because dependencies changed
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   body of "/srv/data/code/racket-mcp/tests/manifest-docs.rkt"
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+manifest-docs.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/scenario.rkt")
+raco test: (file "tests/scenario-session.rkt")
+1 test passed
+1/78 test failures

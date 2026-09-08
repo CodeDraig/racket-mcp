@@ -5581,3 +5581,32 @@ and identifies the remaining DCR-dependent complete fixtures. OAUTH is removed
 from REMAINING.md; the final-source CONFORMANCE gate remains. This closure does
 not claim a hosted authorization service or implement excluded DCR/other auth
 extensions. The failed compiled-bootstrap experiment is retained separately.
+
+## Authored documentation, language and durability closure (2026-09-08)
+
+Scenario syntax now emits ordered source-only manifest examples separately from
+interface declarations. The docs command renders them with safe Markdown fences;
+old manifests return no examples. New tests prove throwing application handlers,
+initializers and scenario configuration are not run by inspect/docs/check/diagram/
+diff; snapshot uses real HTTP discovery. The ordinary SDK reference now describes
+public descriptor values, constructors, handler contracts and dispatch behavior.
+
+The compiler change passed the full Linux Racket 9.3 check: 6,238 native tests,
+1,301 schema cases, 86 regex cases and Scribble, exit zero. Focused checks passed
+on 9.2 and 9.3; installed dependency checks and 157 installed-package checks passed.
+All 14 official Go probes passed. Evidence: authored-example-docs-20260908.
+
+The language invariant audit found nine missing malformed-clause examples. The
+durable-transition audit found eleven missing process-kill cases at branch,
+checkpoint, input, terminal and child-to-parent rendering boundaries. These are
+now repository tests: mcp-grammar-contracts.rkt, mcp-persistence-boundaries.rkt and
+mcp-render-boundaries.rkt. All 20 pass on both Linux Racket 9.2 and 9.3; the updated
+manual builds. SQLite state is inspected independently after killing workers,
+and two later processes verify retained outcomes and permitted replay counts.
+No SDK durability implementation changes were necessary.
+
+LANGUAGE, DURABILITY and TOOLS are removed from REMAINING.md. Their audits and
+terminal logs are in language-acceptance-20260908 and durability-boundaries-20260908.
+BUILD still covers automatic executable identity; CONFORMANCE/PLATFORM/RELEASE
+still require final-source verification. Completed reference analysis was not
+reopened; its stale manual status sentence was corrected.

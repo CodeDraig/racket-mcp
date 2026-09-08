@@ -1,0 +1,3 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (submod (file "/tmp/mcp-render-boundaries.rkt") test)
+3 tests passed

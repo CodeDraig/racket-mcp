@@ -1,0 +1,3 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "/tmp/mcp-grammar-contracts.rkt")
+9 tests passed

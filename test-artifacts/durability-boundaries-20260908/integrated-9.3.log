@@ -1,0 +1,8 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (submod (file "tests/mcp-persistence-boundaries.rkt") test)
+raco test: (submod (file "tests/mcp-render-boundaries.rkt") test)
+raco test: (file "tests/mcp-grammar-contracts.rkt")
+20 tests passed
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+ [Output to .cache/manual/mcp/index.html]

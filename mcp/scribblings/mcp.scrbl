@@ -13,6 +13,109 @@ This package targets MCP 2026-07-28 and Racket 9.2. It is an implementation in
 progress, not a completed conformant release. The repository implementation
 ledger is the authority for missing behavior and executed verification.
 
+@section{Ordinary SDK values and constructors}
+
+@tt{mcp} exports the ordinary descriptor API alongside the declaration forms.
+The focused modules are @tt{mcp/descriptor}, @tt{mcp/schema}, @tt{mcp/workflow},
+@tt{mcp/runtime}, @tt{mcp/stdio}, @tt{mcp/http}, and @tt{mcp/interaction}.
+The following records have their usual Racket predicates and field accessors
+(for example, @tt{tool-descriptor-name}). Descriptor construction does not start
+transports, open application storage, or call handlers.
+
+@tabular[#:sep @hspace[1]
+ (list
+  (list @bold{Value} @bold{Fields / representation})
+  (list @tt{server-descriptor} @tt{name version instructions})
+  (list @tt{argument} @tt{name schema optional? default})
+  (list @tt{prompt-argument} @elem{The @tt{argument} fields plus @tt{codec}.})
+  (list @tt{tool-descriptor} @tt{name description arguments input-schema output-schema handler annotations workflow execution raw? changes})
+  (list @tt{resource-descriptor} @tt{name uri description mime-type handler arguments matcher identity workflow renderer depends-on ttl-ms})
+  (list @tt{prompt-descriptor} @tt{name description arguments handler workflow})
+  (list @tt{interface-descriptor} @tt{server tools resources prompts completions})
+  (list @tt{resource-ref} @tt{declaration arguments})
+  (list @tt{request-context} @tt{principal capabilities request-id cancelled? notify})
+  (list @tt{workflow-descriptor} @tt{name version fingerprint stages key changes})
+  (list @tt{workflow-stage} @tt{id kind schema procedure adapter policy})
+  (list @elem{Schema} @elem{A JSON object hash or Boolean schema; @tt{schema} binds one of these values.})
+  (list @elem{Result} @elem{A JSON hash produced by explicit content/result constructors.}))]
+
+Use the checked factories for dynamic interfaces. Raw record constructors remain
+available, but @tt{make-interface} and @tt{make-runtime} recheck their contracts.
+Resource and prompt declaration identities survive views; display names are not
+substitutes for those identities. Interface policy and reference maps are obtained
+with @tt{interface-requirements}, @tt{interface-adapter-bindings},
+@tt{interface-adapter-restrictions}, and @tt{interface-resource-references}; they
+are not extra positional fields in the public five-field interface record.
+
+@itemlist[
+ @item{@tt{(make-interface #:server server #:tools tools #:resources resources
+ #:prompts prompts #:completions completions #:requirements requirements
+ #:adapter-bindings adapters #:references references #:adapter-restrictions restrictions)}.
+ Every keyword is optional: server defaults to @tt{#f}, declaration collections to
+ empty lists, and policy/reference collections to empty hashes. It returns a
+ checked interface, resolving declaration identities and rejecting duplicates,
+ missing references and ambiguous mappings.}
+ @item{@tt{(make-tool name arguments handler)} accepts optional
+ @tt{#:description} (empty string), @tt{#:output} (absent), @tt{#:annotations}
+ (empty JSON hash), @tt{#:workflow} (@tt{#f}), @tt{#:execution} (@tt{'mrtr}),
+ @tt{#:input-schema} (derived from arguments), @tt{#:raw?} (@tt{#f}), and
+ @tt{#:changes} (a two-argument callback returning no keys by default).
+ The unary handler receives the bound argument map. With @tt{#:raw? #t}, it
+ instead receives the validated wire argument object without applying argument
+ defaults. Successful structured output is validated against @tt{#:output}.}
+ @item{@tt{(make-resource name uri handler)} accepts optional @tt{#:description},
+ @tt{#:mime-type}, @tt{#:render}, @tt{#:arguments}, @tt{#:matcher},
+ @tt{#:workflow}, @tt{#:depends-on}, and @tt{#:ttl-ms}. Defaults are an empty
+ description/argument list, no explicit renderer/workflow, generated URI matcher,
+ no dependency keys, and zero TTL. MIME type comes from the renderer or defaults
+ to @tt{"text/plain"}. Its handler receives positional bound URI arguments.}
+ @item{@tt{(make-prompt name arguments handler)} accepts @tt{#:description}
+ (empty string) and @tt{#:workflow} (@tt{#f}). Its unary handler receives a bound
+ argument map. Prompt wire values remain strings; @tt{prompt-argument} supplies
+ the explicit string codec for a different domain value.}
+ @item{@tt{(make-workflow name version fingerprint stages)} accepts @tt{#:key}
+ (@tt{#f}) and @tt{#:changes} (a two-argument callback returning no keys).
+ It validates the explicit execution-stage program and its codecs. The durable
+ execution chapter defines stage kinds, effects and resumption; compiler IR is
+ private and is not a substitute for these runtime stage records.}]
+
+Argument names are symbols, schemas are native schema values, and @tt{optional?}
+is a Boolean. A @tt{default} is @tt{#f} or a unary procedure receiving the map of
+previously bound arguments. It runs only when that optional argument is absent.
+The @tt{missing} sentinel, @tt{json-null}, and @tt{#f} remain distinct. Calling a
+resource descriptor or @tt{(resource-ref descriptor values)} constructs a checked
+reference without I/O; @tt{link} serializes a link and @tt{embed} resolves content
+through the current interface and authorization context.
+
+During a handler, @tt{(current-request-context)} is the request's context record.
+Its @tt{principal} is the configured local principal or verified HTTP identity;
+@tt{capabilities} contains this request's advertised client capabilities;
+@tt{request-id} identifies the current request. @tt{cancelled?} is a zero-argument
+cooperative cancellation query and @tt{notify} is the active notification sink.
+Use protocol helpers such as @tt{progress!} to enforce their notification contracts.
+The parameter defaults to @tt{#f} outside dispatch. A context contains live
+procedures and must not be persisted as a workflow value.
+
+@tt{(make-runtime interface)} installs storage, adapters, authorization and request
+facilities. Optional @tt{#:store}, @tt{#:adapters}, @tt{#:authorize},
+@tt{#:required-scopes}, @tt{#:clock}, @tt{#:recover-tasks?} and
+@tt{#:restore-principal} configure those facilities; the pagination and freshness
+chapters document the cache/cursor settings. @tt{#:store} defaults to @tt{#f};
+durable serving requires an explicit store path. @tt{#:recover-tasks?} defaults
+to true, so creating a configured runtime may start persisted task recovery.
+That is distinct from constructing its descriptors.
+
+@tt{(dispatch runtime method params #:principal principal #:id id #:notify notify)}
+returns a protocol result body and raises @tt{exn:fail:mcp} for a protocol error.
+Principal defaults to @tt{'local}, ID to @tt{#f}, and notification sink to
+@tt{void}. Supply per-request metadata with @tt{request-meta}.
+@tt{(dispatch-message runtime message #:principal principal #:notify notify)}
+uses the same validation and policy path, accepts a complete JSON-RPC request,
+and returns the JSON-RPC outcome (or no response for a valid notification).
+Both transports use this dispatch path. The transport chapters describe event
+handles and synchronous client calls; only the explicit @tt{run-interaction}
+runner follows MRTR/Tasks outcomes using the supplied callbacks.
+
 @section{Declaration construction contracts}
 
 The @tt{make-tool}, @tt{make-resource}, and @tt{make-prompt} factories check
@@ -1435,8 +1538,9 @@ separate binding space, so @racket[perform]'s adapter name does not capture a
 same-named host variable. Conflicting policies for one adapter fail in both the
 compiler and dynamic workflow constructor. Workflow values retain stage-local
 Racket mutation semantics. At the REPL, declarations use ordinary definitions;
-the checked module binding metadata is unavailable there. Whole-interface
-reference analysis remains unfinished.
+the checked module binding metadata is unavailable there. Lexically visible
+references and explicit reference declarations are checked against the composed
+interface; computed references retain runtime target and ambiguity checks.
 Compiler modules and their IR are private and are not extension APIs.
 
 The manifest submodule can be instantiated without the parent application.
@@ -1999,7 +2103,7 @@ separately defined helpers or dynamic composition expressions.
 
 @tt{raco mcp docs module.rkt} generates Markdown from the static manifest.
 @tt{manifest->markdown}, exported by @tt{mcp/cli}, accepts an already read manifest
-and an optional @tt{#:title}. The result includes known descriptions and metadata,
+and optional @tt{#:title} and @tt{#:examples} arguments. The result includes known descriptions and metadata,
 argument requirements/defaults/codecs, input/output and reusable schemas, completion
 targets, resource references, workflow stages, adapter policies, and runtime
 requirements. Schema examples remain present in the emitted schema JSON.
@@ -2010,6 +2114,23 @@ application. Names and source references use code spans; descriptions are escape
 as text; schema code fences expand when necessary to preserve literal backticks.
 Generated documentation describes what the static manifest establishes, including
 its documented limits on helper analysis and dynamic composition.
+
+The manifest submodule separately exports @tt{manifest-examples}, a list of
+locally authored @tt{scenario} source records in declaration order. Each record
+contains @tt{name}, @tt{code}, and source coordinates. Renamed and macro-generated
+scenario forms use the same compiler collector. These records contain printed
+syntax; collecting or reading them does not evaluate configuration expressions,
+start process scenarios, or execute assertions. They do not enter the published
+interface declaration list or change wire-compatibility reports.
+
+@tt{read-manifest-examples} from @tt{mcp/cli} reads this export without
+instantiating the parent application. Older manifest modules without the export
+return an empty list. Pass its result as @tt{#:examples} to
+@tt{manifest->markdown}; @tt{raco mcp docs} does this automatically. The resulting
+section labels the scenarios as source examples, not test-run results. Code fences
+are extended when source contains backticks. These local examples are not rewritten
+through mounted views: run the source module's scenarios to exercise their actual
+configuration. Compiling the module still executes trusted Racket transformers.
 
 @section{Static compatibility reports}
 

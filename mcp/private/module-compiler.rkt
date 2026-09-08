@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
+(require racket/list racket/pretty "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
 (provide make-module-compilers)
 ;; Preserve the defining module, not an import alias or generated binding name.
 ;; Resolving an already expanded binding does not instantiate its provider.
@@ -20,9 +20,21 @@
 (define (make-module-compilers runtime-register interface-runtime)
   (define entries '())
   (define references '())
+  (define examples '())
   (values
    (lambda (stx)
      (syntax-case stx ()
+       [(_ descriptor #:scenario name source)
+        (begin
+          (set! examples
+            (cons (hasheq 'name (syntax-e #'name)
+                          'source (format "~a" (syntax-source #'source))
+                          'line (syntax-line #'source)
+                          'column (syntax-column #'source)
+                          'position (syntax-position #'source)
+                          'code (pretty-format (syntax->datum #'source) #:mode 'write))
+                  examples))
+          #'(void))]
        [(_ descriptor #:mount (expression ...) source view-id mount-id unconditional?)
         (begin (set! entries (cons (mounted-node (syntax->list #'(expression ...)) #'source #'view-id #'mount-id (syntax-e #'unconditional?)) entries))
                #`(#,runtime-register descriptor))]
@@ -121,9 +133,10 @@
      (when (ormap mounted-node? ordered)
        (check-composed-manifest manifest (mounted-node-source (findf mounted-node? ordered))))
      (syntax-local-lift-module
-      #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions)
+      #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions manifest-examples)
           (define manifest-version 2)
           (define manifest-provider '#,(reference-provider interface-runtime))
           (define manifest-exclusions '#,(remove-duplicates (reverse exclusions) equal?))
+          (define manifest-examples '#,(reverse examples))
           (define manifest '#,manifest)))
      #'(void))))
