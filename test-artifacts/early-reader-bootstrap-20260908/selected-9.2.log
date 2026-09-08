@@ -1,0 +1,21 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/reader-bootstrap.rkt")
+raco test: (file "tests/kernel-observation.rkt")
+raco test: (file "tests/observation-install.rkt")
+raco test: (file "tests/module-observation.rkt")
+raco test: (file "tests/core.rkt")
+raco test: (file "tests/compiler.rkt")
+raco test: (file "tests/loader-cli-restart.rkt")
+raco test: (file "tests/loader.rkt")
+raco test: (file "tests/bootstrap-sdk-restart.rkt")
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/compiled-identity.rkt")
+raco test: (file "tests/retained-capture.rkt")
+raco test: (file "tests/module-context-data-api.rkt")
+raco test: (file "tests/initialized-module-context.rkt")
+raco test: (file "tests/module-finalization.rkt")
+raco test: (file "tests/module-build-context-restart.rkt")
+raco test: (file "tests/module-build-context-worker.rkt")
+raco test: (file "tests/module-build-context.rkt")
+211 tests passed

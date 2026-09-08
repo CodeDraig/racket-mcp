@@ -1,5 +1,5 @@
 (module kernel-observation-worker '#%kernel
-  (#%require "../mcp/private/kernel-observation.rkt")
+  (#%require mcp/private/kernel-observation)
   (call-with-kernel-observation
     (lambda (transfer!)
       (let-values ([(scoped) (dynamic-require 'mcp/private/module-observation 'call-with-module-observation)]

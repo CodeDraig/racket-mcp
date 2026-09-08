@@ -5423,3 +5423,41 @@ terminal log is retained in test-artifacts/subscription-full-refresh-20260908.
 This refresh supersedes the prior 6,148-test broad result for current source;
 it does not establish default workflow sealing, complete independent conformance,
 or native macOS/Windows acceptance. The full SDK release remains incomplete.
+
+## Early reader bootstrap observation (2026-09-08)
+
+The language reader now begins in the kernel language, before loading the ordinary
+observer and syntax/module-reader implementation. A persistent kernel observation
+installation hands its actual code records to the ordinary installed observer;
+retained resolver callbacks continue forwarding after reader initialization.
+Scoped kernel observation keeps its original bounded lifetime. Seed installation
+preserves registry separation, direct/nested precedence and newer live records.
+The reader forwards all four original exports with their standard arities.
+
+A cold fresh-source regression now reports no uncaptured ordinary dependencies in
+its inspected application graph; 22 predefined modules remain. A first scoped
+bootstrap prototype reduced the previous 86 ordinary gaps to ten, but retained
+loader callbacks bypassed the closed scope. Persistent handoff closed those ten
+gaps without substituting file hashes. The initial focused group passed 31 cases.
+
+Broader checks exposed an additional startup interaction: producer metadata on a
+kernel entry caused Racket to load the ordinary identity-information provider
+before entering observation. A small kernel-only provider now handles startup
+identity queries and delegates original language information lazily. It is not a
+static dependency of the ordinary compiler helper. An intermediate version with
+that static import still failed both kernel-entry checks; those failed logs are
+retained. A new regression deliberately stamps, serializes and launches a kernel
+entry in a fresh process. The corrected startup subset passed all 11 cases.
+
+These changes improve code observation, not default build sealing. Complete
+runtime-baseline identity and integration of successful module initialization
+with default workflow sealing remain open. Evidence is recorded under
+ test-artifacts/early-reader-bootstrap-20260908; verified-* logs supersede the
+intermediate selected-* and final-* experiments.
+
+The final selected checks passed 212 tests on each of Linux Racket 9.2 and 9.3.
+All 14 official Go probes and the Scribble build also passed. The preceding
+6,193-test full result predates this compiler/reader change and is not reused
+as broad verification of it.
+Installed Linux Racket 9.3 package dependency setup and all 29 selected installed
+checks passed. The final source ZIP was rebuilt twice and byte-compared.

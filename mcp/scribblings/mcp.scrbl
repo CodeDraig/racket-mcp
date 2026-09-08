@@ -2497,8 +2497,12 @@ of evidence remains unresolved; a replacement file is never used to identify it.
 The same identity selection applies to observed SDK bootstrap code. The explicit
 runtime identity is still required for the remaining unobserved runtime baseline.
 
-The language reader and runtime install an idempotent code observer before
-subsequent application dependencies load. Source and compiled imports retain the
+The language reader starts with kernel-only bootstrap observation before loading
+its ordinary reader and observer dependencies. After handoff, retained loader
+callbacks continue forwarding to the installed observer. Reinstalling a seed
+cannot replace newer code already observed in the same module registry. The
+language runtime also installs an idempotent observer before subsequent
+application dependencies load. Source and compiled imports retain the
 actual evaluated module code, including after the corresponding files change.
 The observer preserves caller evaluator behavior and scopes records by module
 registry. Code loaded before the observer remains explicitly unknown. This is
@@ -2508,8 +2512,10 @@ identity for the default serving path.
 The compiler hook also retains a producer identity in the language metadata of
 module declarations it compiles. It requests saveable module code, compiles once,
 hashes the artifact with an unfilled metadata cell, and fills that cell before
-returning. The original language-information provider remains available through
-delegation. Identity reflection reads an already declared module without loading
+returning. The identity-information provider itself uses only the kernel language, so a
+startup query for a stamped kernel module does not load ordinary libraries before
+its observation boundary. The original language-information provider remains
+available through delegation. Identity reflection reads an already declared module without loading
 files or running its handlers; replacing or deleting its files cannot change the
 retained identity. This is trusted compiler metadata, not a signature or a proof
 of equivalence across different builds. Any transformation after identity creation

@@ -64,7 +64,8 @@
       'module-language '#((quote information) get-info 42)))
     (define code (compile-with-module-identity source #f compiler))
     (define info (module-compiled-language-info code))
-    (define lookup (get-info (vector-ref info 2)))
+    (define lookup
+      ((dynamic-require (vector-ref info 0) (vector-ref info 1)) (vector-ref info 2)))
     (check-equal? (lookup 'mcp-executable-identity #f) (compiled-module-producer-identity code))
     (check-equal? (lookup 'answer #f) 42)
     (check-equal? (lookup 'other 'fallback) 'fallback)))

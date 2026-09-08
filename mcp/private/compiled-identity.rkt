@@ -3,7 +3,7 @@
 ;; could be loaded from a replacement file after the parent was declared.
 (provide compile-with-module-identity compiled-module-producer-identity
          declared-module-producer-identity get-info)
-(define provider 'mcp/private/compiled-identity)
+(define provider 'mcp/private/identity-info)
 (define format-tag 'mcp-compiled/1)
 (define (module-source? expression)
   (define value (if (syntax? expression) (syntax-e expression) expression))

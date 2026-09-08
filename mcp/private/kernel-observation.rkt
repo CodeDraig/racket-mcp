@@ -1,6 +1,6 @@
 (module kernel-observation '#%kernel
   (#%require '#%paramz)
-  (#%provide call-with-kernel-observation)
+  (#%provide call-with-kernel-observation install-kernel-observation!)
   ;; Keep this module in the kernel language: importing racket/base here would
   ;; load the runtime libraries before observation could begin.
   (define-values (entries)
@@ -21,8 +21,8 @@
             (make-resolved-module-path
               (cons (if (pair? owner) (car owner) owner) (cdr name)))
             identity))))
-  (define-values (call-with-kernel-observation)
-    (lambda (proc)
+  (define-values (make-observer)
+    (lambda ()
       (let-values ([(registries) (make-hasheq)]
                    [(lock) (make-semaphore 1)]
                    [(active?) #t]
@@ -70,20 +70,29 @@
                       (raise (exn:fail (if closed? "kernel observation scope is closed"
                                            "kernel observation has already been transferred")
                                        (current-continuation-marks))))))])])
-          (with-continuation-mark parameterization-key
-            (extend-parameterization (continuation-mark-set-first #f parameterization-key)
-              current-eval observe current-compile (current-compile))
-            (dynamic-wind
-              (lambda ()
-                (if closed?
-                    (raise (exn:fail "kernel observation scope is closed"
-                                    (current-continuation-marks)))
-                    (void)))
-              (lambda () (proc transfer!))
-              (lambda ()
-                (call-with-semaphore lock
-                  (lambda ()
-                    (set! closed? #t)
-                    (set! active? #f)
-                    (set! receiver #f)
-                    (hash-clear! registries)))))))))))
+          (values observe transfer!
+            (lambda ()
+              (call-with-semaphore lock
+                (lambda ()
+                  (set! closed? #t) (set! active? #f) (set! receiver #f)
+                  (hash-clear! registries))))
+            (lambda ()
+              (if closed?
+                  (raise (exn:fail "kernel observation scope is closed"
+                                  (current-continuation-marks)))
+                  (void)))
+            original-eval)))))
+  (define-values (call-with-kernel-observation)
+    (lambda (proc)
+      (let-values ([(observe transfer! close! check-open original) (make-observer)])
+        (with-continuation-mark parameterization-key
+          (extend-parameterization (continuation-mark-set-first #f parameterization-key)
+            current-eval observe current-compile (current-compile))
+          (dynamic-wind check-open (lambda () (proc transfer!)) close!)))))
+  ;; Installed observation outlives reader loading. After transfer, retained
+  ;; resolver callbacks continue forwarding to the ordinary installed observer.
+  (define-values (install-kernel-observation!)
+    (lambda ()
+      (let-values ([(observe transfer! close! check-open original) (make-observer)])
+        (current-eval observe)
+        transfer!))))

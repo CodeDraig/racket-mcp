@@ -1,0 +1,5 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/reader-bootstrap.rkt")
+raco test: (file "tests/kernel-observation.rkt")
+11 tests passed
