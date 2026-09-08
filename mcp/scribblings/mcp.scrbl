@@ -2292,7 +2292,9 @@ compatible merely because their source text or package version is unchanged.
 An SDK code change captured by this entry point invalidates saved execution even
 when the caller supplies the same runtime identity.
 
-Captured fingerprints now use the @tt{mcp-executable/2} format. On Linux, when
+Captured fingerprints now use the @tt{mcp-executable/3} format and include the
+execution namespace's base phase. Identical code executed at different phases
+therefore has distinct build identities. On Linux, when
 @tt{/proc/self/exe} is readable, the fingerprint includes a cached SHA-256 identity
 of the running executable image. Its original pathname is never used as a
 substitute: that pathname may have been replaced since process startup. Unreadable

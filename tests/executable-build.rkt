@@ -50,7 +50,7 @@
       (seal-module-code-capture! capture
         #:dependencies (for/hash ([name (in-list (module-code-capture-unobserved capture))])
                          (values name "explicit-test-bootstrap/1"))))
-    (check-true (string-prefix? sealed "mcp-executable/2:"))
+    (check-true (string-prefix? sealed "mcp-executable/3:"))
     (check-exn #rx"already sealed"
       (lambda ()
         (seal-module-code-capture! capture

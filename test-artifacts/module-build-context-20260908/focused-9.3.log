@@ -1,0 +1,7 @@
+raco test: (file "tests/module-build-context.rkt")
+raco test: (file "tests/executable-build-phase.rkt")
+raco test: (file "tests/executable-build.rkt")
+raco test: (file "tests/declared-code-capture.rkt")
+raco test: (file "tests/captured-dynamic-imports.rkt")
+raco test: (file "tests/retained-capture.rkt")
+58 tests passed

@@ -1,0 +1,26 @@
+#lang racket/base
+(require rackunit racket/file mcp/private/executable-capture mcp/private/executable-build)
+(define directory (make-temporary-file "mcp-build-phase-~a" 'directory))
+(define provider (build-path directory "provider.rkt"))
+(dynamic-wind void
+  (lambda ()
+    (call-with-output-file provider
+      (lambda (out)
+        (display "#lang racket/base\n(provide ns)\n(define ns (variable-reference->namespace (#%variable-reference)))\n" out)))
+    (define ns0 (dynamic-require provider 'ns))
+    (define ns1 (dynamic-require-for-syntax provider 'ns))
+    (check-equal? (namespace-base-phase ns0) 0)
+    (check-equal? (namespace-base-phase ns1) 1)
+    (define (capture ns)
+      (module-code-capture #f (hash) '() (make-executable-build) ns
+                           (current-module-name-resolver) '()))
+    (define zero (capture ns0))
+    (define one (capture ns1))
+    (define fp0 (seal-module-code-capture! zero))
+    (define fp1 (seal-module-code-capture! one))
+    (check-equal? (call-with-executable-build (module-code-capture-build zero)
+                    (lambda () (namespace-base-phase (current-namespace)))) 0)
+    (check-equal? (call-with-executable-build (module-code-capture-build one)
+                    (lambda () (namespace-base-phase (current-namespace)))) 1)
+    (check-not-equal? fp0 fp1))
+  (lambda () (delete-directory/files directory)))

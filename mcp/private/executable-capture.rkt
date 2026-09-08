@@ -100,12 +100,13 @@
               ([name (in-list (module-code-capture-unobserved capture))])
       (hash-set all name (hash-ref dependencies name))))
   (define fingerprint
-    (string-append "mcp-executable/2:"
+    (string-append "mcp-executable/3:"
       (bytes->hex-string
         (sha256-bytes (open-input-bytes
           (call-with-output-bytes
             (lambda (out)
               (write (list (version) (system-type 'vm) (system-type 'arch)
+                           (namespace-base-phase (module-code-capture-namespace capture))
                            (running-executable-identity)
                            (for/list ([name (in-list (sort (hash-keys all) string<?))])
                              (list name (hash-ref all name)))) out))))))))

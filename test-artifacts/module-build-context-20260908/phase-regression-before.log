@@ -1,0 +1,10 @@
+raco test: (file "tests/executable-build-phase.rkt")
+--------------------
+FAILURE
+name:       check-not-equal?
+location:   tests/executable-build-phase.rkt:25:4
+params:
+  '("mcp-executable/2:0ab2729e6c1f167e738ffbbbd376a752226512c44f93f9b37be6f12a83094dce"
+  "mcp-executable/2:0ab2729e6c1f167e738ffbbbd376a752226512c44f93f9b37be6f12a83094dce")
+--------------------
+1/5 test failures

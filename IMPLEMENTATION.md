@@ -4881,3 +4881,41 @@ passed. Evidence is retained in `test-artifacts/declared-code-capture-20260908`.
 The broad protocol/crash suite was not repeated for this additive private
 component. Default workflow construction is unchanged; automatic build contexts,
 runtime baseline identity and complete-release gates remain open.
+
+## Module-end build capture and execution phases (2026-09-08)
+
+A private lexical hook now captures declared code at a module-end point and
+retains an enclosing loader's build when present. Factories keep that original
+build unless called within another explicit capture. Expansion before a module
+has been declared leaves no executable snapshot; compiled phase-1 and phase-2
+loading have authored coverage. The hook remains separate from default workflow
+construction while runtime baseline and successful-load integration are open.
+
+A module-end capture is not an initialization-success certificate. A later
+lifted expression can still fail; a probe also found that another dynamic-require
+then returns without repeating that failure. The original loader must return
+successfully before its caller seals. Early and late initialization failures
+leave builds unsealed. This constraint prevents default integration from treating
+an available snapshot alone as authorization to execute saved workflows.
+
+Captured fingerprints use mcp-executable/3 and include the execution namespace's
+base phase. The regression reproduced identical fingerprints at phases 0 and 1
+before the correction, while checking the actual runner's phase independently.
+Earlier captures remain tied to their compatible SDK/runtime build.
+
+Focused compilation and six test files passed on Linux Racket 9.2 (54 checks) and
+9.3 (58 checks); the observed-dependency assertion count differs by runtime. The
+same 58 checks and dependency setup passed from the installed 9.3 package, and
+all 14 official Go probes passed. A separate SQLite process-restart regression
+passed 14 checks on both versions and from the installed package: unchanged
+code resumes, helper changes reject pending and terminal continuations before
+further handler work, and new invocations use the new helper. Its worker rejects
+unknown application code instead of assigning it a fixture runtime identity.
+
+The final private-hook boundary and restart pair passed 19 checks on both
+versions and from the installed 9.3 package. Full 9.3 verification passed
+compilation, 5,985 native checks, all 1,301 core schema cases, all 86 optional regex
+cases and Scribble. It began before the extra restart file and final boundary
+assertion were added; the separate 19-check runs cover those final additions.
+Evidence is in test-artifacts/module-build-context-20260908. Default workflow
+integration and all other complete-release gates remain open.

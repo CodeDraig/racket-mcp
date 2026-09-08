@@ -1,0 +1,18 @@
+#lang racket/base
+(require mcp/private/module-build-context mcp/private/executable-capture)
+(module shared racket/base (provide saved) (define saved (box #f)))
+(require (submod "." shared))
+(module broken racket/base
+  (require mcp/private/module-build-context (submod ".." shared)
+           (for-syntax racket/base))
+  (with-module-build-context ctx (set-box! saved ctx))
+  (define-syntax (fail-late stx)
+    (syntax-local-lift-module-end-declaration #'(error 'late "module end failed"))
+    #'(void))
+  (fail-late))
+(define here (variable-reference->resolved-module-path (#%variable-reference)))
+(define broken `(submod ,(resolved-module-path-name here) broken))
+(with-handlers ([exn:fail? (lambda (e) (printf "load: ~a\n" (exn-message e)))]) (dynamic-require broken #f))
+(printf "capture ready: ~s\n" (and (module-build-context-capture (unbox saved)) #t))
+(with-handlers ([exn:fail? (lambda (e) (printf "reload: ~a\n" (exn-message e)))]) (dynamic-require broken #f) (displayln "reload returned"))
+(with-handlers ([exn:fail? (lambda (e) (printf "namespace: ~a\n" (exn-message e)))]) (module->namespace broken) (displayln "namespace returned"))
