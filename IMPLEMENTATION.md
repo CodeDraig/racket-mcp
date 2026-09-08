@@ -1,8 +1,11 @@
 # Implementation and evidence ledger
 
-Target: MCP 2026-07-28; Racket 9.2. Evidence date: 2026-09-07.
-**The requested seven-milestone release is incomplete.** This checkout contains a
-working development implementation, not a release-level conformance claim.
+Target: MCP 2026-07-28; Racket 9.2. Current scope status: 2026-09-08.
+**The approved implementation scope is complete.** The user removed native
+macOS/Windows testing from the plan; both platforms remain unverified.
+REMAINING.md is the authoritative current state. The dated ledger and initial
+milestone table below retain historical requirements, superseded by later entries.
+Completion of the approved scope is not an unqualified protocol-conformance claim.
 Passing a fixture does not establish every behavior of an advertised facility.
 
 ## Milestones
@@ -5690,3 +5693,52 @@ final SDK commit 5731907 produced startup_failure with zero native jobs in GitHu
 run 34272422677. Its startup cause is not established; native macOS and Windows
 9.2/9.3 results require working native runners. No unqualified release/platform
 or protocol-conformance claim is made.
+
+
+### Native platform gate removed by user (2026-09-08)
+
+The user explicitly removed macOS/Windows testing from the plan because there is
+no immediate way to achieve it. PLATFORM is removed from REMAINING.md by scope
+change, not by successful verification. The remaining-work table is now empty;
+the approved implementation scope is complete. The historical original-plan
+acceptance map and earlier platform blockers remain as evidence of the prior
+scope. Linux Racket 9.2/9.3 verification stands; macOS/Windows remain unverified.
+
+This does not change protocol behavior, conformance results, exclusions, or tier
+status. The retained native workflow is not a release gate. No Actions runs were
+launched or re-enabled. Validation for this documentation-only change:
+`git diff --check` and inspection of the current-state documents; no SDK tests
+were rerun.
+
+
+### Explicit dynamic registration requests and validation (2026-09-08)
+
+Completed the separately requested objective to send dynamic registration requests
+and validate returned client metadata. mcp/oauth-registration.rkt provides
+register-oauth-client!, an opaque issuer-bound result, and independent response
+validation. Requests use JSON POST with optional initial Bearer credentials;
+success requires HTTP 201 and JSON. Core metadata types, callbacks, supported
+authentication, secret expiry representation, grant usability and software
+statement preservation are checked. Returned secrets are hidden by the result's
+printed representation. Unknown extension data is retained without claiming
+extension validation. OAUTH-REGISTRATION.md documents the API and exact profile.
+
+The existing bounded HTTP request engine is shared through
+mcp/private/oauth-http-request.rkt, preserving the public oauth-http exception
+and adapters. Registration has no automatic redirects or retries and applies the
+same timeout, byte limits, HTTPS policy and custodian cleanup.
+
+Verification: `raco make tests/oauth*.rkt tests/authorization*.rkt
+ tests/client-registration.rkt tests/http-authorization.rkt tests/authenticate.rkt`
+and the corresponding `raco test` command pass on local Racket 9.2: 398 checks,
+including 67 new registration checks with actual loopback HTTP exchanges, public
+and secret responses, malformed fields/JSON, errors, timeout, cancellation and
+body limits. `git diff --check` passes. An initial test invocation encountered
+stale Racket 9.3 compiled files; rebuilding with 9.2 resolved that environment
+mismatch. The new repeated-space scope rejection test exposed and corrected a
+validation defect before the final passing run.
+
+This completes request/response handling only. Automatic DCR fallback selection,
+registration persistence and installing returned authentication into an authorizer
+are separate work, not claimed here. No independent conformance score changed,
+no hosted Actions were run, and no native macOS/Windows verification was added.

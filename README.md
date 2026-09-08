@@ -1,7 +1,9 @@
 # Native Racket MCP and `#lang mcp`
 
-Implementation in progress for MCP **2026-07-28**, targeting Racket **9.2**.
-This is not yet the completed seven-milestone release. See
+Native SDK and language for MCP **2026-07-28**, targeting Racket **9.2**.
+The approved implementation scope is complete, with qualified conformance results
+and Linux verification on Racket 9.2/9.3. Native macOS/Windows testing was removed
+from the release plan; those platforms remain unverified. See
 [REMAINING.md](REMAINING.md) for mutable remaining work and
 [IMPLEMENTATION.md](IMPLEMENTATION.md) for recorded implementation evidence.
 
@@ -56,9 +58,10 @@ an explicit project-local package home when checking another Racket installation
 for example, use the same home passed to `scripts/ci.py --package-home` when
 running `scripts/check-interop.sh` with that Racket's `bin` directory on `PATH`.
 
-The GitHub Actions matrix targets x64 Linux, macOS, and Windows with Racket 9.2
+The retained GitHub Actions matrix targets x64 Linux, macOS, and Windows with Racket 9.2
 and 9.3 (the current stable release when configured). Action revisions and Racket
-versions are pinned in `.github/workflows/native.yml`. CI runs are evidence for
+versions are pinned in `.github/workflows/native.yml`. Hosted Actions are disabled;
+native macOS/Windows verification is no longer a release requirement. CI runs are evidence for
 their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
@@ -78,9 +81,8 @@ The qualified MCP results are in `test-artifacts/conformance-closure-20260908`:
 recorded MRTR warning; 43 Tasks successes with a header-specification disagreement
 and a harness notification skip; 62 client successes and four expected skips;
 and a real HTTPS CIMD/offline-access run with a 12/12 terminal pass. These results
-are not an unqualified conformance claim. The latest inspected hosted run failed
-before any native jobs started; its cause is not established. macOS and Windows
-remain unverified.
+are not an unqualified conformance claim. A later hosted retry was blocked before native jobs started by an Actions budget.
+macOS and Windows remain unverified; this is not a remaining release gate.
 
 The CLI is also available without package registration:
 
@@ -170,3 +172,7 @@ maintenance operation: `python3 scripts/fetch-inputs.py [source ...]`.
 Do not infer release completeness from the passing core tests. The implementation
 ledger records missing language semantics, recovery races still needing tests,
 conformance exclusions, and unavailable native platform verification.
+
+Explicit dynamic registration requests and response validation are available in
+`mcp/oauth-registration`; see [the API and supported metadata profile](OAUTH-REGISTRATION.md).
+Automatic DCR selection and registration persistence are not yet integrated.
