@@ -1,11 +1,24 @@
-#lang racket/base
-;; Keep the executable entry point independent of SDK initialization. A bootstrap
-;; loader must be able to install code-observation hooks before loading the CLI.
-(require "private/module-observation.rkt")
-(provide main)
-(define cli-path
-  (module-path-index-join "cli.rkt" (variable-reference->module-path-index (#%variable-reference))))
-(define (main)
-  (call-with-module-observation
-    (lambda () ((dynamic-require (module-path-index-resolve cli-path) 'main)))))
-(module+ main (main))
+(module command '#%kernel
+  ;; Importing this entry must not load the ordinary SDK/runtime libraries.
+  ;; Start observation before dynamically loading their first dependency.
+  (#%require "private/kernel-observation.rkt")
+  (#%provide main)
+  (define-values (home)
+    (variable-reference->module-path-index (#%variable-reference)))
+  (define-values (main)
+    (lambda ()
+      (call-with-kernel-observation
+        (lambda (transfer!)
+          (let-values ([(scoped)
+                        (dynamic-require
+                          (module-path-index-resolve
+                            (module-path-index-join "private/module-observation.rkt" home))
+                          'call-with-module-observation)]
+                       [(keyword-call) (dynamic-require 'racket/base 'keyword-apply)])
+            (keyword-call scoped '(#:handoff) (list transfer!)
+              (list
+                (lambda ()
+                  ((dynamic-require
+                     (module-path-index-resolve (module-path-index-join "cli.rkt" home))
+                     'main))))))))))
+  (module* main #f (main)))

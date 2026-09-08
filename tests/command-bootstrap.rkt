@@ -7,7 +7,7 @@
   (check-false (module-declared? 'mcp/runtime #f))
   (define entry (dynamic-require 'mcp/command 'main))
   (check-true (procedure? entry))
-  (for ([module '(mcp/runtime mcp/cli mcp/descriptor mcp/lang)])
+  (for ([module '(mcp/runtime mcp/cli mcp/descriptor mcp/lang mcp/private/module-observation)])
     (check-false (module-declared? module #f)))
   ;; Invocation, unlike importing the entry, starts the normal SDK command path.
   (define output

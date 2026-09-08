@@ -2240,8 +2240,14 @@ resolver or namespace.
 The serving command opts into this loader with an explicit runtime identity:
 @verbatim{raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serve application.rkt}
 
-The @tt{raco mcp} entry point installs an observer before loading the SDK. For
-SDK dependencies evaluated under that observer, captured loading uses the actual
+The @tt{mcp/command} entry point starts in Racket's kernel language and installs
+observation before loading ordinary SDK libraries. Direct file execution and
+@tt{racket -l mcp/command} use this cold entry; @tt{raco mcp} uses the same command
+inside its existing Racket process. Libraries already loaded by @tt{raco} precede
+the observation scope. Importing the command alone does not load the ordinary SDK.
+Kernel observations transfer to the SDK collector by module registry, and retained
+loader hooks forward later declarations until the command scope closes. For
+SDK dependencies evaluated under observation, captured loading uses the actual
 compiled module code in its original module registry instead of the supplied
 identity. The explicit identity remains required for dependencies loaded before
 observation, including predefined runtime modules. Importing the SDK first or

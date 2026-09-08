@@ -1,0 +1,3 @@
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+15 tests passed

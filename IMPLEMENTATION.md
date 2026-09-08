@@ -4737,3 +4737,21 @@ optional regex cases and Scribble.
 All 14 official Go probes and installed dependency checks plus 54 installed tests
 passed for the handoff change. A temporary kernel command entry also ran inspect
 on both versions; production command integration is still pending.
+
+## Kernel command startup (2026-09-08)
+
+The production command now imports only the kernel observer before invocation.
+Its SDK and CLI paths remain anchored to the command module. Invocation transfers
+kernel observations and subsequent loader events into the SDK scope. Importing
+the command alone leaves ordinary SDK modules unloaded.
+
+Two stdio regressions walk the server's actual ordinary dependency graph through
+file and library command invocation. Both fail against the prior entry and pass
+with the new command. The initial 9.3 suite passed 15 checks; the broader 9.2
+suite passed 29, including copied-SDK durable workflow restart and changed-code
+rejection. Evidence is in `test-artifacts/kernel-command-20260908`. Installed
+package checks and 44 installed tests passed, as did all 14 regular Go probes and
+an additional official Go client probe through the command. Installed raco inspect
+passed. Full 9.3 verification passed compilation, 5,950 native checks, all 1,301
+core schema cases, all 86 optional regex cases, and the updated Scribble build. Predefined and preloaded
+runtime identity, and default workflow build sealing, remain open.
