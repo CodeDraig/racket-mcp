@@ -25,9 +25,13 @@
       (filter (lambda (pair)
                 (define d (cdr pair))
                 (and (eq? (hash-ref d 'kind #f) 'resource)
-                     (equal? (hash-ref d 'name #f) (hash-ref ref 'name #f))
-                     (hash-ref ref 'source #f)
-                     (equal? (hash-ref d 'source #f) (hash-ref ref 'source)))) declarations))
+                     (if (hash-has-key? ref 'local-target)
+                         (and (hash-ref ref 'local-target)
+                              (equal? (hash-ref d 'local-id #f) (hash-ref ref 'local-target)))
+                         ;; Older manifests have only source/name hints.
+                         (and (equal? (hash-ref d 'name #f) (hash-ref ref 'name #f))
+                              (hash-ref ref 'source #f)
+                              (equal? (hash-ref d 'source #f) (hash-ref ref 'source)))))) declarations))
     (cond [(= (length candidates) 1) (caar candidates)]
           [else
            (hash-ref! external ref

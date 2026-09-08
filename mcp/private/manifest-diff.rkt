@@ -7,7 +7,7 @@
 (define (contract entry)
   ;; Strip compiler-owned locations only. A schema property called "source" or
   ;; "line" is application data and must still participate in comparison.
-  (define base (without entry location-fields))
+  (define base (without entry (cons 'local-id location-fields)))
   (define stages
     (if (hash-has-key? base 'workflow-stages)
         (hash-set base 'workflow-stages
@@ -15,7 +15,11 @@
   (if (hash-has-key? stages 'resource-references)
       (hash-set stages 'resource-references
                 (remove-duplicates
-                 (map (lambda (ref) (without ref '(line column position span)))
+                 (map (lambda (ref)
+                        (define stable (without ref '(line column position span local-target)))
+                        (if (hash-has-key? ref 'local-target)
+                            (hash-set stable 'target-scope (if (hash-ref ref 'local-target) 'local 'external))
+                            stable))
                       (hash-ref stages 'resource-references)) equal?)) stages))
 (define (key entry)
   (define kind (hash-ref entry 'kind))
@@ -27,10 +31,29 @@
 (define (index manifest)
   (unless (and (list? manifest) (andmap hash? manifest))
     (raise-argument-error 'manifest-diff "(listof hash?)" manifest))
+  (define local-targets
+    (for/fold ([targets (hash)]) ([entry (in-list manifest)]
+                                 #:when (and (eq? (hash-ref entry 'kind #f) 'resource)
+                                             (hash-has-key? entry 'local-id)))
+      (define id (hash-ref entry 'local-id))
+      (when (hash-has-key? targets id)
+        (error 'manifest-diff "duplicate local declaration identity: ~a" id))
+      (hash-set targets id (key entry))))
   (for/fold ([result (hash)]) ([entry (in-list manifest)])
     (define id (key entry))
     (when (hash-has-key? result id) (error 'manifest-diff "duplicate declaration identity: ~a" id))
-    (hash-set result id entry)))
+    (define normalized
+      (if (hash-has-key? entry 'resource-references)
+          (hash-set entry 'resource-references
+            (for/list ([ref (in-list (hash-ref entry 'resource-references))])
+              (cond [(hash-ref ref 'local-target #f)
+                     (hash-set ref 'local-target-declaration
+                       (hash-ref local-targets (hash-ref ref 'local-target)
+                         (lambda () (error 'manifest-diff "unresolved local resource target: ~a"
+                                           (hash-ref ref 'local-target)))))]
+                    [else (hash-remove ref 'local-target-declaration)])))
+          entry))
+    (hash-set result id normalized)))
 (define (workflow-version entry)
   (define metadata (hash-ref entry 'metadata (hasheq)))
   (hash-ref metadata (if (eq? (hash-ref entry 'kind) 'workflow) 'version 'workflow) (hasheq 'known? #f)))

@@ -1,0 +1,2 @@
+Two consecutive scripts/package.py runs produced identical source archives.
+5e608da3501b88958ff14f3bbff197f331f6073866c1345431f757d94b8ec821  racket-mcp-0.1.zip

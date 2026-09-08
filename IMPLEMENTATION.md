@@ -4800,3 +4800,22 @@ analysis and all other full-release gates remain open.
 
 All 14 official Go probes, installed package dependency checks and 70 installed
 tests passed for the reference change.
+
+## Lexical manifest reference targets (2026-09-08)
+
+Generated manifests now identify local resource targets by lexical binding.
+An imported resource from another submodule of the same source file no longer
+acquires an incorrect diagram edge to a same-name local resource. Generated
+bindings without source positions also resolve locally. Explicit external targets
+never fall back to source/name hints; older manifests retain that legacy fallback.
+Diffs normalize local IDs to declaration identities, ignoring incidental ID
+renumbering while retaining retargeting and local/external changes.
+
+Focused compilation and 95 checks passed on Linux Racket 9.2 and 9.3, including
+phase checks and inspection of manifests whose application/provider modules would
+throw if instantiated. Initial failure and passing evidence are retained in
+`test-artifacts/manifest-reference-bindings-20260908`. All 14 official Go probes,
+installed package dependency checks and 95 installed tests passed. Full 9.3
+verification passed compilation, 5,962 native checks, all 1,301 core schema cases,
+all 86 optional regex cases and Scribble. Whole-interface cross-module analysis
+remains incomplete.

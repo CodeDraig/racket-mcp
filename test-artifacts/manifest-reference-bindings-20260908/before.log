@@ -1,0 +1,9 @@
+raco test: (file "tests/manifest-reference-bindings.rkt")
+--------------------
+same-name resources in other submodules are not local diagram targets
+FAILURE
+name:       check-false
+location:   tests/manifest-reference-bindings.rkt:19:2
+params:     '(#t)
+--------------------
+1/1 test failures

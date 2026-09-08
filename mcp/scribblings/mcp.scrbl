@@ -1774,6 +1774,13 @@ explicitly marked unknown. These fields describe references visible in handler
 and workflow-stage syntax; they do not prove that separately defined helpers or
 dynamic interface expressions introduce no additional references.
 
+Each local resource has a @tt{local-id}. A reference's @tt{local-target} is that
+identifier when lexical binding resolves to a resource in this manifest, and
+@racket[#f] otherwise. These identifiers are local to this generated manifest;
+they are not wire names or stable identifiers across builds. Imported resources
+remain external even when their names and source files match a local declaration.
+Generated bindings need no source location to establish a local target.
+
 The compiler emits the manifest after declaration right-hand sides expand, using
 Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
@@ -1807,8 +1814,9 @@ The diagram shows declarations, dotted resource-reference edges, workflow entry
 points, sequential stage transitions, numbered branch alternatives, explicit
 joins, and effect adapters labelled with their policy. Completion stages have no
 implicit outgoing transition. Imported resources outside the local manifest are
-labelled external or unresolved; matching names alone do not connect them to a
-local resource with a different source. Ambiguous matches remain explicit.
+labelled external or unresolved. Generated manifests use lexical local targets;
+older manifests lacking these fields use source/name hints. Explicit external
+targets never fall back to those hints. Ambiguous matches remain explicit.
 
 All node identifiers are generated. Declaration and stage names are escaped as
 quoted labels using Mermaid decimal entities. The diagram does not execute
@@ -1840,7 +1848,10 @@ required arguments and changed known published resource URIs/templates are
 @tt{breaking-contract-change}. Other static changes require review. New
 declarations are reported as added. Duplicate published identities are errors.
 
-Compiler-owned source positions do not affect comparison. Resource-reference
+Compiler-owned source positions and incidental local-ID renumbering do not affect
+comparison. Local target IDs resolve to declaration identities before comparison;
+retargeting and local/external changes require review. Duplicate local IDs and
+dangling local targets are errors. Resource-reference
 origins retain their source identity so distinct providers with the same name
 are not collapsed. Schema properties named @tt{source} or @tt{line} remain
 application data and still participate in comparison. Ordinary tools and workflow
