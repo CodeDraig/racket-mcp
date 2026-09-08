@@ -1736,6 +1736,13 @@ views of the same referenced identity are rejected as ambiguous. Cyclic referenc
 are allowed because links can be cyclic; recursive embedding retains its own
 runtime cycle checks.
 
+The ordinary @tt{resource-ref} constructor checks its resource descriptor, argument
+list, exact arity, and each argument's schema through the same path as applying a
+resource declaration. Neither form reads the resource. References constructed in
+ordinary helpers or from runtime data still resolve against the active interface:
+missing and multiply mounted identities raise errors. Dynamic links and embeddings
+never select a mount merely because it occurs first in the resource list.
+
 For example, after defining a tool @tt{open-document} and resource @tt{document},
 construct their interface with @tt{#:references (hasheq open-document (list document))}.
 A view excluding @tt{document} then fails while @tt{open-document} remains exposed.

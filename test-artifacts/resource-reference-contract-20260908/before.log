@@ -1,0 +1,18 @@
+raco test: (file "tests/resource-reference-contract.rkt")
+--------------------
+ordinary reference constructor enforces the resource call contract
+FAILURE
+name:       check-exn
+location:   tests/resource-reference-contract.rkt:8:4
+params:     '(#<procedure:exn:fail?> #<procedure:...erence-contract.rkt:8:25>)
+message:    "No exception raised"
+--------------------
+--------------------
+dynamic references reject ambiguous mounting instead of choosing list order
+FAILURE
+name:       check-exn
+location:   tests/resource-reference-contract.rkt:16:6
+params:     '(#rx"ambiguous" #<procedure:...erence-contract.rkt:16:32>)
+message:    "No exception raised"
+--------------------
+2/3 test failures

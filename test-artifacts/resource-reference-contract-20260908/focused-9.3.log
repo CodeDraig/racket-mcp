@@ -1,0 +1,5 @@
+raco test: (file "tests/resource-reference-contract.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/inferred-references.rkt")
+raco test: (file "tests/upstream.rkt")
+70 tests passed

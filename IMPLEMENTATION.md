@@ -4780,3 +4780,23 @@ open, along with the other complete-release gates.
 
 All 14 official Go probes passed for the executable-image change. Installed
 package dependency checks and 75 installed tests passed.
+
+## Resource-reference construction and dynamic resolution (2026-09-08)
+
+Direct resource-ref construction now performs the same descriptor, argument-list,
+arity and schema checks as resource application. Dynamic reference resolution
+rejects multiple mounts of an identity instead of choosing whichever appears
+first. Unique transformed names/URIs and missing-target errors are preserved.
+
+Authored regressions reproduced both defects. The corrected suite also verifies
+that dynamic links and embeddings reach JSON-RPC errors before resource reads.
+Focused 9.3 compilation and 70 checks passed across new, domain, inferred-reference
+and upstream tests. Evidence is in `test-artifacts/resource-reference-contract-20260908`.
+The same 70 focused checks passed on 9.2. Full 9.3 validation passed compilation,
+5,957 native checks, all 1,301 core schema cases, all 86 optional regex cases,
+and the Scribble build.
+Whole-interface cross-module
+analysis and all other full-release gates remain open.
+
+All 14 official Go probes, installed package dependency checks and 70 installed
+tests passed for the reference change.

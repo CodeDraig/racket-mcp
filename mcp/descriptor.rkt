@@ -19,11 +19,7 @@
 (struct tool-descriptor (name description arguments input-schema output-schema handler annotations workflow execution raw? changes) #:transparent)
 (struct resource-descriptor (name uri description mime-type handler arguments matcher identity workflow renderer depends-on ttl-ms) #:transparent
   #:property prop:procedure
-  (lambda (self . args)
-    (unless (= (length args) (length (resource-descriptor-arguments self))) (error 'resource "incorrect resource-reference arity"))
-    (for ([a (in-list (resource-descriptor-arguments self))] [v (in-list args)])
-      (unless (valid? (argument-schema a) v) (error 'resource "invalid reference argument ~a" (argument-name a))))
-    (resource-ref self args)))
+  (lambda (self . args) (resource-ref self args)))
 (struct prompt-descriptor (name description arguments handler workflow) #:transparent)
 (struct interface-descriptor (server tools resources prompts completions) #:transparent)
 (struct scoped-interface interface-descriptor (requirements adapters references restrictions) #:transparent)
@@ -58,7 +54,19 @@
     '("tool" "resource" "prompt")
     (list tool-descriptor-name resource-descriptor-name prompt-descriptor-name)
     (list tool-descriptor-workflow resource-descriptor-workflow prompt-descriptor-workflow)))
-(struct resource-ref (declaration arguments) #:transparent)
+(struct resource-ref (declaration arguments) #:transparent
+  #:guard
+  (lambda (declaration arguments who)
+    (unless (resource-descriptor? declaration)
+      (raise-argument-error who "resource-descriptor?" declaration))
+    (unless (list? arguments) (raise-argument-error who "list?" arguments))
+    (define declared (resource-descriptor-arguments declaration))
+    (unless (= (length arguments) (length declared))
+      (error who "incorrect resource-reference arity"))
+    (for ([argument (in-list declared)] [value (in-list arguments)])
+      (unless (valid? (argument-schema argument) value)
+        (error who "invalid reference argument ~a" (argument-name argument))))
+    (values declaration arguments)))
 (struct request-context (principal capabilities request-id cancelled? notify) #:transparent)
 (define current-request-context (make-parameter #f))
 (define current-interface (make-parameter #f))
@@ -354,9 +362,16 @@
   (hasheq 'type "resource_link" 'uri (resource-uri ref) 'name (resource-descriptor-name d) 'mimeType (resource-descriptor-mime-type d)))
 (define (resolve-resource ref)
   (define original (resource-ref-declaration ref))
-  (if (current-interface)
-                (or (findf (lambda (d) (eq? (resource-descriptor-identity original) (resource-descriptor-identity d))) (interface-descriptor-resources (current-interface)))
-                    (error 'resource-uri "referenced resource is absent from the interface")) original))
+  (cond
+    [(current-interface)
+     (define candidates
+       (filter (lambda (d) (eq? (resource-descriptor-identity original)
+                                (resource-descriptor-identity d)))
+               (interface-descriptor-resources (current-interface))))
+     (cond [(null? candidates) (error 'resource-uri "referenced resource is absent from the interface")]
+           [(pair? (cdr candidates)) (error 'resource-uri "referenced resource has ambiguous mounts in the interface")]
+           [else (car candidates)])]
+    [else original]))
 (define (resource-uri ref)
   (define original (resource-ref-declaration ref))
   (define d (resolve-resource ref))
