@@ -20,7 +20,9 @@
       (syntax-parse value #:literals (quote)
         [(quote datum) (cons #t (syntax->datum #'datum))]
         [_ (and (or (boolean? datum) (hash? datum) (string? datum) (number? datum)
-                    (bytes? datum) (char? datum) (vector? datum))
+                    (bytes? datum) (char? datum) (vector? datum)
+                    (regexp? datum) (byte-regexp? datum) (box? datum)
+                    (prefab-struct-key datum))
                 (cons #t (syntax->datum value)))]))
     (when literal
       (with-handlers ([exn:fail? (lambda (e) (raise-syntax-error 'schema (exn-message e) value))])

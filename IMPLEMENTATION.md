@@ -4919,3 +4919,21 @@ cases and Scribble. It began before the extra restart file and final boundary
 assertion were added; the separate 19-check runs cover those final additions.
 Evidence is in test-artifacts/module-build-context-20260908. Default workflow
 integration and all other complete-release gates remain open.
+
+## Reader-literal schema diagnostics (2026-09-08)
+
+The literal schema checker omitted regexps, boxes and prefab structures, so these
+self-evaluating Racket values escaped expansion checks in schema-bearing forms.
+A matrix reproduced all 44 cases across eleven declaration/stage positions.
+The checker now reports each malformed literal at its original source location;
+computed schemas retain runtime checking and lexical quote handling is unchanged.
+Compilation and 118 focused checks passed on Linux Racket 9.2 and 9.3. Installed
+package dependency checks and the same 118 tests passed on 9.3; all 14 official Go
+probes passed. Full 9.3 verification passed compilation, 6,044 native checks, all
+1,301 core schema cases, all 86 optional regex cases and Scribble. The interaction
+runner now has
+an indexed module/function reference with its complete signature and callback
+policy. Stdio client construction, request-handle inspection, cancellation and
+close also have indexed references. Separate Scribble builds passed. Evidence is
+in test-artifacts/declaration-reader-literals-20260908. This closes these specific
+literal cases, not the remaining whole-interface and release acceptance gates.

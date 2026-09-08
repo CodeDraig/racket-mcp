@@ -1,0 +1,442 @@
+raco test: (file "tests/declaration-reader-literals.rkt")
+--------------------
+reader schema literal #rx"abc" in (schema Bad ~a)
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (tool (bad [value ~a]) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (tool (bad) #:output ~a (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (resource (bad [value ~a]) #:uri "bad:///{value}" "bad")
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (prompt (bad [value ~a]) '())
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (shape Bad [value ~a])
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (workflow (bad [value ~a]) #:version "1" (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (workflow (bad) #:version "1" (checkpoint [value ~a] 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (workflow (bad) #:version "1" (await-input [value ~a] 'request) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (workflow (bad) #:version "1" (await-input ([value ~a 'request])) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx"abc" in (workflow (bad) #:version "1" (perform [value ~a] #:adapter save #:policy manual 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (schema Bad ~a)
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (tool (bad [value ~a]) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (tool (bad) #:output ~a (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (resource (bad [value ~a]) #:uri "bad:///{value}" "bad")
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (prompt (bad [value ~a]) '())
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (shape Bad [value ~a])
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (workflow (bad [value ~a]) #:version "1" (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (workflow (bad) #:version "1" (checkpoint [value ~a] 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (workflow (bad) #:version "1" (await-input [value ~a] 'request) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (workflow (bad) #:version "1" (await-input ([value ~a 'request])) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #rx#"abc" in (workflow (bad) #:version "1" (perform [value ~a] #:adapter save #:policy manual 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (schema Bad ~a)
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (tool (bad [value ~a]) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (tool (bad) #:output ~a (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (resource (bad [value ~a]) #:uri "bad:///{value}" "bad")
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (prompt (bad [value ~a]) '())
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (shape Bad [value ~a])
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (workflow (bad [value ~a]) #:version "1" (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (workflow (bad) #:version "1" (checkpoint [value ~a] 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (workflow (bad) #:version "1" (await-input [value ~a] 'request) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (workflow (bad) #:version "1" (await-input ([value ~a 'request])) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #&1 in (workflow (bad) #:version "1" (perform [value ~a] #:adapter save #:policy manual 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (schema Bad ~a)
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (tool (bad [value ~a]) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (tool (bad) #:output ~a (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (resource (bad [value ~a]) #:uri "bad:///{value}" "bad")
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (prompt (bad [value ~a]) '())
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (shape Bad [value ~a])
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (workflow (bad [value ~a]) #:version "1" (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (workflow (bad) #:version "1" (checkpoint [value ~a] 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (workflow (bad) #:version "1" (await-input [value ~a] 'request) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (workflow (bad) #:version "1" (await-input ([value ~a 'request])) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+--------------------
+reader schema literal #s(record 1) in (workflow (bad) #:version "1" (perform [value ~a] #:adapter save #:policy manual 1) (text-result "bad"))
+FAILURE
+name:       check-exn
+location:   tests/declaration-reader-literals.rkt:24:4
+params:
+  '(#<procedure:...reader-literals.rkt:25:6>
+  #<procedure:...reader-literals.rkt:31:6>)
+message:    "No exception raised"
+--------------------
+44/44 test failures

@@ -1,0 +1,5 @@
+raco test: (file "tests/declaration-reader-literals.rkt")
+raco test: (file "tests/declaration-schemas.rkt")
+raco test: (file "tests/domain-bindings.rkt")
+raco test: (file "tests/compiler.rkt")
+118 tests passed

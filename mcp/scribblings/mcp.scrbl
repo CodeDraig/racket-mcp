@@ -1,6 +1,9 @@
 #lang scribble/manual
-@(require (for-label racket/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
+@(require (for-label racket/base racket/async-channel racket/contract/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
+                     (only-in mcp/interaction run-interaction)
+                     (only-in mcp/stdio make-stdio-client client-close! request-handle?
+                              request-handle-id request-handle-notifications request-cancel!)
                      (only-in mcp/runtime runtime-observe-upstream-task!)
                      (only-in mcp/upstream make-upstream-bridge upstream-bridge? bridge-upstream-request recover-upstream-request! recover-upstream-task! retry-upstream-task!)))
 @title{MCP for Racket: Development API}
@@ -89,9 +92,12 @@ shape. Append @racket[#:optional] to receive @racket[missing] when absent, or
 and can reference preceding arguments. JSON null is @racket['null]; false is
 @racket[#f]. Duplicate argument binders are expansion errors.}
 @defform[(schema name schema-expression)]{
-Defines a reusable JSON Schema. Literal boolean/object schemas receive expansion
-checks; dynamic schemas receive construction checks. Arbitrary schema expressions
-are never evaluated by a transformer.}
+Defines a reusable JSON Schema. Literal schemas receive expansion checks, and
+invalid reader literals (including regular expressions, boxes and prefab
+structures) produce errors at their source location. These checks also apply to
+argument, output, shape and workflow stage schemas. Dynamic schemas receive
+construction checks; arbitrary schema expressions are never evaluated by a
+transformer.}
 @defform[(shape name [field schema-expression] ...)]{
 Produces the schema binding, a @tt{make-name} constructor, @tt{name-field}
 accessors, @tt{name->json}/@tt{json->name} conversions, and a @tt{name-codec} binding. These generated names use the
@@ -430,6 +436,44 @@ matrix remains open.
 @section{Transports, policy, and ownership}
 @subsection{Stdio}
 @defmodule[mcp/stdio]
+@defproc[(make-stdio-client [input input-port?] [output output-port?]
+                            [#:close-ports? close-ports? boolean? #t]
+                            [#:notification-limit notification-limit exact-positive-integer? 64]
+                            [#:request-limit request-limit exact-positive-integer? 1024]
+                            [#:progress-token-limit token-limit exact-positive-integer? 1024]
+                            [#:timeout timeout (or/c #f (and/c rational? positive?)) 30]
+                            [#:outbound-limit outbound-limit exact-positive-integer? 64])
+         any/c]{
+Creates an opaque stdio client and starts its reader and serialized writer.
+Pass the returned value to @racket[client-request], @racket[client-call] and
+@racket[client-close!]. Limits and ownership are described below.
+}
+@defproc[(request-handle? [value any/c]) boolean?]{
+Recognizes request handles returned by the stdio and HTTP request APIs. A handle
+is an event: @racket[sync] returns its response hash or failure exception value.
+Synchronizing the same completed handle again returns its recorded outcome.
+}
+@defproc[(request-handle-id [handle request-handle?]) any/c]{
+Returns the JSON-RPC request ID assigned to the handle.
+}
+@defproc[(request-handle-notifications [handle request-handle?]) async-channel?]{
+Returns the bounded channel of notification messages for this request. Receive
+from it with @racket[async-channel-get] or synchronize on the channel. Completion
+of the request is reported by the handle event, not by a channel sentinel; wait
+on both when consuming notifications until completion.
+}
+@defproc[(request-cancel! [handle request-handle?]) void?]{
+Cancels an active request locally and initiates transport cancellation. The
+operation does not wait for acknowledgement and leaves completed handles intact.
+}
+@defproc[(client-close! [client any/c]
+                      [reason any/c (exn:fail "Client closed" (current-continuation-marks))])
+         void?]{
+Closes a client returned by @racket[make-stdio-client], settles its outstanding
+handles and releases owned resources. Repeated calls leave the first outcome
+intact. An exception reason is retained; another value is wrapped in
+@racket[exn:fail:stdio].
+}
 @racket[make-stdio-client] accepts input/output ports and owns them by default.
 Explicit close, EOF, or a decoding/protocol failure resolves all pending handles,
 stops the reader, and closes both ports. With @racket[#:close-ports? #f], the
@@ -474,7 +518,7 @@ outbound queue. A full queue rejects a new request before writing; failure to
 queue necessary cancellation fails the connection explicitly. Closing the client also
 stops this worker.
 @racket[request-cancel!] resolves an active handle with
-@racket[exn:fail:request-cancelled], carrying its @racket[request-id], and queues
+@racket[exn:fail:request-cancelled], carrying its @racket[request-handle-id], and queues
 stdio cancellation without waiting for output or a server acknowledgement.
 A late response cannot replace that local outcome. Completed handles are unchanged.
 Servers do not acknowledge cancellation of ordinary requests with a cancellation
@@ -810,8 +854,27 @@ Hosted authorization services
 and dynamic client registration are outside the package scope.
 
 @subsection{Explicit interaction runner}
-@tt{mcp/interaction} exports @racket[run-interaction]. Its request callback accepts
-method and parameter values and must issue a fresh JSON-RPC ID on every call.
+@defmodule[mcp/interaction]
+@defproc[(run-interaction [request procedure?] [method string?] [params hash?]
+                          [#:elicit elicit procedure?]
+                          [#:navigate navigate procedure?]
+                          [#:max-rounds max-rounds exact-positive-integer? 100]
+                          [#:wait wait procedure? (lambda (milliseconds)
+                                                   (sync (alarm-evt (+ (current-inexact-milliseconds) milliseconds))))])
+         hash?]{
+Runs one application-authorized interaction, following MRTR continuations and
+Tasks through the supplied request procedure. The request callback accepts two
+arguments, a method string and a parameter hash, and must issue a fresh JSON-RPC
+ID on every call. It returns a result hash or a JSON-RPC response hash. The runner
+returns the final outcome in that same representation; a terminal Tasks outcome
+remains the task snapshot, including its nested operation result.
+
+The elicitation and navigation callbacks each accept one elicitation parameter
+hash and return an input-response hash. Navigation handles URL elicitation; the
+elicitation callback handles forms. The wait callback accepts a polling interval
+in milliseconds and its result is ignored. The default waits on a Racket alarm
+event. Callbacks execute synchronously in the calling thread, so applications
+control UI interaction, credentials and any surrounding cancellation scope.
 Low-level client calls return protocol outcomes directly; only this explicit runner
 performs follow-up requests. Supply @racket[#:elicit] and @racket[#:navigate]
 callbacks returning input responses. Decline and cancellation responses are retained.
@@ -828,6 +891,7 @@ malformed input-required results fail before retry. Missing @tt{resultType} mean
 through the same callback, which must carry the application's capabilities and
 credentials. @racket[#:wait] supplies polling waits; @racket[#:max-rounds] is a
 positive integer, default 100, bounding loop rounds rather than individual messages.
+}
 
 @section{Composition, extensions, and inspection}
 @racket[mount] composes descriptors and registers the result in a language module.
