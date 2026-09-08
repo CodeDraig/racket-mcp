@@ -46,8 +46,9 @@
   (unless (and (procedure? clock) (procedure-arity-includes? clock 0))
     (raise-argument-error 'make-runtime "clock procedure accepting zero arguments" clock))
   ;; Public raw descriptors must pass the same interface checks before recovery
-  ;; can execute application work. Preserve the supplied descriptor's identity.
-  (void (make-interface #:server (interface-descriptor-server interface)
+  ;; can execute application work. Preserve already-normalized descriptors,
+  ;; but retain remapped completion targets when raw construction needs them.
+  (define checked-interface (make-interface #:server (interface-descriptor-server interface)
                         #:tools (interface-descriptor-tools interface)
                         #:resources (interface-descriptor-resources interface)
                         #:prompts (interface-descriptor-prompts interface)
@@ -56,6 +57,9 @@
                         #:adapter-bindings (interface-adapter-bindings interface)
                         #:adapter-restrictions (interface-adapter-restrictions interface)
                         #:references (interface-resource-references interface)))
+  (unless (andmap eq? (interface-descriptor-completions interface)
+                     (interface-descriptor-completions checked-interface))
+    (set! interface checked-interface))
   (define (operation-scopes method params)
     (append (check-scopes! (required-scopes method params))
             (declaration-scopes interface store method params)))

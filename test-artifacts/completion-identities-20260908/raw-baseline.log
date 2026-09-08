@@ -1,0 +1,9 @@
+raco test: (file "/tmp/mcp-raw-completion-probe.rkt")
+--------------------
+ERROR
+name:       check-equal?
+location:   /tmp/mcp-raw-completion-probe.rkt:7:0
+
+Unknown completion target
+--------------------
+1/1 test failures

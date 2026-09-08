@@ -1987,6 +1987,25 @@ review, including unmatched known URIs that an unknown counterpart could retain.
 Dynamic mounts also prevent definite addition/removal claims for declarations
 whose counterpart could be supplied by the unresolved mount.
 
+Completion identities combine the target's kind and published identity with the
+argument name. Prompt targets use their published name; resource targets resolve
+lexical references to their published URI/template, including through mounts and
+URI remappings. Equal display names therefore do not merge distinct resource or
+prompt completions. A completion targeting a resource excluded by a static view
+receives the same expansion diagnostic as other references to that resource.
+Older manifests without resolved resource-completion references require review;
+display names alone do not establish their identity.
+
+Runtime interface construction resolves resource completion targets by declaration
+identity. A completion declared outside a mounted view can therefore target that
+view's unique transformed resource. Missing and ambiguous identities are errors;
+an unrelated resource with the same URI does not satisfy the reference. Duplicate
+target/argument pairs are checked after resolution, both during static composition
+and by @racket[make-interface].
+@racket[make-runtime] retains normalized completion targets when given a raw
+interface descriptor. If the supplied interface is already normalized, its
+descriptor identity is preserved.
+
 Compiler-owned source positions and incidental local-ID renumbering do not affect
 comparison. Local target IDs resolve to declaration identities before comparison;
 retargeting and local/external changes require review. Duplicate local IDs and

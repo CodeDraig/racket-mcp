@@ -59,7 +59,13 @@
                                          'binding-provider (reference-provider target)
                                          'binding-name (reference-binding-name target))))) base-entry))
          (define targets
-           (append-map cdr (filter (lambda (group) (and (identifier? (declaration-node-name node)) (free-identifier=? (car group) (declaration-node-name node)))) references)))
+           (if (eq? (declaration-node-kind node) 'completion)
+               (let ([binding (lookup-resource-binding (declaration-node-name node))])
+                 (if binding
+                     (let ([target (resource-binding-target binding)])
+                       (list (syntax-property (local-expand target 'expression '()) 'mcp-resource-origin
+                                              (syntax-property target 'mcp-resource-origin)))) '()))
+               (append-map cdr (filter (lambda (group) (and (identifier? (declaration-node-name node)) (free-identifier=? (car group) (declaration-node-name node)))) references))))
          (define origins
            (remove-duplicates
             (for/list ([target (in-list targets)])
@@ -71,9 +77,10 @@
                 (for/first ([resource (in-list local-resources)]
                             #:when (and (car resource) (free-identifier=? target (car resource))))
                   (cdr resource)))) equal?))
-         (if (memq (declaration-node-kind node) '(tool resource prompt workflow))
+         (if (memq (declaration-node-kind node) '(tool resource prompt workflow completion))
              (hash-set* entry 'resource-references (sort origins string<? #:key (lambda (origin) (format "~a:~a:~a" (hash-ref origin 'source "") (hash-ref origin 'position 0) (hash-ref origin 'name))))
-                        'reference-analysis 'lexical-handler-syntax) entry)))
+                        'reference-analysis (if (eq? (declaration-node-kind node) 'completion)
+                                                'lexical-completion-target 'lexical-handler-syntax)) entry)))
      ;; Called in the final generated RHS, after application RHS expansion.
      ;; Lift a fresh, independent module containing only quoted manifest data.
      (define exclusions '())
@@ -87,6 +94,10 @@
      (when (ormap mounted-node? ordered)
        (check-composed-manifest combined (mounted-node-source (findf mounted-node? ordered))))
      (define manifest (resolve-mounted-references combined #:exclusions exclusions))
+     ;; Completion targets may only become local after resolving an imported
+     ;; binding through a view. Check their published identity after resolution.
+     (when (ormap mounted-node? ordered)
+       (check-composed-manifest manifest (mounted-node-source (findf mounted-node? ordered))))
      (syntax-local-lift-module
       #`(module manifest racket/base (provide manifest manifest-version manifest-provider manifest-exclusions)
           (define manifest-version 2)

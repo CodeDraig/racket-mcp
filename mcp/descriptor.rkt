@@ -269,10 +269,21 @@
       (error 'make-interface "overlapping resource URI routes ~a and ~a; both match ~s"
              (resource-descriptor-uri resource) (resource-descriptor-uri other) witness)))
   (define completion-routes (make-hasheq))
-  (for ([completion (in-list completions)])
+  (define checked-completions
+   (for/list ([completion (in-list completions)])
     (unless (completion-descriptor? completion)
       (raise-argument-error 'make-interface "completion-descriptor?" completion))
-    (define target (completion-descriptor-target completion))
+    (define original (completion-descriptor-target completion))
+    (define target
+      (if (resource-descriptor? original)
+          (let ([candidates
+                 (filter (lambda (resource)
+                           (eq? (resource-descriptor-identity resource)
+                                (resource-descriptor-identity original))) resources)])
+            (when (null? candidates) (error 'make-interface "completion references an absent resource"))
+            (unless (null? (cdr candidates))
+              (error 'make-interface "completion references an ambiguous mounted resource"))
+            (car candidates)) original))
     (define argument-name* (completion-descriptor-argument completion))
     (define arguments
       (cond [(resource-descriptor? target)
@@ -287,7 +298,9 @@
     (define previous (hash-ref completion-routes target '()))
     (when (memq argument-name* previous)
       (error 'make-interface "duplicate completion for argument: ~a" argument-name*))
-    (hash-set! completion-routes target (cons argument-name* previous)))
+    (hash-set! completion-routes target (cons argument-name* previous))
+    (if (eq? target original) completion
+        (struct-copy completion-descriptor completion [target target]))))
   (unless (hash? requirements) (raise-argument-error 'make-interface "hash?" requirements))
   (define declarations (append tools resources prompts))
   (define checked
@@ -341,7 +354,7 @@
             (error 'make-interface "declaration ~a references an ambiguous mounted resource: ~a" source-name (resource-descriptor-name target)))
           (car candidates)))
       (values source (remove-duplicates resolved eq?))))
-  (scoped-interface server tools resources prompts completions checked checked-adapters checked-references checked-restrictions))
+  (scoped-interface server tools resources prompts checked-completions checked checked-adapters checked-references checked-restrictions))
 (define (bind-arguments arguments input)
   (unless (hash? input) (error 'bind-arguments "arguments must be an object"))
   (for/fold ([bound (hasheq)]) ([a (in-list arguments)])

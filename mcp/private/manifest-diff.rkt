@@ -32,13 +32,26 @@
          (and (hash-ref uri 'known? #f) (string? (hash-ref uri 'value #f)) (hash-ref uri 'value)))))
 (define (unknown-resource? entry) (and (resource? entry) (not (resource-uri entry))))
 (define (dynamic-mount? entry) (and entry (eq? (hash-ref entry 'kind) 'mount)))
+(define (completion-target entry)
+  (define target (hash-ref entry 'target (hasheq)))
+  (and (hash-ref target 'known? #f)
+       (case (hash-ref target 'kind #f)
+         [(prompt) (list 'prompt (hash-ref target 'name))]
+         [(resource)
+          (define references (hash-ref entry 'resource-references '()))
+          (and (= (length references) 1)
+               (let ([identity (hash-ref (car references) 'local-target-declaration #f)])
+                 (and identity (string? (cadr identity)) identity)))]
+         [else #f])))
+(define (unknown-completion? entry)
+  (and entry (eq? (hash-ref entry 'kind) 'completion) (not (completion-target entry))))
 (define (key entry [ordinal 0])
   (define kind (hash-ref entry 'kind))
   (case kind
     [(server) '(server)]
     [(tool workflow) (list 'tool (hash-ref entry 'name))]
     [(resource) (list kind (or (resource-uri entry) (list 'unknown (hash-ref entry 'name) ordinal)))]
-    [(completion) (list kind (hash-ref entry 'name) (hash-ref entry 'argument))]
+    [(completion) (list kind (or (completion-target entry) (list 'unknown ordinal)) (hash-ref entry 'argument))]
     [else (list kind (hash-ref entry 'name))]))
 (define (index manifest)
   (unless (and (list? manifest) (andmap hash? manifest))
@@ -52,8 +65,6 @@
         (error 'manifest-diff "duplicate local declaration identity: ~a" id))
       (hash-set targets id (key entry ordinal))))
   (for/fold ([result (hash)]) ([entry (in-list manifest)] [ordinal (in-naturals)])
-    (define id (key entry ordinal))
-    (when (hash-has-key? result id) (error 'manifest-diff "duplicate declaration identity: ~a" id))
     (define normalized
       (if (hash-has-key? entry 'resource-references)
           (hash-set entry 'resource-references
@@ -65,6 +76,8 @@
                                            (hash-ref ref 'local-target)))))]
                     [else (hash-remove ref 'local-target-declaration)])))
           entry))
+    (define id (key normalized ordinal))
+    (when (hash-has-key? result id) (error 'manifest-diff "duplicate declaration identity: ~a" id))
     (hash-set result id normalized)))
 (define (workflow-version entry)
   (define metadata (hash-ref entry 'metadata (hasheq)))
@@ -135,11 +148,18 @@
   (define unknown-after? (ormap unknown-resource? (hash-values new)))
   (define dynamic-before? (ormap dynamic-mount? (hash-values old)))
   (define dynamic-after? (ormap dynamic-mount? (hash-values new)))
+  (define unknown-completions-before? (ormap unknown-completion? (hash-values old)))
+  (define unknown-completions-after? (ormap unknown-completion? (hash-values new)))
   (define ids (sort (remove-duplicates (append (hash-keys old) (hash-keys new)) equal?) string<? #:key (lambda (id) (format "~s" id))))
   (for/list ([id (in-list ids)])
     (define prior (hash-ref old id #f)) (define next (hash-ref new id #f))
     (define base (hasheq 'declaration (format "~a" id) 'behavior "not-compared"))
-    (cond [(or (dynamic-mount? prior) (dynamic-mount? next)
+    (cond [(or (unknown-completion? prior) (unknown-completion? next)
+               (and (not next) prior (eq? (hash-ref prior 'kind) 'completion) unknown-completions-after?)
+               (and (not prior) next (eq? (hash-ref next 'kind) 'completion) unknown-completions-before?))
+           (hash-set* base 'change "review-required"
+                      'reasons (list "An unresolved completion target prevents establishing the published identity change."))]
+          [(or (dynamic-mount? prior) (dynamic-mount? next)
                (and (not next) dynamic-after?)
                (and (not prior) dynamic-before?))
            (hash-set* base 'change "review-required"

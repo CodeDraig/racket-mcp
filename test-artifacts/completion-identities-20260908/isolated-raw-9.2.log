@@ -1,0 +1,5 @@
+raco test: (file "tests/manifest-completion-identities.rkt")
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "/tmp/mcp-raw-completion-probe.rkt")
+102 tests passed

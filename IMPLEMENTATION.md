@@ -5090,3 +5090,57 @@ the project command's +m option also passed. An initial manual invocation withou
 test-artifacts/composed-reference-checks-20260908.
 The original release scope is unchanged; remaining complete interface, workflow,
 conformance and platform gates stay open.
+
+## Completion manifest identities (2026-09-08)
+
+A generated interface with two same-named resources and a same-named prompt,
+each completing the same argument, reproduced duplicate declaration errors in
+manifest-diff. The mounted form failed identically. Resource completions now
+carry lexical resource references through the ordinary compiler collector,
+mount prefixing, provider rebasing and reference resolver. Diffs key completions
+by target kind, published resource URI or prompt name, and argument. Duplicate
+resolved targets remain errors even under aliases. Unresolved older resource
+completion metadata requires review instead of assuming a display-name identity.
+
+Eight new cases cover same-named distinct targets, transformed URI/name dispatch,
+duplicate resolved targets, older unknown targets, renamed imports and excluded
+imported completion targets. The focused completion/resource diff run passed 51
+checks on Linux 9.3. A follow-up instantiation probe exposed an existing runtime
+gap: a locally declared completion could not target a mounted resource copy.
+Interface construction now resolves resource completions by declaration identity,
+rejects absent or ambiguous identities, and checks duplicates after resolution.
+Static composition repeats its identity check after imported target resolution.
+The data API and expanded modules exercise the same behavior.
+
+Before this final runtime correction, Linux 9.3 passed 6,099 native tests, 1,301
+core schema cases, 86 optional regex cases and the manual build. Both versions
+and the installed package passed 231 focused checks; 14 Go probes passed. The
+runtime correction was developed in an isolated checkout while that suite ran,
+and passed 53 targeted checks on both 9.2 and 9.3 before integration. Final-source
+verification is recorded in test-artifacts/completion-identities-20260908. This
+does not close the remaining whole-interface or release gates.
+
+The final combined source passed 442 focused checks on Linux Racket 9.2, Racket
+9.3 and the installed 9.3 package, including descriptor contracts, completion
+references and view policies. Installed dependency setup passed. A fresh full
+9.3 run against this combined source passed 6,101 native tests, 1,301 core schema
+cases, 86 optional regex cases and the manual build.
+
+A final raw-interface probe reproduced Unknown completion target because
+make-runtime discarded normalized targets after validating a raw descriptor.
+It now retains the checked interface when completion targets changed, preserving
+identity for already-normalized interfaces. The isolated correction passed 101
+grouped checks plus the independent probe on 9.3, and 102 together on 9.2. It was
+integrated after the full run above finished; final focused verification is
+recorded separately in the artifact bundle. The final source passed 442 focused
+checks on each Linux version and the installed 9.3 package. Installed dependency
+setup, all 14 Go probes and the manual build passed on that source. Distribution
+reproducibility and artifact hashes are recorded in the evidence bundle. The
+6,101-test full result precedes this last raw-interface correction.
+
+The GitHub run for 76e733c (34238711795) ended in startup_failure with no jobs.
+The workflow is registered as active and all three pinned action commits resolve.
+The CLI gives only a generic likely-workflow-file diagnostic; no specific cause
+was available through the inspected API responses. Browser inspection could not
+start because the local browser-tool runtime failed to initialize. This run does
+not establish a billing cause or native macOS/Windows verification.

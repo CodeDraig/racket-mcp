@@ -161,11 +161,23 @@
          (and (hash-ref uri 'known? #f) (list kind (hash-ref uri 'value)))]
         [(completion)
          (define target (hash-ref entry 'target))
+         (define references (hash-ref entry 'resource-references '()))
+         (define local-target
+           (and (= (length references) 1) (hash-ref (car references) 'local-target #f)))
+         (define resource
+           (and local-target
+                (findf (lambda (candidate)
+                         (and (eq? (hash-ref candidate 'kind) 'resource)
+                              (equal? (hash-ref candidate 'local-id #f) local-target))) entries)))
+         (define uri (and resource (hash-ref (hash-ref resource 'metadata) 'uri)))
+         (if resource
+             (and (hash-ref uri 'known? #f)
+                  (list kind 'resource (hash-ref uri 'value) (hash-ref entry 'argument)))
          (and (hash-ref target 'known? #f)
               (= 1 (count (lambda (candidate)
                             (and (eq? (hash-ref candidate 'kind) (hash-ref target 'kind))
                                  (equal? (wire-name (hash-ref candidate 'name)) (wire-name (hash-ref target 'name))))) entries))
-              (list kind (hash-ref target 'kind) (wire-name (hash-ref target 'name)) (hash-ref entry 'argument)))]
+              (list kind (hash-ref target 'kind) (wire-name (hash-ref target 'name)) (hash-ref entry 'argument))))]
         [else #f]))
     (when key
       (when (hash-has-key? seen key) (raise-syntax-error 'mount (format "duplicate statically known published identity: ~a" key) source))

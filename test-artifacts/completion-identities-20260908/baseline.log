@@ -1,0 +1,14 @@
+raco test: (file "tests/manifest-completion-identities.rkt")
+--------------------
+same-named prompt and resource completions have distinct identities
+ERROR
+
+manifest-diff: duplicate declaration identity: (completion document id)
+--------------------
+--------------------
+mounted resource completions resolve to transformed URIs
+ERROR
+
+manifest-diff: duplicate declaration identity: (completion api/document id)
+--------------------
+2/2 test failures
