@@ -1,5 +1,5 @@
 #lang racket/base
-(require "scenario-process.rkt" "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
+(require "scenario-process.rkt" "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt" "private/module-build-context.rkt"
          (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-match.rkt" "private/workflow-binding-context.rkt" "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform task-boundary completion scenario define-mcp-extension)
 (begin-for-syntax
@@ -397,9 +397,10 @@
      ;; compatibility even when the caller's source is unchanged.
      (define fingerprint (format "mcp-workflow/3:~s:~s" (syntax->datum stx) (map syntax->datum stages)))
      (define program-code
-       #`(make-workflow (symbol->string 'name) version #,fingerprint (list #,@stages) #:key key
+       #`(with-enclosing-module-build-context
+          (make-workflow (symbol->string 'name) version #,fingerprint (list #,@stages) #:key key
                           #:changes (lambda (arguments outcome)
-                                      (let (#,@(for/list ([id ids]) #`[#,id (hash-ref arguments '#,id missing)])) changes))))
+                                      (let (#,@(for/list ([id ids]) #`[#,id (hash-ref arguments '#,id missing)])) changes)))))
      (if program-only?
          (if summaries? (values program-code stage-summaries) program-code)
      #`(begin (define-operation-value name

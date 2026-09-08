@@ -5252,3 +5252,36 @@ claim is made for this additive compiler component.
 Final verification passed all 12 focused checks on Linux Racket 9.2 and 9.3 and
 from the installed 9.3 package. Dependency setup passed. Distribution reproducibility
 and evidence hashes are recorded in the module-finalization evidence bundle.
+
+## Shared initialized workflow construction contexts (2026-09-08)
+
+The private module-begin/build-context boundary now creates one lexical context
+per module, shared by with-module-build-context construction sites and retained
+factories. Its completion callback captures the graph only after all expanded
+initialization work, then records an initialized flag. Guarded sealing requires
+that flag; a failed late form or repeated dynamic-require cannot manufacture it.
+An enclosing explicit loader retains ownership of its inherited build.
+
+Generated workflow construction uses an enclosing context when the boundary is
+installed. The ordinary library/default language path keeps its existing scope.
+Five new cases verify shared identity, late observed declarations, factory
+retention and explicit overrides, failure/retry rejection, loader ownership, and
+a real MCP workflow that stays unsealed until its context is explicitly sealed,
+then executes through dispatch. Fixture dependency identities are explicit test
+values, not an automatic production runtime policy.
+
+The first broader focused runs exposed a stale compiled restart worker referencing
+the old sealing function. Its error logs are preserved; corrected verification
+recompiles that dynamic worker. Full 9.3 verification, corrected 9.2 focused checks,
+and installed-package checks are in progress. Production default integration,
+automatic runtime baseline identity, and all remaining release gates stay open.
+
+Final initialized-context source passed 196 focused checks on each Linux Racket
+version and in the installed 9.3 package. Dependency setup and all 14 Go probes
+passed. Full 9.3 verification passed 6,148 native tests, all 1,301 core schema
+cases, all 86 optional regex cases and the manual build. The source ZIP was built
+twice and byte-compared; final logs and hashes are in the evidence bundle.
+GitHub run 34249649722 for preceding commit 1f1f82c ended in startup_failure with
+zero jobs, so native macOS/Windows remain unverified. All remaining release
+requirements, including default language integration and runtime identity, remain
+open; these results do not close the full SDK goal.

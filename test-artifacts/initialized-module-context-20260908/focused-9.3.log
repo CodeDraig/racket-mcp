@@ -1,0 +1,18 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/initialized-module-context.rkt")
+raco test: (file "tests/module-build-context.rkt")
+raco test: (file "tests/module-finalization.rkt")
+raco test: (file "tests/workflow.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/workflow-references.rkt")
+raco test: (file "tests/workflow-match.rkt")
+raco test: (file "tests/module-imports.rkt")
+raco test: (file "tests/phase-exports.rkt")
+raco test: (file "tests/extension-phase-matrix.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+raco test: (file "tests/module-build-context-restart.rkt")
+raco test: (file "tests/loader-cli-restart.rkt")
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/command-process.rkt")
+196 tests passed

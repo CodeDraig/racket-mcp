@@ -1,0 +1,41 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/initialized-module-context.rkt")
+raco test: (file "tests/module-build-context.rkt")
+raco test: (file "tests/module-finalization.rkt")
+raco test: (file "tests/workflow.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/workflow-references.rkt")
+raco test: (file "tests/workflow-match.rkt")
+raco test: (file "tests/module-imports.rkt")
+raco test: (file "tests/phase-exports.rkt")
+raco test: (file "tests/extension-phase-matrix.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+raco test: (file "tests/module-build-context-restart.rkt")
+--------------------
+FAILURE
+name:       check-true
+location:   tests/module-build-context-restart.rkt:57:4
+params:     '(#f)
+--------------------
+module-build-context-restart: worker failed: instantiate-linklet: mismatch;
+ reference to a variable that is not exported
+  name: seal-module-build-context!5.1
+  exporting instance: "/srv/data/code/racket-mcp/mcp/private/module-build-context.rkt"
+  importing instance: (submod "/srv/data/code/racket-mcp/tests/module-build-context-worker.rkt" main)
+  possible reason: modules need to be recompiled because dependencies changed
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   body of (submod "/srv/data/code/racket-mcp/tests/module-build-context-worker.rkt" main)
+
+  context...:
+   body of "/srv/data/code/racket-mcp/tests/module-build-context-restart.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+module-build-context-restart.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/loader-cli-restart.rkt")
+raco test: (file "tests/command-observation.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/command-process.rkt")
+1/183 test failures
