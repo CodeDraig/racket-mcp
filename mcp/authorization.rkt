@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/list racket/string racket/random net/base64 net/url net/uri-codec web-server/http "json.rkt" "private/authenticate.rkt" "private/oauth-metadata.rkt")
+(require "clock.rkt" "private/oauth-uri-policy.rkt" racket/list racket/string racket/random net/base64 net/url net/uri-codec web-server/http "json.rkt" "private/authenticate.rkt" "private/oauth-metadata.rkt")
 (provide (all-from-out "private/authenticate.rkt" "private/oauth-metadata.rkt") (struct-out verified-principal) (struct-out oauth-registration) (struct-out oauth-pending)
          (struct-out oauth-credential) protected-resource-metadata bearer-challenge make-bearer-authenticator
          check-scopes! protected-resource-metadata-url scopes-allow? principal-key begin-authorization finish-authorization refresh-credential discover-authorization discover-authorization-for-resource authorization-metadata-urls
@@ -12,9 +12,11 @@
   (if (verified-principal? principal)
       (json->string (hasheq 'issuer (verified-principal-issuer principal) 'subject (verified-principal-subject principal)))
       (format "~a" principal)))
-(define (https-uri! value who)
+(define (https-uri! value who #:loopback? [loopback? (current-oauth-loopback-http?)])
   (define u (string->url value))
-  (unless (and (equal? (url-scheme u) "https") (url-host u) (not (url-user u)) (not (url-fragment u))) (error who "expected HTTPS URL without credentials or fragment")) value)
+  (unless (oauth-secure-url? u #:loopback? loopback?)
+    (error who "expected HTTPS URL without credentials or fragment"))
+  value)
 (define (check-scopes! scopes)
   (unless (and (list? scopes)
                (for/and ([scope (in-list scopes)])
@@ -141,7 +143,7 @@
     (error 'authorization "invalid redirect URI; HTTP redirects require loopback"))
   uri)
 (define (client-id-url! id)
-  (https-uri! id 'client-id-metadata)
+  (https-uri! id 'client-id-metadata #:loopback? #f)
   (define path (url-path (string->url id)))
   (unless (and (pair? path)
                (for/and ([part (in-list path)])

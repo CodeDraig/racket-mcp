@@ -1,0 +1,9 @@
+raco test: (file "tests/oauth-client-authentication.rkt")
+raco test: (file "tests/oauth-authorizer-policy.rkt")
+raco test: (file "tests/oauth-http.rkt")
+raco test: (file "tests/oauth-flow.rkt")
+raco test: (file "tests/oauth-http-client.rkt")
+raco test: (file "tests/authorization.rkt")
+raco test: (file "tests/authorization-discovery.rkt")
+raco test: (file "tests/client-registration.rkt")
+238 tests passed

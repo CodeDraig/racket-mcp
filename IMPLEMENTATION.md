@@ -4474,3 +4474,34 @@ before metadata fetch by the authorizer; and native pre-registration token
 requests need configurable issuer-scoped client authentication. Applications can
 currently replace the token-exchange callback. These are not passing conformance
 claims or evidence against normal native HTTPS authorization.
+
+## Native OAuth client authentication (2026-09-08)
+
+The native HTTP adapter supports opaque immutable client authentication values
+for Basic, form-body secret and public-client methods. The authorizer snapshots
+an issuer-keyed mapping, checks the selected registration and advertised method,
+then binds authentication to the discovered token endpoint for both code exchange
+and refresh. Custom exchange callbacks retain responsibility for authentication
+and cannot be combined with a nonempty native authentication mapping. Metadata
+requests never receive the configured client authentication.
+
+An explicit per-authorizer loopback option admits the pinned harness's localhost
+HTTP identifiers and endpoints. HTTPS remains the default; nested authorizers do
+not inherit a relaxed policy. CIMD URLs remain HTTPS in all modes. No received URL
+is rewritten. The manual documents both APIs and their ownership boundaries.
+
+The new focused suites passed 89 checks on Racket 9.3, including real HTTP refresh
+for Basic/Post authentication and a cross-issuer credential-isolation probe. The
+broader focused Racket 9.2 run passed 238 checks. Unmodified official scenarios
+basic-cimd, pre-registration, resource-mismatch and metadata-issuer-mismatch
+passed 29 checks total with no failures or warnings. The mismatch cases reach
+the relevant metadata before rejection; the pinned harness labels them draft.
+Other fixtures requiring DCR without CIMD/pre-registration are not passing
+conformance claims for this DCR-excluding release. Evidence and that applicability
+limit are in `test-artifacts/oauth-client-authentication-20260908`.
+
+Full Racket 9.3 validation passed 5,881 native checks, 1,301 core schema cases,
+86 optional regex cases, compilation and Scribble. All 14 Go probes, 89 installed
+checks and installed package dependency setup passed. All 279 harness files match
+the pin. Complete OAuth/provider conformance and the other SDK release gates
+remain open.

@@ -1,0 +1,3 @@
+raco test: (file "tests/oauth-client-authentication.rkt")
+raco test: (file "tests/oauth-authorizer-policy.rkt")
+89 tests passed

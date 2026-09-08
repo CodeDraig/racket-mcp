@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list net/url)
+(require racket/list net/url "oauth-uri-policy.rkt")
 (provide validate-authorization-metadata!)
 (define string-lists
   '(scopes_supported response_types_supported response_modes_supported grant_types_supported
@@ -21,7 +21,7 @@
   (unless (string? value) (error 'authorization-metadata "~a must be a URL string" key))
   (define u (string->url value))
   (unless (and (url-scheme u) (url-host u) (not (url-user u)) (not (url-fragment u))
-               (or (not secure?) (equal? (url-scheme u) "https"))
+               (or (not secure?) (oauth-secure-url? u))
                (or (not issuer?) (null? (url-query u))))
     (error 'authorization-metadata "invalid URL for ~a" key)))
 (define (validate-authorization-metadata! metadata issuer #:oidc? [oidc? #f])

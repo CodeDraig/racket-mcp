@@ -691,6 +691,22 @@ URL and returns a hash containing the callback's state, issuer, and code (or
 @racket[#:fetch] and @racket[#:exchange] can replace them. Registration and issuer
 selection use the options described above.
 
+For native confidential-client authentication, supply
+@racket[#:client-authentication] as a hash from issuer strings to
+@racket[oauth-client-authentication] values from @racketmodname[mcp/oauth-http].
+The selected registration's issuer and client ID must match the configured value,
+and discovery metadata must support its authentication method. Both authorization
+code exchange and token refresh use that configuration. Credentials configured
+for another issuer are never selected. The authorizer snapshots the mapping.
+A custom @racket[#:exchange] owns its authentication and cannot be combined with
+a nonempty native authentication mapping.
+
+@racket[#:allow-loopback-http? #t] permits HTTP identifiers and endpoints only on
+@tt{localhost}, @tt{127.0.0.1}, and @tt{::1} during this authorizer's execution.
+This explicit local-fixture option defaults to @racket[#f]; HTTPS remains required
+otherwise. Client ID Metadata Document URLs remain HTTPS even with the option.
+It does not change another authorizer's policy or rewrite received URLs.
+
 @racket[authorize-resource!] performs discovery and obtains an
 @racket[oauth-credential]. Supply parsed @racket[#:challenges], optional
 @racket[#:scopes], and the actual @racket[#:rejected-token] when responding to a
@@ -748,13 +764,29 @@ Options are @racket[#:timeout] (30 seconds), @racket[#:max-response-bytes] (1 Mi
 and @racket[#:max-header-bytes] (64 KiB). A request custodian cleans up sockets and
 copy workers on completion, errors, timeouts, and caller exception/break unwinding.
 HTTPS verifies certificates and hostnames. @racket[#:allow-loopback-http? #t]
-explicitly permits literal loopback HTTP for local development fixtures; it does
-not relax the discovery API's HTTPS identifier checks.
+explicitly permits HTTP on @tt{localhost}, @tt{127.0.0.1}, and @tt{::1} for local
+development fixtures. Standalone discovery functions retain their HTTPS checks.
+
+@racket[(oauth-client-authentication issuer client-id method secret)] creates an
+opaque configuration whose strings are copied to immutable storage. The method
+is @racket['client_secret_basic], @racket['client_secret_post], or @racket['none];
+the first two require a string secret, and @racket['none] requires @racket[#f].
+The predicate and issuer, client-ID and method accessors are exported; a secret
+accessor is not. Default printing does not expose the secret.
+
+To use a configuration directly, pass it as @racket[#:client-authentication] to
+@racket[make-oauth-http-adapters] together with @racket[#:token-endpoint]. The
+exchange callback rejects a different endpoint, a conflicting client ID, or
+additional authentication fields before sending a request. Basic authentication
+form-encodes the ID and secret separately before Base64 encoding; post
+authentication puts them in the form body. Neither attaches authentication to
+metadata fetches. The low-level adapter binds an endpoint; the authorizer also
+checks issuer, registration and advertised method.
 
 OAuth functions create PKCE requests and validate state and issuer during exchange.
 Applications can use the native fetch/exchange callbacks or supply their own.
-Browser interaction and credential persistence remain application callbacks;
-complete registration and credential-flow orchestration is still in progress. Hosted authorization services
+Browser interaction and credential persistence remain application callbacks.
+Hosted authorization services
 and dynamic client registration are outside the package scope.
 
 @subsection{Explicit interaction runner}

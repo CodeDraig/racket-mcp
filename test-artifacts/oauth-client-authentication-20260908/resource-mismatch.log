@@ -1,0 +1,34 @@
+(node:3866648) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: auth/resource-mismatch
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt http://localhost:42595/mcp
+(node:3866648) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+
+Client exited with code 1
+
+Stderr:
+discover-authorization: protected resource identifier mismatch
+  context...:
+   /srv/data/code/racket-mcp/mcp/authorization.rkt:105:0: discover-from-resource
+   /srv/data/code/racket-mcp/mcp/oauth.rkt:45:2: run
+   /srv/data/code/racket-mcp/mcp/oauth-http-client.rkt:4:0: authorize-http-client!
+   /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt:52:21: with-handlers-handler28
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/more-scheme.rkt:160:2: select-handler/no-breaks
+   /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt:49:0: call
+   body of "/srv/data/code/racket-mcp/dev/conformance-auth-client.rkt"
+
+Results saved to /srv/data/code/racket-mcp/.cache/oauth-conformance/resource-mismatch/auth/resource-mismatch-2026-09-08T05-32-17-820Z
+Checks:
+[90m2026-09-08T05:32:18.686Z[0m [incoming-request          ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-09-08T05:32:18.687Z[0m [outgoing-response         ] [36mINFO   [0m Sent 401 response for POST /mcp (method: server/discover)
+
+[90m2026-09-08T05:32:18.690Z[0m [incoming-request          ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource/mcp
+[90m2026-09-08T05:32:18.690Z[0m [prm-pathbased-requested   ] [32mSUCCESS[0m Client requested PRM metadata at path-based location
+[90m2026-09-08T05:32:18.690Z[0m [outgoing-response         ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-protected-resource/mcp
+
+[90m2026-09-08T05:32:18.705Z[0m [resource-mismatch-rejected] [32mSUCCESS[0m Client correctly rejected authorization when PRM resource does not match server URL
+
+Test Results:
+Passed: 2/2, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

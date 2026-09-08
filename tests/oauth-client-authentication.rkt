@@ -1,0 +1,150 @@
+#lang racket/base
+(require rackunit racket/port racket/string racket/tcp net/base64 net/uri-codec net/url
+         mcp/oauth-http mcp/oauth mcp/authorization)
+(define (with-peer procedure #:response [response #"{}"])
+  (define owner (make-custodian))
+  (dynamic-wind void
+    (lambda ()
+      (parameterize ([current-custodian owner])
+        (define listener (tcp-listen 0 4 #t "127.0.0.1"))
+        (define-values (_ port _h _p) (tcp-addresses listener #t))
+        (define requests '())
+        (thread
+          (lambda ()
+            (let loop ()
+              (define-values (in out) (tcp-accept listener))
+              (define first (read-line in 'any))
+              (define headers
+                (let read ([all '()])
+                  (define line (read-line in 'any))
+                  (if (equal? line "") (reverse all) (read (cons line all)))))
+              (define length
+                (for/first ([line headers]
+                            #:do [(define m (regexp-match #px"(?i:^content-length:) *([0-9]+)$" line))]
+                            #:when m) (string->number (cadr m))))
+              (define body (read-bytes (or length 0) in))
+              (set! requests (cons (list first headers body) requests))
+              (fprintf out "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ~a\r\n\r\n" (bytes-length response))
+              (write-bytes response out)
+              (flush-output out) (close-output-port out) (close-input-port in)
+              (loop))))
+        (procedure (format "http://localhost:~a" port) (lambda () (reverse requests)))))
+    (lambda () (custodian-shutdown-all owner))))
+(define client-id "client +:雪")
+(define secret "secret &+:雪")
+(define (authorization headers)
+  (for/first ([line headers] #:when (string-prefix? (string-downcase line) "authorization:")) line))
+(for ([method '(client_secret_basic client_secret_post none)])
+  (with-peer
+    (lambda (base requests)
+      (define mutable-secret (string-copy secret))
+      (define authentication (oauth-client-authentication "https://issuer.example" client-id method
+                                                          (and (not (eq? method 'none)) mutable-secret)))
+      (string-set! mutable-secret 0 #\X)
+      (check-false (string-contains? (format "~v" authentication) secret))
+      (define endpoint (string-append base "/token"))
+      (define-values (fetch exchange)
+        (make-oauth-http-adapters #:allow-loopback-http? #t
+          #:client-authentication authentication #:token-endpoint endpoint))
+      (check-equal? (fetch (string-append base "/metadata")) (hasheq))
+      (check-equal? (exchange endpoint (hasheq 'client_id client-id 'grant_type "authorization_code" 'code "code")) (hasheq))
+      (check-false (authorization (cadar (requests))))
+      (define request (cadr (requests)))
+      (define header (authorization (cadr request)))
+      (define fields (form-urlencoded->alist (bytes->string/utf-8 (caddr request))))
+      (check-equal? (cdr (assq 'code fields)) "code")
+      (case method
+        [(client_secret_basic)
+         (check-equal? (base64-decode (string->bytes/latin-1 (substring header (string-length "Authorization: Basic "))))
+                       #"client+%2B%3A%E9%9B%AA:secret+%26%2B%3A%E9%9B%AA")
+         (check-false (assq 'client_id fields))
+         (check-false (assq 'client_secret fields))]
+        [(client_secret_post)
+         (check-false header)
+         (check-equal? (cdr (assq 'client_id fields)) client-id)
+         (check-equal? (cdr (assq 'client_secret fields)) secret)]
+        [else
+         (check-false header)
+         (check-equal? (cdr (assq 'client_id fields)) client-id)
+         (check-false (assq 'client_secret fields))])
+      (check-exn #rx"endpoint changed" (lambda () (exchange (string-append base "/other") (hasheq 'client_id client-id))))
+      (check-exn #rx"client ID" (lambda () (exchange endpoint (hasheq 'client_id "other"))))
+      (check-exn #rx"conflicting" (lambda () (exchange endpoint (hasheq 'client_secret "other"))))
+      (check-equal? (length (requests)) 2))))
+(check-exn exn:fail? (lambda () (oauth-client-authentication "issuer" "id" 'none "secret")))
+(check-exn exn:fail? (lambda () (oauth-client-authentication "issuer" "id" 'unknown "secret")))
+(check-exn exn:fail? (lambda () (make-oauth-http-adapters #:allow-loopback-http? 'yes)))
+(define-values (fetch _) (make-oauth-http-adapters #:allow-loopback-http? #t))
+(for ([url '("http://remote.example/token" "http://localhost.example/token" "http://user@localhost/token")])
+  (check-exn #rx"HTTPS" (lambda () (fetch url))))
+
+;; A secret for another issuer must not reach the selected issuer's token endpoint.
+(with-peer
+  (lambda (base requests)
+    (define issuer (string-append base "/issuer-b"))
+    (define resource (string-append base "/mcp"))
+    (define redirect "http://localhost:3080/callback")
+    (define auth
+      (make-oauth-authorizer #:resource resource #:redirect-uri redirect #:allow-loopback-http? #t
+        #:pre-registered (hash issuer (oauth-registration issuer "client-b" redirect resource '()))
+        #:client-authentication (hash "https://issuer-a.example"
+          (oauth-client-authentication "https://issuer-a.example" "client-a" 'client_secret_basic "secret-a"))
+        #:fetch (lambda (url)
+          (if (regexp-match? #rx"oauth-protected-resource" url)
+              (hasheq 'resource resource 'authorization_servers (list issuer))
+              (hasheq 'issuer issuer 'authorization_endpoint (string-append base "/authorize")
+                      'token_endpoint (string-append base "/token") 'response_types_supported '("code")
+                      'code_challenge_methods_supported '("S256") 'token_endpoint_auth_methods_supported '("none"))))
+        #:browse (lambda (url)
+          (hasheq 'state (cdr (assq 'state (url-query (string->url url)))) 'iss issuer 'code "code"))))
+    (check-equal? (oauth-credential-issuer (authorize-resource! auth)) issuer)
+    (check-equal? (length (requests)) 1)
+    (check-false (authorization (cadar (requests))))
+    (define fields (form-urlencoded->alist (bytes->string/utf-8 (caddar (requests)))))
+    (check-equal? (cdr (assq 'client_id fields)) "client-b")
+    (check-false (assq 'client_secret fields)))
+  #:response #"{\"token_type\":\"Bearer\",\"access_token\":\"token-b\",\"expires_in\":100}")
+
+;; Expiry must use the same native client authentication without opening another
+;; browser flow. Inspect actual POSTs, including the refresh grant and resource.
+(for ([method '(client_secret_basic client_secret_post)])
+  (with-peer
+    (lambda (base requests)
+      (define resource (string-append base "/mcp"))
+      (define redirect "http://localhost:3080/callback")
+      (define now 1000)
+      (define visits 0)
+      (define auth
+        (make-oauth-authorizer #:resource resource #:redirect-uri redirect
+          #:allow-loopback-http? #t #:clock (lambda () now)
+          #:pre-registered (hash base (oauth-registration base "client" redirect resource '()))
+          #:client-authentication (hash base (oauth-client-authentication base "client" method "secret"))
+          #:fetch (lambda (url)
+            (if (regexp-match? #rx"oauth-protected-resource" url)
+                (hasheq 'resource resource 'authorization_servers (list base))
+                (hasheq 'issuer base 'authorization_endpoint (string-append base "/authorize")
+                        'token_endpoint (string-append base "/token") 'response_types_supported '("code")
+                        'code_challenge_methods_supported '("S256")
+                        'token_endpoint_auth_methods_supported (list (symbol->string method)))))
+          #:browse (lambda (url)
+            (set! visits (add1 visits))
+            (hasheq 'state (cdr (assq 'state (url-query (string->url url)))) 'iss base 'code "code"))))
+      (void (authorize-resource! auth))
+      (set! now 1200)
+      (check-equal? (oauth-credential-expires (authorize-resource! auth)) 1300)
+      (check-equal? visits 1)
+      (check-equal? (length (requests)) 2)
+      (define refresh (cadr (requests)))
+      (define fields (form-urlencoded->alist (bytes->string/utf-8 (caddr refresh))))
+      (check-equal? (cdr (assq 'grant_type fields)) "refresh_token")
+      (check-equal? (cdr (assq 'refresh_token fields)) "refresh-value")
+      (check-equal? (cdr (assq 'resource fields)) resource)
+      (check-false (assq 'code fields))
+      (if (eq? method 'client_secret_basic)
+          (begin
+            (check-equal? (authorization (cadr refresh)) "Authorization: Basic Y2xpZW50OnNlY3JldA==")
+            (check-false (assq 'client_secret fields)))
+          (begin
+            (check-false (authorization (cadr refresh)))
+            (check-equal? (cdr (assq 'client_secret fields)) "secret"))))
+    #:response #"{\"token_type\":\"Bearer\",\"access_token\":\"token\",\"refresh_token\":\"refresh-value\",\"expires_in\":100}"))

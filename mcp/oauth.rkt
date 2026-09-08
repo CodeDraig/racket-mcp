@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/list racket/string "authorization.rkt" "oauth-http.rkt")
+(require "clock.rkt" "private/oauth-uri-policy.rkt" racket/list racket/string "authorization.rkt" "oauth-http.rkt")
 (provide make-oauth-authorizer oauth-authorizer? oauth-authorizer-resource authorize-resource!)
 (struct oauth-authorizer (lock run resource))
 (define (make-oauth-authorizer #:resource resource #:redirect-uri redirect #:browse browse
@@ -7,10 +7,23 @@
                                #:load [load (lambda (issuer client-id resource) #f)]
                                #:save [save (lambda (issuer client-id resource credential) (void))]
                                #:pre-registered [registrations (hash)]
+                               #:client-authentication [authentication-config (hash)]
+                               #:allow-loopback-http? [loopback? #f]
                                #:client-metadata [document #f] #:client-metadata-url [document-url #f]
                                #:request-registration [request-registration #f]
                                #:select-issuer [select-issuer car] #:clock [clock mcp-current-seconds])
-  (define-values (native-fetch native-exchange) (make-oauth-http-adapters))
+  (unless (boolean? loopback?) (raise-argument-error 'make-oauth-authorizer "boolean?" loopback?))
+  (unless (hash? authentication-config)
+    (raise-argument-error 'make-oauth-authorizer "issuer-keyed client authentication hash" authentication-config))
+  (define authentications
+    (for/hash ([(issuer authentication) (in-hash authentication-config)])
+      (unless (and (oauth-client-authentication? authentication)
+                   (equal? issuer (oauth-client-authentication-issuer authentication)))
+        (error 'make-oauth-authorizer "client authentication must be keyed by its issuer"))
+      (values (oauth-client-authentication-issuer authentication) authentication)))
+  (when (and supplied-exchange (positive? (hash-count authentications)))
+    (error 'make-oauth-authorizer "a custom exchange owns authentication; do not combine it with native client authentication"))
+  (define-values (native-fetch native-exchange) (make-oauth-http-adapters #:allow-loopback-http? loopback?))
   (define fetch (or supplied-fetch native-fetch))
   (define exchange (or supplied-exchange native-exchange))
   (define credentials (make-hash))
@@ -51,6 +64,20 @@
         #:client-metadata document #:client-metadata-url document-url #:request-registration request-registration))
     (define issuer (oauth-registration-issuer registration))
     (define client-id (oauth-registration-client-id registration))
+    (define authentication (hash-ref authentications issuer #f))
+    (when authentication
+      (unless (equal? client-id (oauth-client-authentication-client-id authentication))
+        (error 'authorize-resource! "client authentication does not match the selected registration"))
+      (define supported (hash-ref metadata 'token_endpoint_auth_methods_supported '("client_secret_basic")))
+      (unless (member (symbol->string (oauth-client-authentication-method authentication)) supported)
+        (error 'authorize-resource! "authorization server does not support the configured client authentication method")))
+    (define selected-exchange
+      (if authentication
+          (let-values ([(fetch exchange)
+                        (make-oauth-http-adapters #:allow-loopback-http? loopback?
+                          #:client-authentication authentication #:token-endpoint (hash-ref metadata 'token_endpoint))])
+            exchange)
+          exchange))
     (define key (list issuer client-id resource))
     (when (hash-has-key? unsaved key)
       (save issuer client-id resource (hash-ref unsaved key))
@@ -70,12 +97,12 @@
             [(and existing (not step-up?) (covers? existing scopes) (oauth-credential-refresh-token existing))
              ;; Failure or an uncertain exchange is surfaced; never retry a
              ;; refresh token or silently fall through to another browser flow.
-             (obtain (lambda () (refresh-credential registration existing metadata exchange #:clock clock)))]
+             (obtain (lambda () (refresh-credential registration existing metadata selected-exchange #:clock clock)))]
             [else
              (define-values (url pending) (begin-authorization registration metadata))
              (define response (browse url))
              (unless response (error 'authorize-resource! "authorization cancelled by application"))
-             (obtain (lambda () (finish-authorization pending response exchange #:clock clock)))]))
+             (obtain (lambda () (finish-authorization pending response selected-exchange #:clock clock)))]))
     (with-handlers ([(lambda (_) #t) (lambda (e) (hash-set! uncertain key #t) (raise e))])
       (check-credential! credential issuer)
       (unless (covers? credential scopes) (error 'authorize-resource! "authorization did not grant the required scopes")))
@@ -89,7 +116,9 @@
     (hash-remove! uncertain key)
     (hash-set! credentials key credential)
     credential)
-  (oauth-authorizer (make-semaphore 1) run resource))
+  (oauth-authorizer (make-semaphore 1)
+    (lambda arguments
+      (parameterize ([current-oauth-loopback-http? loopback?]) (apply run arguments))) resource))
 (define (authorize-resource! authorizer #:challenges [challenges '()] #:scopes [scopes #f]
                              #:rejected-token [rejected-token #f] #:reauthorize? [reauthorize? #f])
   (call-with-semaphore (oauth-authorizer-lock authorizer)
