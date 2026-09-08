@@ -4864,3 +4864,20 @@ and 9.3, and from the installed source distribution on 9.3. Evidence is retained
 in `test-artifacts/discovery-capabilities-20260908`. Runtime code is unchanged
 from the preceding full run; the broad crash suite was not repeated for this
 test-only addition. Upstream capability and complete-release audits remain open.
+
+## Frozen declared-module code capture (2026-09-08)
+
+A private registry-scoped observation snapshot and declared-module capture path
+now freeze already available code and retained producer identities. They do not
+read source files, instantiate modules or obtain user exports. Observed dynamic
+declarations are included conservatively; unknown dependencies remain explicit
+and prevent sealing without supplied identities. Existing sealed execution keeps
+its old code after source replacement and rejects modules observed later.
+
+Focused compilation and 59 checks passed on Linux Racket 9.2 and 9.3, including
+capture during a language module's own initialization and capture of a throwing
+uninstantiated module. Installed package dependency checks and the same 59 cases
+passed. Evidence is retained in `test-artifacts/declared-code-capture-20260908`.
+The broad protocol/crash suite was not repeated for this additive private
+component. Default workflow construction is unchanged; automatic build contexts,
+runtime baseline identity and complete-release gates remain open.

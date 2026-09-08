@@ -3,7 +3,8 @@
 ;; This module deliberately imports no SDK or hashing libraries: command startup
 ;; installs its observer before those libraries are loaded. Evidence is scoped to
 ;; the actual module registry, never inferred from a source file after loading.
-(provide call-with-module-observation install-module-observation! observed-module-code)
+(provide call-with-module-observation install-module-observation! observed-module-code
+         module-observation-snapshot)
 (struct observation (registries lock))
 (define current-observations (make-parameter #f))
 (define current-observing-evaluator (make-parameter #f))
@@ -19,6 +20,16 @@
            (hash-ref (hash-ref (observation-registries observations)
                                (namespace-module-registry namespace) #hasheq())
                      identity #f)))))
+(define (module-observation-snapshot [namespace (current-namespace)])
+  (define observations (current-observations))
+  (if observations
+      (call-with-semaphore (observation-lock observations)
+        (lambda ()
+          (for/hash ([(identity code)
+                      (in-hash (hash-ref (observation-registries observations)
+                                         (namespace-module-registry namespace) #hasheq()))])
+            (values identity code))))
+      (hash)))
 (define (module-source? expression)
   (and (syntax? expression)
        (pair? (syntax-e expression))

@@ -1,0 +1,6 @@
+raco test: (file "tests/declared-code-capture.rkt")
+raco test: (file "tests/module-observation.rkt")
+raco test: (file "tests/executable-capture.rkt")
+raco test: (file "tests/captured-dynamic-imports.rkt")
+raco test: (file "tests/retained-capture.rkt")
+59 tests passed
