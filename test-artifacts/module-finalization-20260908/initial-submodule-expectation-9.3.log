@@ -1,0 +1,12 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/module-finalization.rkt")
+--------------------
+finish binding is hygienic and does not execute submodules
+FAILURE
+name:       check-equal?
+location:   tests/module-finalization.rkt:77:2
+actual:     '(colliding finished submodule finished)
+expected:   '(colliding finished submodule)
+--------------------
+1/5 test failures

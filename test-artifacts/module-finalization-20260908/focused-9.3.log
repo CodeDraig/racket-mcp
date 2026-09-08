@@ -1,0 +1,4 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/module-finalization.rkt")
+raco test: (file "tests/module-build-context.rkt")
+12 tests passed

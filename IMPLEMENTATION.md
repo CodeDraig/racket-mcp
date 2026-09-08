@@ -5225,3 +5225,30 @@ and 9.3 and in the installed 9.3 package. Installed dependency checks and the
 manual build passed. Reproducible ZIP and evidence hashes are retained with the
 logs. No native macOS/Windows execution or full-suite result is claimed for this
 change. All remaining release requirements stay open.
+
+## Completion after expanded module initialization (2026-09-08)
+
+A private module-begin/finish compiler boundary now fully expands the chosen
+module-begin before appending a trusted completion expression. Unlike a
+module-end lift, this places the marker after recursively lifted forms and
+contracted-export initialization. User transformers are not evaluated twice.
+This supplies a tested route to a successful-initialization marker without
+inferring success from a prior snapshot or a second dynamic-require.
+
+Seven authored cases cover ordinary and lifted failures, retry after failure,
+recursive lifts, expansion count, hygiene, explicit submodule execution,
+contracted-export failure, and wrapping the real MCP expander. The latter reads
+the manifest without instantiating the application and then dispatches its tool
+through the runtime. The earlier custom-language submodule expectation was
+corrected: explicitly instantiating that submodule legitimately runs its own
+completion callback, while loading the parent alone does not.
+
+This private boundary is not yet installed in the default language or connected
+to workflow build contexts. Automatic runtime identities and the other release
+gates remain open. Focused source and installed-package results are retained in
+ test-artifacts/module-finalization-20260908; no full-suite or native macOS/Windows
+claim is made for this additive compiler component.
+
+Final verification passed all 12 focused checks on Linux Racket 9.2 and 9.3 and
+from the installed 9.3 package. Dependency setup passed. Distribution reproducibility
+and evidence hashes are recorded in the module-finalization evidence bundle.
