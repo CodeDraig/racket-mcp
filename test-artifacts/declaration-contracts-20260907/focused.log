@@ -1,0 +1,24 @@
+raco test: (file "tests/declaration-wire-bindings.rkt")
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/core.rkt")
+raco test: (file "tests/domain.rkt")
+raco test: (file "tests/completion-references.rkt")
+raco test: (file "tests/tool-schema-objects.rkt")
+raco test: (file "tests/workflow.rkt")
+raco test: (file "tests/view-adapters.rkt")
+raco test: (file "tests/phases.rkt")
+syntax-spec-phase-0: exit 0
+1
+syntax-spec-phase-1: exit 0
+1
+syntax-spec-phase-2: exit 0
+1
+mcp-phase-0: exit 0
+string
+mcp-phase-1: exit 0
+string
+mcp-phase-2: exit 0
+string
+raco test: (file "tests/phase-exports.rkt")
+raco test: (file "tests/extension-bindings.rkt")
+278 tests passed

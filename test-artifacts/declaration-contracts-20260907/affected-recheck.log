@@ -1,0 +1,9 @@
+raco test: (file "tests/declaration-schemas.rkt")
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/declaration-wire-bindings.rkt")
+raco test: (file "tests/scenario-subscriptions.rkt")
+raco test: (file "tests/serve-lifetime.rkt")
+raco test: (file "tests/upstream-bridge-restart.rkt")
+raco test: (file "tests/upstream-task-restart.rkt")
+raco test: (file "tests/upstream-storage-requirement.rkt")
+308 tests passed

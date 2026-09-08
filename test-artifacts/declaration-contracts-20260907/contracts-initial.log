@@ -1,0 +1,198 @@
+raco test: (file "tests/declaration-contracts.rkt")
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:9:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:10:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:11:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:12:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:13:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:14:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:15:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:16:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:17:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:18:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:19:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:20:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:21:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:22:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:23:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:24:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:25:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:27:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:26:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:30:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:31:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:32:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:33:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:34:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:35:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:36:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:37:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:38:24>)
+message:    "No exception raised"
+--------------------
+--------------------
+FAILURE
+name:       check-exn
+location:   tests/declaration-contracts.rkt:40:2
+params:     '(#<procedure:exn:fail?> #<procedure:...ation-contracts.rkt:39:24>)
+message:    "No exception raised"
+--------------------
+28/29 test failures

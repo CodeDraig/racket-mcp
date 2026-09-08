@@ -123,10 +123,13 @@
     (define metadata
       (for/hasheq ([(keyword expression) (in-hash (declaration-node-clauses node))])
         (values (string->symbol (keyword->string keyword))
-                (if (and (eq? kind 'workflow) (eq? keyword '#:execution))
-                    ;; This is a checked grammar identifier, not a host expression.
-                    (hasheq 'known? #t 'value (syntax-e expression))
-                    (describe expression (eq? keyword '#:output))))))
+                (cond [(and (eq? kind 'workflow) (eq? keyword '#:execution))
+                       ;; This is a checked grammar identifier, not a host expression.
+                       (hasheq 'known? #t 'value (syntax-e expression))]
+                      [(and (eq? kind 'server) (eq? keyword '#:instructions)
+                            (eq? (literal expression) #f))
+                       (hasheq 'known? #t 'value "")]
+                      [else (describe expression (eq? keyword '#:output))]))))
     (define arguments
       (for/list ([argument (in-list (declaration-node-arguments node))])
         (define parts (syntax->list argument))

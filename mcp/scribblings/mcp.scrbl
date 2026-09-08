@@ -10,6 +10,36 @@ This package targets MCP 2026-07-28 and Racket 9.2. It is an implementation in
 progress, not a completed conformant release. The repository implementation
 ledger is the authority for missing behavior and executed verification.
 
+@section{Declaration construction contracts}
+
+The @tt{make-tool}, @tt{make-resource}, and @tt{make-prompt} factories check
+metadata and callback contracts without executing handlers, defaults, completion
+procedures, dependency expressions, or change expressions. The language forms
+use these same factories. @tt{make-interface} rechecks raw descriptor structures
+and copies, their arguments and schemas, and complete-interface references.
+Runtime construction uses those same checks before recovering durable work.
+Server identity and version are strings. The server constructor accepts @tt{#f}
+for absent instructions and normalizes it to the empty-string default; other
+instruction values must be strings. Argument names are
+interned symbols, so their identity agrees with names decoded from JSON.
+Repeated argument and shape-field wire names are rejected during expansion,
+even when their lexical scopes differ; the diagnostic identifies the repeated
+source binder rather than a generated constructor or accessor.
+
+Tool and prompt handlers accept one bound-argument map. Resource handlers accept
+one positional value per declared argument. Required keyword parameters are not
+supplied by dispatch. Durable resources and prompts may use @tt{#f} for their
+unused ordinary handler; tools retain a dispatcher procedure. A supplied workflow
+must be a workflow descriptor. These checks do not execute or prove the result
+of arbitrary handler code.
+
+Tool annotations are JSON objects. The four standard hint fields are booleans
+and @tt{title} is a string; unknown JSON-valued fields are retained. Inspection
+rejects cyclic/non-JSON values and is bounded to 128 nesting levels and 50,000
+values. The hints do not grant authority or establish effect guarantees.
+Description and stored MIME-type fields are strings. Matchers and dependency
+callbacks accept one argument, and committed-change callbacks accept two.
+
 @section{A first server}
 @tt{#lang mcp}
 @racketmod[

@@ -53,7 +53,7 @@
 (for ([interface (in-list
                   (list (make-interface)
                         iface
-                        (make-interface #:resources (list (make-resource "doc" "test:doc" (lambda (_) "doc")))
+                        (make-interface #:resources (list (make-resource "doc" "test:doc" (lambda () "doc")))
                                         #:prompts (list (make-prompt "hint" '() (lambda (_) '()))))))]
       [expected (in-list (list (hasheq)
                                (hasheq 'tools (hasheq 'listChanged #t))
@@ -62,4 +62,7 @@
   (call-with-scenario-session interface
     (lambda (session)
       (check-equal? (hash-ref (hash-ref (scenario-call session "server/discover") 'result) 'capabilities)
-                    expected))))
+                    expected)
+      (when (pair? (interface-descriptor-resources interface))
+        (define read (hash-ref (scenario-call session "resources/read" (hasheq 'uri "test:doc")) 'result))
+        (check-equal? (hash-ref (car (hash-ref read 'contents)) 'text) "doc")))))

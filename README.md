@@ -62,10 +62,11 @@ passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
 Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 4,962 native checks, 1,301 pinned core schema cases,
+Racket 9.3 run passed 5,066 native checks, 1,301 pinned core schema cases,
 documentation, package checks and all thirteen Go probes; see
-`test-artifacts/bootstrap-observation-20260907`. The last full 9.2 run passed
-4,928 native checks; the new observer separately passed 11 focused checks on 9.2.
+`test-artifacts/declaration-contracts-20260907`. The last full 9.2 run passed
+4,928 native checks; current declaration/wire-binding tests separately passed
+103 focused checks on 9.2.
 The earlier fresh 9.3 dependency bootstrap exposed an omitted development fixture
 retaining 9.2 bytecode. Validation scripts now compile every top-level development
 fixture; `test-artifacts/linux-9.3-current-20260907` retains that failure and fix.

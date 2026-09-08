@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/adapter-policy.rkt" "private/executable-build.rkt")
+(require "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
@@ -7,19 +7,6 @@
          (struct-out exn:fail:recovery))
 ;; Stage procedures receive persistent JSON environments. Their result is saved
 ;; before the next stage runs. Only named adapters may cross effect boundaries.
-(struct workflow-stage (id kind schema procedure adapter policy) #:transparent)
-(struct workflow-descriptor (name version fingerprint stages key changes)
-  #:transparent
-  #:property prop:declared-adapters
-  (lambda (workflow)
-    (sort (remove-duplicates
-      (for/list ([stage (in-list (workflow-descriptor-stages workflow))]
-                 #:when (eq? (workflow-stage-kind stage) 'effect))
-        (workflow-stage-adapter stage))) symbol<?))
-  #:property prop:resource-references
-  (lambda (workflow)
-    (append-map (lambda (stage) (handler-resource-references (workflow-stage-procedure stage)))
-                (workflow-descriptor-stages workflow))))
 (struct captured-workflow workflow-descriptor (build) #:transparent)
 (define (workflow-add-fingerprint-suffix workflow suffix)
   (define updated

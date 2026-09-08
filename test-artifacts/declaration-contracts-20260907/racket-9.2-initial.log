@@ -1,0 +1,23 @@
+raco test: (file "tests/declaration-contracts.rkt")
+loading code: version mismatch
+  expected: "9.2"
+  found: "9.3"
+  in: /srv/data/code/racket-mcp/tests/compiled/declaration-contracts_rkt.zo
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+declaration-contracts.rkt: racket test: non-zero exit: 1
+raco test: (file "tests/declaration-wire-bindings.rkt")
+loading code: version mismatch
+  expected: "9.2"
+  found: "9.3"
+  in: /srv/data/code/racket-mcp/tests/compiled/declaration-wire-bindings_rkt.zo
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+declaration-wire-bindings.rkt: racket test: non-zero exit: 1
+2/2 test failures

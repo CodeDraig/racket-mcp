@@ -1,0 +1,61 @@
+raco test: (file "tests/declaration-wire-bindings.rkt")
+--------------------
+FAILURE
+name:       check-true
+location:   tests/declaration-wire-bindings.rkt:24:2
+params:     '(#f)
+message:    "(tool (demo [a String] [b String]) (text-result a))"
+--------------------
+--------------------
+FAILURE
+name:       check-true
+location:   tests/declaration-wire-bindings.rkt:24:2
+params:     '(#f)
+message:
+  "(resource (demo [a String] [b String]) #:uri \"test:///{value}\" a)"
+--------------------
+--------------------
+FAILURE
+name:       check-true
+location:   tests/declaration-wire-bindings.rkt:24:2
+params:     '(#f)
+message:    "(prompt (demo [a String] [b String]) (role \"user\" a))"
+--------------------
+--------------------
+FAILURE
+name:       check-true
+location:   tests/declaration-wire-bindings.rkt:24:2
+params:     '(#f)
+message:
+  "(workflow (demo [a String] [b String]) #:version \"1\" (text-result a))"
+--------------------
+--------------------
+FAILURE
+name:       check-regexp-match
+location:   tests/declaration-wire-bindings.rkt:26:4
+params:
+  '(#rx"duplicate.*wire name"
+  "mcp/forms.rkt:136:16: define-values: duplicate binding name\n  at: Demo4-value\n  in: (define-values (struct:Demo4 Demo45 Demo4? Demo4-value Demo4-value) (let-local-keys ((g11847 stx-param3)) (let-values (((struct: make- ? -ref -set!) (syntax-parameterize ((struct-field-index (make-struct-field-index (quote-syntax (value value))))) (make...")
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/declaration-wire-bindings.rkt:28:4
+actual:     'Demo4-value
+expected:   'value
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/declaration-wire-bindings.rkt:29:4
+actual:     #f
+expected:   'wire-binders.rkt
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/declaration-wire-bindings.rkt:30:4
+actual:     #f
+expected:   21
+--------------------
+8/9 test failures

@@ -1,0 +1,3 @@
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/declaration-wire-bindings.rkt")
+103 tests passed

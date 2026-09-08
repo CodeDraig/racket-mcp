@@ -27,7 +27,7 @@ complete coverage of its surrounding milestone.
 | Reader, module imports/exports, executable server, fragment | `mcp/lang.rkt`, `mcp/lang/reader.rkt`; `tests/core.rkt`, executable examples | Covered basic behavior and extension-generated server entry points |
 | Required/optional/default arguments; omitted/null/false | `descriptor.rkt`, `forms.rkt`; `tests/core.rkt` | Covered defaults, order/count, distinct representations |
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
-| Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Implemented; constructor checks are not yet fully equivalent for every declaration |
+| Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; deeper workflow/codec constructor parity remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
 | Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; full domain binding API remains open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
@@ -4162,3 +4162,45 @@ focused observer run on Linux Racket 9.2 passed 11 checks; this is not a new ful
 9.2 run. `git diff --check` passed. Evidence is retained under
 `test-artifacts/bootstrap-observation-20260907`. Other platforms and the remaining
 full SDK implementation/release gates remain open.
+
+## Declaration contracts and scoped wire names (2026-09-07)
+
+Tool, resource and prompt factories now share metadata/callback validation with
+interface assembly and runtime installation. Invalid descriptions, MIME types,
+known annotation fields, handlers/matchers, execution modes, raw flags and
+workflow values fail before dispatch. Prompt codec requirements also apply to
+raw descriptor copies. Tool annotations retain unknown JSON fields, with bounded
+host-value traversal that rejects cycles, uninterned keys and non-JSON values.
+Defaults, handlers and completion callbacks are not invoked by these checks.
+Server instructions accept the existing absent `#f` convention and normalize it
+to the empty-string default; static literal manifests and discovery agree.
+Computed metadata remains unknown without instantiating the application.
+
+Argument names must be interned symbols. The compiler separately checks JSON
+wire identity, so differently scoped binders with the same spelling cannot
+become duplicate argument or shape-field names. Tests cover tool, resource,
+prompt, workflow and shape expansion, with errors attached to the repeated
+source binder rather than generated code. The workflow representation moved to
+`private/workflow-types.rkt` to permit type checks without importing its execution
+engine; the existing public workflow exports remain available.
+
+The first regression reproduced 28 accepted-invalid cases. A separate expansion
+probe confirmed four accepted scoped collisions and a shape error at a generated
+accessor. The initial full run reported 8 failures among 4,905 recorded checks:
+three diagnostic assertions, callers using absent instructions, and an invalid
+subscription fixture handler. Non-symbol names retain their previous diagnostic;
+uninterned symbols get the new diagnostic. Absent instructions are normalized,
+and the fixture now supplies the correct zero-argument handler and verifies an
+actual resource read. The affected selection passed 308 checks; contract/manifest
+checks then passed 143. Earlier fixture import/language mistakes and a 9.2/9.3
+bytecode mismatch are distinguished in the retained evidence.
+
+Final Linux/Racket 9.3 validation: `sh scripts/check.sh` passed compilation,
+5,066 native checks, all 1,301 pinned core schema cases and Scribble. All thirteen
+`sh scripts/check-interop.sh` Go probes passed. Distribution construction,
+installed package dependency setup and installed `raco mcp check` passed.
+Racket 9.2 passed 103 focused declaration/wire-binding checks using source-only
+`raco test --direct`; a new full 9.2 run was not performed. `git diff --check`
+passed. Evidence is in `test-artifacts/declaration-contracts-20260907`.
+Deeper workflow/codec constructor parity, complete domain binding/extension APIs,
+and the other full SDK release gates remain unfinished.

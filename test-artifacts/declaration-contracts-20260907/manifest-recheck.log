@@ -1,0 +1,4 @@
+raco test: (file "tests/declaration-contracts.rkt")
+raco test: (file "tests/declaration-manifest.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+143 tests passed

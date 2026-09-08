@@ -35,7 +35,19 @@
     (pattern [id:id spec:expr #:codec codec:expr] #:attr optional #'#f #:attr default #f)
     (pattern [id:id spec:expr #:codec codec:expr #:optional] #:attr optional #'#t #:attr default #f)
     (pattern [id:id spec:expr #:codec codec:expr #:default default:expr] #:attr optional #'#t))
+  ;; Lexical identity and JSON field identity differ. Distinct scopes can bind
+  ;; the same printed name, but the peer sends only the interned JSON name.
+  (define (check-wire-binders! ids)
+    (define seen (make-hasheq))
+    (for ([id (in-list ids)])
+      (define name (syntax-e id))
+      (unless (symbol-interned? name)
+        (raise-syntax-error #f "declaration wire name must be an interned symbol" id))
+      (when (hash-has-key? seen name)
+        (raise-syntax-error #f "duplicate declaration wire name" id))
+      (hash-set! seen name #t)))
   (define (argument-code ids specs opts defaults [codecs (make-list (length ids) #f)])
+    (check-wire-binders! ids)
     (for/list ([id ids] [spec specs] [opt opts] [default defaults] [codec codecs] [i (in-naturals)])
       (check-literal-schema! spec)
       #`(#,(if codec #'prompt-argument #'argument) '#,id (checked-schema-expression #,spec) #,opt
@@ -127,6 +139,7 @@
   (syntax-parse stx
     [(_ name:id [field:id spec:expr] ...)
      (check-binders (syntax->list #'(field ...)) stx)
+     (check-wire-binders! (syntax->list #'(field ...)))
      (for-each check-literal-schema! (syntax->list #'(spec ...)))
      (define internal (car (generate-temporaries #'(name))))
      (with-syntax ([record internal] [constructor (format-id #'name "make-~a" #'name)]
