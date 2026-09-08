@@ -30,7 +30,7 @@ complete coverage of its surrounding milestone.
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
 | Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values and lexical effect adapters; renamed/re-exported schema, operation, resource and prompt queries covered at phases 0–2; remaining binding/manifest integration audit stays open |
-| Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
+| Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, metadata, workflow stages/capability requirements and local/external resource identities including defining phase; complete dynamic/composed-manifest coverage remains open |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
 | References and annotations | Local registry, anchors, dynamic refs, unevaluated properties/items | Covered by official core cases, including local remote fixtures; no network fetching |
@@ -4987,3 +4987,17 @@ code is unchanged from d906531, so the broad protocol/crash suite is not repeate
 for this test-only change. Evidence is in
 test-artifacts/extension-phase-matrix-20260908. Other compiler and release gates
 remain open.
+
+## Manifest provider-phase acceptance (2026-09-08)
+
+A new fixture imports same-named resources from one provider at defining phases
+zero and one into a single runtime interface. The manifest distinguishes those
+phases, and deleting either reference is review-required. Both ordinary provider
+and application instantiation throw, while manifest inspection succeeds. This
+does not suppress trusted phase execution during compilation. Compilation and
+56 focused checks passed on Linux Racket 9.2 and 9.3; the same checks passed from
+the installed 9.3 source distribution. Compiler/runtime code is unchanged. The manifest summary row now names
+the implemented workflow-capability and cross-module identity coverage instead
+of suggesting those facilities are wholly absent. Dynamic/composed-manifest and
+other release gates remain open. Evidence is in
+test-artifacts/manifest-provider-phases-20260908.

@@ -1,0 +1,6 @@
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-provider-phases.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-external-identities.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-reference-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-diff.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/reference-manifest.rkt")
+56 tests passed
