@@ -1,0 +1,11 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/subscription-client-validation.rkt")
+--------------------
+delivered acknowledgement cannot mutate retained URI acceptance
+FAILURE
+name:       check-exn
+location:   tests/subscription-client-validation.rkt:83:2
+params:     '(#rx"outside" #<procedure:...ient-validation.rkt:83:26>)
+message:    "No exception raised"
+--------------------
+1/23 test failures

@@ -1,7 +1,7 @@
 #lang racket/base
 (require "private/failure.rkt" "private/http-request.rkt" (only-in web-server/private/connection-manager connection-custodian connection-i-port) (only-in racket/tcp tcp-addresses) "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
          web-server/http web-server/web-server web-server/servlet-dispatch web-server/safety-limits
-         "subscription.rkt" "authorization.rkt" "private/http-wire.rkt" "private/sse.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "json.rkt" "runtime.rkt" "descriptor.rkt" "stdio.rkt" "header-schema.rkt")
+         "subscription.rkt" "authorization.rkt" "private/http-wire.rkt" "private/sse.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "private/subscription-client.rkt" "json.rkt" "runtime.rkt" "descriptor.rkt" "stdio.rkt" "header-schema.rkt")
 (provide serve-http make-http-handler encode-header-value decode-header-value request-headers
          make-http-client http-client-request http-client-call (struct-out http-client)
          (struct-out exn:fail:http:authorization) (struct-out exn:fail:http:timeout)
@@ -211,6 +211,7 @@
         (set-http-client-next-id! client (add1 (http-client-next-id client)))
         (values (http-client-next-id client)
                 captured-url captured-token))))
+  (define subscription-tracker (make-subscription-tracker id method params))
   (define custodian (make-custodian))
   (define ready (make-semaphore 0)) (define result (box #f)) (define notices (make-async-channel 64))
   (define finish-lock (make-semaphore 1))
@@ -303,8 +304,9 @@
                                             (error 'http-client "Server cancellation may only close this subscription"))
                                           (finish! m)]
                                          [else
-                                          (when (equal? (hash-ref m 'method) "notifications/progress")
-                                            (observe-progress! progress-tracker (hash-ref m 'params (hasheq))))
+                                          (if (equal? (hash-ref m 'method) "notifications/progress")
+                                              (observe-progress! progress-tracker (hash-ref m 'params (hasheq)))
+                                              (observe-subscription! subscription-tracker (hash-ref m 'method) (hash-ref m 'params (hasheq))))
                                           (unless (sync/timeout 0 (async-channel-put-evt notices m)) (error 'http-client "notification queue overflow"))
                                           (loop)])])))
                         (let ([body (bounded-response-body in (http-client-max-response-bytes client))])

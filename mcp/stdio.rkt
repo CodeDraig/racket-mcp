@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/async-channel racket/port "json.rkt" "runtime.rkt" "subscription.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "private/failure.rkt")
+(require racket/async-channel racket/port "json.rkt" "runtime.rkt" "subscription.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "private/subscription-client.rkt" "private/failure.rkt")
 (provide serve-stdio make-stdio-client client-request client-call client-close!
          (struct-out exn:fail:stdio) (struct-out request-handle) (struct-out exn:fail:notification-overflow) (struct-out exn:fail:request-cancelled) (struct-out exn:fail:request-timeout) request-cancel!)
 (struct request-handle (id ready result cancel notifications) #:transparent
@@ -105,7 +105,7 @@
 (struct exn:fail:notification-overflow exn:fail (request-id) #:transparent)
 (struct stdio-client (in out pending tokens lock writer-lock reader next-id closed? close-ports?
                          control control-worker notification-limit request-limit progress-token-limit timeout) #:mutable)
-(struct pending-request (handle token capabilities progress method outbound) #:transparent)
+(struct pending-request (handle token capabilities progress method outbound subscription) #:transparent)
 (struct outbound-request (id wire state) #:transparent)
 (struct outbound-cancel (request) #:transparent)
 (define (check-timeout v)
@@ -188,8 +188,7 @@
               (hash-ref (stdio-client-tokens c) (hash-ref params 'progressToken missing) missing)
               (if (equal? method "notifications/cancelled")
                   (hash-ref params 'requestId missing)
-                  (hash-ref meta 'io.modelcontextprotocol/subscriptionId
-                            (hash-ref params 'requestId missing)))))
+                  (subscription-notification-id method params))))
         (define pending (hash-ref (stdio-client-pending c) target-id #f))
         (when (and pending (equal? method "notifications/progress"))
           (observe-progress! (pending-request-progress pending) params))
@@ -204,6 +203,8 @@
                   (error 'client "Server cancellation may only close a subscription"))
                 (finish-request! c target-id m)))
             (when pending
+              (unless (equal? method "notifications/progress")
+                (observe-subscription! (pending-request-subscription pending) method params))
               (unless (sync/timeout 0 (async-channel-put-evt
                                       (request-handle-notifications (pending-request-handle pending)) m))
                 (finish-request! c target-id
@@ -296,7 +297,8 @@
           (lambda () (cancel-request! c id))
           (make-async-channel (stdio-client-notification-limit c))))
        (set-stdio-client-next-id! c id)
-       (hash-set! (stdio-client-pending c) id (pending-request h token request-caps (make-progress-tracker token) method outbound))
+       (hash-set! (stdio-client-pending c) id (pending-request h token request-caps (make-progress-tracker token) method outbound (and (equal? method "subscriptions/listen")
+                                  (make-subscription-tracker id method (hash-ref (string->json wire) 'params)))))
        (unless (missing? token) (hash-set! (stdio-client-tokens c) token id))
        (unless (sync/timeout 0 (async-channel-put-evt (stdio-client-control c) outbound))
          (finish-request! c id #f)

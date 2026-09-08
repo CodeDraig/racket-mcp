@@ -13,8 +13,17 @@
 (define (change h)
   (hasheq 'jsonrpc "2.0" 'method "notifications/tools/list_changed"
           'params (hasheq '_meta (hasheq 'io.modelcontextprotocol/subscriptionId (request-handle-id h)))))
-(define slow (request "subscriptions/listen"))
-(define healthy (request "subscriptions/listen"))
+(define (listen)
+  (define h (request "subscriptions/listen" (hasheq 'notifications (hasheq 'toolsListChanged #t))))
+  (define acknowledgement
+    (hasheq 'jsonrpc "2.0" 'method "notifications/subscriptions/acknowledged"
+            'params (hasheq 'notifications (hasheq 'toolsListChanged #t)
+                            '_meta (hasheq 'io.modelcontextprotocol/subscriptionId (request-handle-id h)))))
+  (send acknowledgement)
+  (check-equal? (sync/timeout 2 (request-handle-notifications h)) acknowledgement)
+  h)
+(define slow (listen))
+(define healthy (listen))
 (define ping (request "ping"))
 (for ([i (in-range 3)]) (send (change slow)))
 (send (change healthy))
@@ -32,7 +41,7 @@
 ;; Late traffic must not replace the local failure or reach another handle.
 (send (reply slow))
 (send (change slow))
-(define replacement (request "subscriptions/listen"))
+(define replacement (listen))
 (send (change replacement))
 (check-equal? (sync/timeout 2 (request-handle-notifications replacement)) (change replacement))
 (check-eq? (sync/timeout 0 slow) overflow)

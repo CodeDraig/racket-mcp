@@ -45,7 +45,7 @@ complete coverage of its surrounding milestone.
 | JSON-RPC envelopes and errors | Runtime and transport modules; core and wire-schema checks | Tested envelopes and current error allocations; full notification direction and malformed-envelope matrix outstanding |
 | Stdio concurrency/cancellation | `stdio.rkt`; core tests, official Go SDK probe | Bounded reader/workers/writer; stdio-lifecycle, cancellation, timeout and overflow tests cover EOF cleanup, owned/borrowed ports and progress demultiplexing; broader transport race coverage remains open |
 | HTTP JSON/SSE and headers | `http.rkt`, `header-schema.rkt`; HTTP/header tests, independent scenarios | Tested versions/names/Unicode/annotated parameters and root URLs; Keep-alives, bounded decoded SSE events, and request cleanup implemented; Native bounded HTTP framing and TLS probes added; full disconnect/cancellation race matrix and timeout policy outstanding |
-| Subscriptions | `subscription.rkt`; subscription tests and runtime integration | Ack order, filter routing, overflow, closure tested locally; full HTTP reconnect/filter-validation coverage missing |
+| Subscriptions | `subscription.rkt`; subscription tests and runtime integration | Ack order, filter routing, overflow and closure tested; both clients now check notification correlation, acknowledgement sequencing and accepted core/Tasks filters; full reconnect/terminal-message matrix remains |
 | Pagination and caching fields | Runtime zero-TTL private results; upstream pagination | Cache fields pass fixtures; Opaque snapshot pagination and resource TTL declarations implemented; complete list caching and conformance matrix remain |
 | Authorization | `authorization.rkt`; authorization/header tests | Verified principal, scope checks, issuer/resource-scoped OAuth helpers and PKCE; HTTP protected-resource metadata routes, 401/403 challenges, and shared runtime scopes implemented; explicit discovery/registration/browser/refresh/persistence orchestration and HTTP installation implemented; full metadata and provider conformance remain |
 | Checkpoints and branches | `workflow.rkt`, generated explicit stages; workflow/branch tests | Sequencing, tail/non-tail if/match, and suspending let blocks covered by branch/control-flow tests; whole-interface reference analysis remains |
@@ -5317,3 +5317,44 @@ Installed source verification passed dependency setup and all 34 combined cases
 on Linux Racket 9.3. The source distribution was built twice and byte-compared;
 logs and hashes are recorded in the data-API context evidence bundle. This does
 not establish default integration or any broader conformance/platform gate.
+
+## Client subscription notification validation (2026-09-08)
+
+A raw-peer regression reproduced 17 failures: both clients delivered subscription
+changes before acknowledgement, duplicate acknowledgements, invalid/unrequested
+accepted filters, changes outside accepted filters, and subscription traffic
+addressed to ordinary requests. The HTTP client also accepted another request's
+subscription ID. Two partial-acceptance cases passed before the correction.
+
+A shared per-request tracker now retains the actual sent filter, validates
+acknowledgement order/subsets, and checks core list/resource and Tasks events
+against the accepted filter before exposing them. Stdio demultiplexing requires
+the subscription metadata field rather than falling back to params.requestId;
+finished requests still discard late notifications. Unknown extension filter
+values require exact equality because no generic subset semantics are known.
+Progress and server cancellation keep their separate protocol paths. This does
+not add terminal-result validation or complete the reconnect/failure matrix.
+
+The existing overflow fixture was corrected to request notifications and receive
+an acknowledgement before emitting changes; its isolation and token-lifetime
+assertions remain. Additional cases cover missing metadata and mutable caller
+filters. The focused group passed 210 checks after recompilation corrected one
+stale compiled test dependency. The final selected transport/upstream/subscription
+suite passed 1,008 checks on Linux Racket 9.3. Further evidence is recorded under
+test-artifacts/subscription-client-validation-20260908. Default workflow capture,
+complete independent conformance, native platforms and the other release gates
+remain open.
+
+Review then reproduced a second issue: mutable strings in a delivered
+acknowledgement could change the retained accepted URI filter. The tracker now
+copies accepted filters before delivery; the new regression rejects the changed
+URI and still accepts the original. The retained baseline fails 1/23 cases.
+Earlier 1,008-check runs on both Linux versions, 14 Go probes, manual and installed
+47-check verification predate this final copy; final verification is recorded
+separately in the same evidence directory.
+
+The final source passed all 14 Go probes again and installed Linux Racket 9.3
+package dependency setup plus 48 selected checks. Its selected source run passed
+1,009 checks on Racket 9.3. The manual source did not change after its successful
+build. These focused results do not replace the outstanding full release audit.
+The final selected Linux Racket 9.2 run also passed all 1,009 checks.

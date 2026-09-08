@@ -561,6 +561,16 @@ acknowledgement remain bounded by the hub queue capacity; overflow produces the
 subscription error after acknowledgement, without draining stale queued events.
 Every hub access removes listeners whose threads were forcibly terminated.
 
+Both clients validate subscription notification IDs, acknowledgement ordering,
+and the acknowledged subset of the requested filter before delivering messages.
+Core list/resource notifications and Tasks notifications must match the accepted
+filter. Partial or empty acceptance remains visible on the notification channel;
+it is not an automatic retry. Unknown extension filter values must match exactly,
+since the client cannot infer their subset semantics. A malformed subscription
+notification fails the HTTP request; on stdio it closes the client under the
+shared reader's protocol-error policy. Late notifications for finished stdio
+requests are discarded. Progress and cancellation retain their separate routing.
+
 @tt{close-subscriptions!} accepts a hub and optional @tt{#:matches?} predicate
 receiving each listener's principal and accepted filter. The default selects all
 listeners. An optional @tt{#:error-message} string closes selected listeners with
