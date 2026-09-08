@@ -8,9 +8,8 @@ without a regression or a dependency of a remaining requirement. Historical
 
 | ID | Concrete unmet work | Evidence needed to remove this row |
 |---|---|---|
-| BUILD | Integrate automatic runtime identity and successfully initialized, sealed dependency captures into default/direct language and ordinary library workflow construction. | Fresh source and compiled launches; unchanged restart accepted; changed helper/runtime rejected; failed initialization never seals; factory and data API paths agree. |
-| PLATFORM | Obtain final-source Racket 9.2/9.3 native macOS and Windows verification. | Native builds/tests/package/docs run successfully. GitHub run 34267316205 terminates with startup_failure and zero jobs; startup cause is not established. |
-| RELEASE | Run final-source Linux 9.2/9.3, installed-package dependency checks, Scribble and reproducible distribution; reconcile this table against the original plan. | Terminal logs and reproducible hashes for the release source; every original acceptance item mapped to evidence or an explicit external blocker. |
+| PLATFORM | Obtain final-source Racket 9.2/9.3 native macOS and Windows verification. | Native builds/tests/package/docs run successfully. GitHub run 34268172343 terminates with startup_failure and zero jobs; startup cause is not established. |
+| RELEASE | Refresh Linux/package and affected interoperability checks after declared-build integration, compare two source archives, and finalize the original-plan evidence map. | Prior full Linux 9.2 run passed 6,256 tests, schema/regex and Scribble; installed checks passed both versions. Record final-source checks and archive hashes. PLATFORM stays separate. |
 
 Latest baseline: the authored-example compiler changes passed 6,238 native tests,
 1,301 schema core cases, 86 regex cases and Scribble on Linux Racket 9.3. Twenty

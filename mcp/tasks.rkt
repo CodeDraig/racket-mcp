@@ -173,11 +173,16 @@
         (hash-ref (stored-instance-state instance) 'creation-result))))
 (define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)])
   ;; A view restriction must reject resumption before accepting/persisting input.
-  (void (workflow-executable-fingerprint workflow adapters))
+  (define fingerprint (workflow-executable-fingerprint workflow adapters))
   (define updated (store-transaction store
     (lambda ()
       (define instance (owned store id principal)) (define state (stored-instance-state instance)) (define task (hash-ref state 'task))
       (unless (equal? (hash-ref task 'status) "input_required") (mcp-error -32602 "Task is not awaiting input"))
+      ;; Reject incompatible code before consuming input or changing task state.
+      (define flow (load-instance store (hash-ref state 'workflow)))
+      (unless (and flow (equal? (stored-instance-fingerprint flow) fingerprint)
+                   (equal? (stored-instance-version flow) (workflow-descriptor-version workflow)))
+        (mcp-error -32603 "Task workflow build is incompatible"))
       (unless (hash? responses) (mcp-error -32602 "Input responses must be an object"))
       (define accepted
         (for/hasheq ([(key response) (in-hash responses)] #:when (hash-has-key? (hash-ref task 'inputRequests) key))

@@ -1,0 +1,59 @@
+[
+  {
+    "id": "sep-2322-missing-response-rerequests",
+    "name": "InputRequiredResultMissingResponseRerequests",
+    "description": "Server re-requests missing inputResponses via new InputRequiredResult",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:43:59.821Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "user_name": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "What is your name?",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "40150b61b6f563b95f5e932c271fcd6beb09af1cc9702360f2c72ad391d887e1",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:43:59.821Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 2,
+      "violations": []
+    }
+  }
+]

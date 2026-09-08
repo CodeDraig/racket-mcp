@@ -1,0 +1,4 @@
+Diagnostic log fixture
+user break
+  context...:
+   body of (submod "/srv/data/code/racket-mcp/dev/conformance-list-changes.rkt" main)

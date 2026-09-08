@@ -1,0 +1,941 @@
+[
+  {
+    "id": "sep-2243-server-reject-invalid-headers",
+    "name": "ServerRejectsMismatchedMethodHeader",
+    "description": "Server rejects requests where Mcp-Method header does not match body method",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.087Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyMethod": "tools/list",
+      "mcpMethodHeader": "prompts/list",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 100,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-error-code",
+    "name": "ServerRejectsMismatchedMethodHeaderErrorCode",
+    "description": "Server rejects requests where Mcp-Method header does not match body method — uses JSON-RPC error code -32020 (HeaderMismatch)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.087Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyMethod": "tools/list",
+      "mcpMethodHeader": "prompts/list",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 100,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-invalid-headers",
+    "name": "ServerRejectsMissingMethodHeader",
+    "description": "Server rejects requests with missing Mcp-Method header",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.088Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyMethod": "tools/list",
+      "mcpMethodHeader": "(missing)",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 101,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-error-code",
+    "name": "ServerRejectsMissingMethodHeaderErrorCode",
+    "description": "Server rejects requests with missing Mcp-Method header — uses JSON-RPC error code -32020 (HeaderMismatch)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.088Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyMethod": "tools/list",
+      "mcpMethodHeader": "(missing)",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 101,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-invalid-headers",
+    "name": "ServerRejectsMismatchedNameHeader",
+    "description": "Server rejects tools/call where Mcp-Name does not match body params.name",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.089Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyName": "test_simple_text",
+      "mcpNameHeader": "wrong_tool_name",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Name header does not match body"
+        },
+        "id": 102,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-error-code",
+    "name": "ServerRejectsMismatchedNameHeaderErrorCode",
+    "description": "Server rejects tools/call where Mcp-Name does not match body params.name — uses JSON-RPC error code -32020 (HeaderMismatch)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.089Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyName": "test_simple_text",
+      "mcpNameHeader": "wrong_tool_name",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Name header does not match body"
+        },
+        "id": 102,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-accepts-whitespace-header-value",
+    "name": "ServerAcceptsWhitespaceHeaderValue",
+    "description": "Server MUST accept leading/trailing whitespace in Mcp-Name value (RFC 9110 §5.5: field parsing MUST exclude OWS before evaluating)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.091Z",
+    "specReferences": [
+      {
+        "id": "RFC-9110-5.5-Field-Values",
+        "url": "https://www.rfc-editor.org/rfc/rfc9110#section-5.5"
+      }
+    ],
+    "details": {
+      "headerValue": "  test_simple_text  ",
+      "bodyValue": "test_simple_text",
+      "reason": "HTTP spec requires trimming OWS around field values",
+      "responseStatus": 200,
+      "responseBody": {
+        "id": 103,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "This is a simple text response for testing.",
+              "type": "text"
+            }
+          ],
+          "resultType": "complete"
+        }
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-invalid-headers",
+    "name": "ServerRejectsMissingNameHeader",
+    "description": "Server MUST reject tools/call with missing Mcp-Name header when body has params.name",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.092Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyName": "test_simple_text",
+      "mcpNameHeader": "(missing)",
+      "reason": "Standard header omitted but value present in body → MUST reject",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Name header does not match body"
+        },
+        "id": 104,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-error-code",
+    "name": "ServerRejectsMissingNameHeaderErrorCode",
+    "description": "Server MUST reject tools/call with missing Mcp-Name header when body has params.name — uses JSON-RPC error code -32020 (HeaderMismatch)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.092Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Server-Validation",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#server-validation"
+      }
+    ],
+    "details": {
+      "requestBodyName": "test_simple_text",
+      "mcpNameHeader": "(missing)",
+      "reason": "Standard header omitted but value present in body → MUST reject",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Name header does not match body"
+        },
+        "id": 104,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-header-name-case-insensitive",
+    "name": "ServerAcceptsLowercaseHeaderName",
+    "description": "Server MUST accept lowercase header name (mcp-method)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.093Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Case-Sensitivity",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#case-sensitivity"
+      }
+    ],
+    "details": {
+      "headerNameUsed": "mcp-method",
+      "responseStatus": 200,
+      "responseBody": {
+        "id": 105,
+        "jsonrpc": "2.0",
+        "result": {
+          "cacheScope": "private",
+          "resultType": "complete",
+          "tools": [
+            {
+              "annotations": {},
+              "description": "Return simple text.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_simple_text"
+            },
+            {
+              "annotations": {},
+              "description": "Mirror a region parameter into its declared header.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "x-mcp-header": "Region"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "type": "object"
+              },
+              "name": "test_header"
+            },
+            {
+              "annotations": {},
+              "description": "Return a test PNG.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_image_content"
+            },
+            {
+              "annotations": {},
+              "description": "Return a test WAV.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_audio_content"
+            },
+            {
+              "annotations": {},
+              "description": "Embed a resource.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_embedded_resource"
+            },
+            {
+              "annotations": {},
+              "description": "Return several content types.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_multiple_content_types"
+            },
+            {
+              "annotations": {},
+              "description": "Return an execution error.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_error_handling"
+            },
+            {
+              "annotations": {},
+              "description": "Report progress on the request stream.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_tool_with_progress"
+            },
+            {
+              "annotations": {},
+              "description": "Write diagnostics outside the protocol stream.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_logging_tool"
+            },
+            {
+              "annotations": {},
+              "description": "Exercise a missing-capability error.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_missing_capability"
+            },
+            {
+              "annotations": {},
+              "description": "Request form input through MRTR.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_streaming_elicitation"
+            },
+            {
+              "annotations": {},
+              "description": "Ask for a name through MRTR.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_elicitation"
+            },
+            {
+              "annotations": {},
+              "description": "Validate an opaque continuation.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_request_state"
+            },
+            {
+              "annotations": {},
+              "description": "Reject unknown opaque continuations.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_tampered_state"
+            },
+            {
+              "annotations": {},
+              "description": "Collect two inputs across durable rounds.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_multi_round"
+            },
+            {
+              "annotations": {},
+              "description": "Preserve the JSON Schema 2020-12 vocabulary.",
+              "inputSchema": {
+                "$defs": {
+                  "address": {
+                    "$anchor": "addressDef",
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      },
+                      "street": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "phone"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "email"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "else": {
+                  "required": [
+                    "email"
+                  ]
+                },
+                "if": {
+                  "properties": {
+                    "contactMethod": {
+                      "const": "phone"
+                    }
+                  },
+                  "required": [
+                    "contactMethod"
+                  ]
+                },
+                "properties": {
+                  "address": {
+                    "$ref": "#/$defs/address"
+                  },
+                  "contactMethod": {
+                    "enum": [
+                      "phone",
+                      "email"
+                    ],
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "then": {
+                  "required": [
+                    "phone"
+                  ]
+                },
+                "type": "object"
+              },
+              "name": "json_schema_2020_12_tool"
+            },
+            {
+              "annotations": {},
+              "description": "Toggle a diagnostic tool in the published list.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_trigger_tool_change"
+            },
+            {
+              "annotations": {},
+              "description": "Toggle a diagnostic prompt in the published list.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_trigger_prompt_change"
+            },
+            {
+              "annotations": {},
+              "description": "A dynamically published diagnostic tool.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "diagnostic_added_tool"
+            }
+          ],
+          "ttlMs": 0
+        }
+      }
+    }
+  },
+  {
+    "id": "sep-2243-header-name-case-insensitive",
+    "name": "ServerAcceptsUppercaseHeaderName",
+    "description": "Server MUST accept uppercase header name (MCP-METHOD)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.094Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Case-Sensitivity",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#case-sensitivity"
+      }
+    ],
+    "details": {
+      "headerNameUsed": "MCP-METHOD",
+      "responseStatus": 200,
+      "responseBody": {
+        "id": 106,
+        "jsonrpc": "2.0",
+        "result": {
+          "cacheScope": "private",
+          "resultType": "complete",
+          "tools": [
+            {
+              "annotations": {},
+              "description": "Return simple text.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_simple_text"
+            },
+            {
+              "annotations": {},
+              "description": "Mirror a region parameter into its declared header.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "x-mcp-header": "Region"
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "type": "object"
+              },
+              "name": "test_header"
+            },
+            {
+              "annotations": {},
+              "description": "Return a test PNG.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_image_content"
+            },
+            {
+              "annotations": {},
+              "description": "Return a test WAV.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_audio_content"
+            },
+            {
+              "annotations": {},
+              "description": "Embed a resource.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_embedded_resource"
+            },
+            {
+              "annotations": {},
+              "description": "Return several content types.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_multiple_content_types"
+            },
+            {
+              "annotations": {},
+              "description": "Return an execution error.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_error_handling"
+            },
+            {
+              "annotations": {},
+              "description": "Report progress on the request stream.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_tool_with_progress"
+            },
+            {
+              "annotations": {},
+              "description": "Write diagnostics outside the protocol stream.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_logging_tool"
+            },
+            {
+              "annotations": {},
+              "description": "Exercise a missing-capability error.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_missing_capability"
+            },
+            {
+              "annotations": {},
+              "description": "Request form input through MRTR.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_streaming_elicitation"
+            },
+            {
+              "annotations": {},
+              "description": "Ask for a name through MRTR.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_elicitation"
+            },
+            {
+              "annotations": {},
+              "description": "Validate an opaque continuation.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_request_state"
+            },
+            {
+              "annotations": {},
+              "description": "Reject unknown opaque continuations.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_tampered_state"
+            },
+            {
+              "annotations": {},
+              "description": "Collect two inputs across durable rounds.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_input_required_result_multi_round"
+            },
+            {
+              "annotations": {},
+              "description": "Preserve the JSON Schema 2020-12 vocabulary.",
+              "inputSchema": {
+                "$defs": {
+                  "address": {
+                    "$anchor": "addressDef",
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      },
+                      "street": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "phone"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "email"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "else": {
+                  "required": [
+                    "email"
+                  ]
+                },
+                "if": {
+                  "properties": {
+                    "contactMethod": {
+                      "const": "phone"
+                    }
+                  },
+                  "required": [
+                    "contactMethod"
+                  ]
+                },
+                "properties": {
+                  "address": {
+                    "$ref": "#/$defs/address"
+                  },
+                  "contactMethod": {
+                    "enum": [
+                      "phone",
+                      "email"
+                    ],
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "then": {
+                  "required": [
+                    "phone"
+                  ]
+                },
+                "type": "object"
+              },
+              "name": "json_schema_2020_12_tool"
+            },
+            {
+              "annotations": {},
+              "description": "Toggle a diagnostic tool in the published list.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_trigger_tool_change"
+            },
+            {
+              "annotations": {},
+              "description": "Toggle a diagnostic prompt in the published list.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "test_trigger_prompt_change"
+            },
+            {
+              "annotations": {},
+              "description": "A dynamically published diagnostic tool.",
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "type": "object"
+              },
+              "name": "diagnostic_added_tool"
+            }
+          ],
+          "ttlMs": 0
+        }
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-invalid-headers",
+    "name": "ServerRejectsCaseMismatchValue",
+    "description": "Server MUST reject uppercase method value (TOOLS/LIST) since values are case-sensitive",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.095Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Case-Sensitivity",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#case-sensitivity"
+      }
+    ],
+    "details": {
+      "headerValue": "TOOLS/LIST",
+      "bodyValue": "tools/list",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 107,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "sep-2243-server-reject-error-code",
+    "name": "ServerRejectsCaseMismatchValueErrorCode",
+    "description": "Server MUST reject uppercase method value (TOOLS/LIST) since values are case-sensitive — uses JSON-RPC error code -32020 (HeaderMismatch)",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.095Z",
+    "specReferences": [
+      {
+        "id": "SEP-2243-Case-Sensitivity",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/transports#case-sensitivity"
+      }
+    ],
+    "details": {
+      "headerValue": "TOOLS/LIST",
+      "bodyValue": "tools/list",
+      "responseStatus": 400,
+      "responseBody": {
+        "error": {
+          "code": -32020,
+          "message": "Method header does not match body"
+        },
+        "id": 107,
+        "jsonrpc": "2.0"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:44:00.095Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 2,
+      "violations": []
+    }
+  }
+]

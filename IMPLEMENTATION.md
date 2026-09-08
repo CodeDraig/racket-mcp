@@ -5644,3 +5644,20 @@ Tasks runs. No upstream harness or SDK runtime was changed. CONFORMANCE is remov
 with the documented interpretations/exclusions. BUILD, PLATFORM and RELEASE remain.
 The latest inspected GitHub run, 34267316205, has startup_failure and zero jobs;
 no platform success or startup cause is inferred.
+
+### Declared ordinary build contract completed (2026-09-08)
+
+The user chose an explicit application/runtime build identity for ordinary loading,
+with application responsibility for updating it. This supersedes the outstanding
+automatic default-capture contract. mcp/build, #:build-id and --build-id implement
+that choice without re-instantiation or inferred provenance. Workflow construction
+retains the declaration; runtime dispatch, workers/recovery, parent rendering and
+upstream continuation/task bindings enforce it. Incompatible task input is rejected
+before persistence. The separate captured-loader contract remains supported.
+
+Evidence: test-artifacts/declared-build-20260908. Targeted rebuilt tests: 63 pass;
+installed dependencies plus 22 installed tests pass on both 9.2/9.3; Scribble passes;
+all 14 Go probes pass. Core and declared-ID Tasks conformance refreshes reproduce
+the prior qualified 144 and 43 successes and the same explicit exclusions/harness
+discrepancies. BUILD is removed. RELEASE is narrowed to the running final Linux
+checks, final evidence map and archive reproducibility; PLATFORM remains external.

@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require (for-label racket/base racket/async-channel racket/contract/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
+@(require (for-label racket/base (only-in racket/string non-empty-string?) (only-in mcp/build current-build-identity call-with-build-identity) racket/async-channel racket/contract/base (only-in mcp tool schema shape resource task-boundary text-result structured-result error-result load-interface interface-descriptor? interface-requires-state?)
                      (only-in mcp/cli serve-interface-command)
                      (only-in mcp/interaction run-interaction)
                      (only-in mcp/stdio make-stdio-client client-close! request-handle?
@@ -2662,12 +2662,60 @@ of equivalence across different builds. Any transformation after identity creati
 requires a new identity. These per-module identities are not yet a complete
 default-path durable build fingerprint.
 
-Automatic runtime build provenance is not implemented yet. Serving without this
-option, including a generated direct executable entry point, still uses the
-existing loading path and retains its imported-helper compatibility limitation.
-Full plain-handler rendering fingerprints and other release gates also remain
-open. Inspection commands continue to use the generated manifest rather than
-this instantiating loader.
+Automatic runtime provenance is not asserted for ordinary loading. Applications
+can use the declared identity contract below without a capture boundary.
+Inspection commands continue to use the generated manifest rather than this
+instantiating loader.
+
+@subsection{Declared identities for ordinary loading}
+
+@defmodule[mcp/build]
+@defparam[current-build-identity identity (or/c #f non-empty-string?) #:value #f]{
+The application/runtime identity for descriptors constructed and durable operations
+executed in this scope. The SDK retains an immutable copy. This is an application
+assertion, not observed provenance, a code signature, or proof that initialization
+succeeded. The application must change it whenever its application code, imported
+helpers, adapters, codecs, SDK, Racket runtime, or native dependencies change in a
+way that can affect resumed execution. Use an immutable deployment identifier or
+a digest of the application's controlled build inputs.
+}
+@defproc[(call-with-build-identity [identity non-empty-string?] [thunk (-> any)]) any]{
+Calls @racket[thunk] with the declared identity. Workflows created by ordinary
+@tt{make-workflow}, macro declarations, or factories retain it after the scope ends.
+Normal Racket loading and instantiation semantics are preserved; this function
+neither reloads modules nor seals an observed dependency capture. A failed module
+initialization propagates normally and does not produce a successful interface.
+}
+
+@tt{make-workflow} accepts @tt{#:build-id}, defaulting to the current parameter.
+@tt{make-runtime} accepts the same keyword and retains it for dispatch, durable
+worker execution and startup recovery, including descriptors constructed before
+that runtime exists. @tt{runtime-build-identity} returns the retained identity.
+If both workflow and runtime declare an identity, they must agree; a conflict
+fails before workflow execution. Constructor validation rejects empty strings and
+values other than strings or @racket[#f].
+
+The identity participates in workflow fingerprints, plain-handler parent rendering
+state, and local/upstream continuation and task bindings. Changed identities reject
+incompatible resumes; task input updates reject them before persisting input.
+Read-only retrieval of recorded native task results and cancellation do not run the
+old program. Existing terminal task states remain immutable. Direct low-level
+workflow execution or upstream recovery APIs must run under the matching declared identity
+scope; runtime recovery functions supply that scope automatically.
+
+@verbatim{(define rt (make-runtime mcp-interface #:store store #:build-id "my-application/42"))
+racket application.rkt --build-id my-application/42 --state state.sqlite
+raco mcp --build-id my-application/42 --state state.sqlite serve application.rkt}
+
+@tt{--build-id} works with ordinary source and compiled module loading, including
+the generated direct entry point. It does not instantiate the application twice.
+@tt{serve-interface} accepts the corresponding @tt{#:build-id} keyword.
+@tt{--runtime-build-id} remains the separate captured-loader contract above;
+applications can use both contracts, in which case both identities constrain
+compatibility. Without either contract, local program/version/codec/adapter checks
+remain available but do not establish compatibility of imported helpers or the
+runtime. Reusing a declared ID after changing those dependencies violates the
+application's contract; the SDK cannot detect that misdeclaration automatically.
 
 @subsection{Recognizing interface descriptors}
 
@@ -2694,7 +2742,7 @@ require an explicit state-file path before acquiring runtime resources.
 @defproc[(serve-interface-command [interface interface-descriptor?]) void?]{
 Parses the current command-line arguments and serves an already-instantiated
 interface. Generated @tt{#lang mcp} main submodules call this function. It accepts
-@tt{--state}, @tt{--transport} and @tt{--port}; options use the same parser as the
+@tt{--state}, @tt{--transport}, @tt{--port} and @tt{--build-id}; options use the same parser as the
 @tt{raco mcp} command. Unexpected positional arguments are rejected.
 
 For example, @tt{racket examples/approval.rkt --state approval.sqlite} runs the
@@ -2712,8 +2760,8 @@ cleanup failure on ordinary return is raised to the caller.
 Captured loading cannot be retroactively applied to an already-instantiated
 module. Supplying @tt{--runtime-build-id} here produces a diagnostic directing the
 caller to @tt{raco mcp --runtime-build-id ID [options] serve MODULE}; it does not
-silently ignore the identity or reload application definitions. The existing
-direct-path imported-helper compatibility limitation therefore remains.
+silently ignore the identity or reload application definitions. Use @tt{--build-id}
+for the declared application/runtime identity contract with this direct entry point.
 }
 
 

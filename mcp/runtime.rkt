@@ -1,9 +1,9 @@
 #lang racket/base
-(require "private/handler-info.rkt" "private/task-observation.rkt")
+(require "build.rkt" (submod "build.rkt" private) "private/handler-info.rkt" "private/task-observation.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
-(provide runtime-clock runtime-report-change! runtime-drain-changes! runtime-observe-upstream-task! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
+(provide runtime-build-identity runtime-clock runtime-report-change! runtime-drain-changes! runtime-observe-upstream-task! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
          (struct-out exn:fail:mcp) mcp-error request-meta validate-request-meta)
 (define protocol-version "2026-07-28")
 (struct resource-snapshot (result reads keys expires) #:transparent)
@@ -12,7 +12,9 @@
   (struct-copy resource-snapshot snapshot [result (hash-set (resource-snapshot-result snapshot) 'ttlMs ttl)]))
 (define current-embedding-stack (make-parameter '()))
 (struct runtime (interface authorize store adapters custodian subscriptions cache cache-context cache-namespace pagination required-scopes) #:transparent)
-(struct clocked-runtime runtime (clock))
+(struct clocked-runtime runtime (clock build-id))
+(define (runtime-build-identity rt)
+  (if (clocked-runtime? rt) (clocked-runtime-build-id rt) (current-build-identity)))
 (define (runtime-clock rt)
   (if (clocked-runtime? rt) (clocked-runtime-clock rt) (current-mcp-clock)))
 (module* upstream-task-subscriptions #f
@@ -29,7 +31,8 @@
     (dispatch rt "tasks/get" (hasheq 'taskId id '_meta (request-meta #:capabilities capabilities)) #:principal principal)))
 (define-syntax-rule (define/clock (name rt . arguments) body ...)
   (define (name rt . arguments)
-    (parameterize ([current-mcp-clock (runtime-clock rt)]) body ...)))
+    (parameterize ([current-mcp-clock (runtime-clock rt)]
+                   [current-build-identity (runtime-build-identity rt)]) body ...)))
 (define (default-cache-context principal)
   (cond [(verified-principal? principal)
          (json->string (hasheq 'subject (verified-principal-subject principal) 'issuer (verified-principal-issuer principal)
@@ -38,11 +41,12 @@
         [(string? principal) (string->immutable-string principal)]
         [else principal]))
 (define (make-runtime interface #:authorize [authorize (lambda (principal method params) #t)] #:store [store #f] #:adapters [adapters (hasheq)]
-                      #:clock [clock (current-mcp-clock)] #:recover-tasks? [recover? #t] #:restore-principal [restore-principal values] #:cache [cache (make-resource-cache #:clock clock)] #:cache-context [cache-context default-cache-context]
+                      #:clock [clock (current-mcp-clock)] #:build-id [build-id (current-build-identity)] #:recover-tasks? [recover? #t] #:restore-principal [restore-principal values] #:cache [cache (make-resource-cache #:clock clock)] #:cache-context [cache-context default-cache-context]
                       #:page-size [page-size 100] #:cursor-ttl [cursor-ttl 60]
                       #:cursor-limit [cursor-limit 1024] #:cursor-bytes [cursor-bytes 16777216]
                       #:cursor-clock [cursor-clock (lambda () (parameterize ([current-mcp-clock clock]) (mcp-current-seconds)))]
                       #:required-scopes [required-scopes (lambda (method params) '())])
+  (set! build-id (normalize-build-identity build-id))
   (unless (and (procedure? clock) (procedure-arity-includes? clock 0))
     (raise-argument-error 'make-runtime "clock procedure accepting zero arguments" clock))
   ;; Public raw descriptors must pass the same interface checks before recovery
@@ -75,7 +79,7 @@
     (and (or (null? needed) (scopes-allow? principal needed)) (authorize principal method params)))
   (define rt (clocked-runtime interface scope-authorize store (for/hasheq ([(name adapter) (in-hash adapters)]) (values name adapter)) (make-custodian) (make-subscription-hub) cache cache-context (gensym 'runtime-cache)
                               (make-pagination #:page-size page-size #:ttl cursor-ttl #:limit cursor-limit
-                                               #:max-bytes cursor-bytes #:clock cursor-clock) scopes clock))
+                                               #:max-bytes cursor-bytes #:clock cursor-clock) scopes clock build-id))
   (with-handlers ([(lambda (_) #t) (lambda (e) (custodian-shutdown-all (runtime-custodian rt)) (raise e))])
     (when (and store recover?) (recover-runtime-tasks! rt #:restore-principal restore-principal)))
   rt)
@@ -342,7 +346,7 @@
     (if (or resumed? (and store (layout-embeddings? layout)))
         (render-layout store layout #:operation method
                        #:arguments (hash-remove (hash-remove (hash-remove params '_meta) 'requestState) 'inputResponses)
-                       #:principal (principal-key principal) #:fingerprint fingerprint
+                       #:principal (principal-key principal) #:fingerprint (bind-build-identity fingerprint)
                        #:state (and resumed? token) #:responses (current-workflow-responses)
                        #:key render-key
                        #:authorize (lambda (uri)

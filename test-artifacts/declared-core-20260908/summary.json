@@ -1,0 +1,616 @@
+{
+  "counts": {
+    "SUCCESS": 144,
+    "INFO": 1,
+    "FAILURE": 4,
+    "WARNING": 1
+  },
+  "tasks_on_core_fixture": {
+    "SUCCESS": 15,
+    "FAILURE": 27,
+    "SKIPPED": 1
+  },
+  "exceptions": [
+    {
+      "artifact": "results/server-input-required-result-basic-list-roots-2026-09-08T19-43-59-643Z/checks.json",
+      "check": {
+        "id": "sep-2322-list-roots-incomplete",
+        "name": "InputRequiredResultListRootsIncomplete",
+        "description": "Server returns InputRequiredResult with roots/list inputRequest",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.648Z",
+        "errorMessage": "JSON-RPC error: Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/server-input-required-result-ignore-extra-params-2026-09-08T19-43-59-948Z/checks.json",
+      "check": {
+        "id": "sep-2322-ignore-unexpected-params",
+        "name": "IgnoreUnexpectedParams",
+        "description": "Server ignores extra unrecognized keys in inputResponses",
+        "status": "WARNING",
+        "timestamp": "2026-09-08T19:43:59.952Z",
+        "errorMessage": "Server returned JSON-RPC error when extra params were included: Input responses require a continuation. Servers SHOULD ignore unrecognized information.",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/server-tasks-capability-negotiation-2026-09-08T19-43-59-978Z/checks.json",
+      "check": {
+        "id": "sep-2663-server-rejects-undeclared-client",
+        "name": "TasksToolsCallWithoutExtensionSync",
+        "description": "tools/call from a session without the extension MUST fall through to sync (no CreateTaskResult, even for task-supporting tools)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.003Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-capability-negotiation-2026-09-08T19-43-59-978Z/checks.json",
+      "check": {
+        "id": "tasks-per-request-meta-opt-in",
+        "name": "TasksPerRequestMetaOptIn",
+        "description": "tools/call with extension declared in _meta.io.modelcontextprotocol/clientCapabilities produces a CreateTaskResult even when the session did not negotiate the extension",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.006Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2575",
+            "url": "https://modelcontextprotocol.io/seps/2575-stateless-mcp"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-request-state-removal-2026-09-08T19-44-00-013Z/checks.json",
+      "check": {
+        "id": "tasks-request-state-removal-setup",
+        "name": "TasksRequestStateRemovalSetup",
+        "description": "Failed to create a long-running task to exercise the absence-asserts",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.017Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-mrtr-input-2026-09-08T19-44-00-019Z/checks.json",
+      "check": {
+        "id": "sep-2663-tasks-get-status-input-required",
+        "name": "TasksMRTRInputRequestsOnTasksGet",
+        "description": "tasks/get on an input_required task MUST surface a non-empty inputRequests map",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.023Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-mrtr-input-2026-09-08T19-44-00-019Z/checks.json",
+      "check": {
+        "id": "tasks-mrtr-tasks-update-resumes",
+        "name": "TasksMRTRTasksUpdateResumes",
+        "description": "tasks/update with matching inputResponses MUST be acked with {resultType:\"complete\"} and resume the task to a terminal state",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.025Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          },
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-mrtr-input-2026-09-08T19-44-00-019Z/checks.json",
+      "check": {
+        "id": "tasks-mrtr-partial-fulfillment",
+        "name": "TasksMRTRPartialFulfillment",
+        "description": "tasks/update with a subset of keys MUST keep the task in input_required with only the unanswered key remaining",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.028Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          },
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-status-notifications-2026-09-08T19-44-00-065Z/checks.json",
+      "check": {
+        "id": "tasks-status-notifications",
+        "name": "TasksStatusNotificationsScenario",
+        "description": "Status notifications conformance, pending subscriptions/listen rewrite.",
+        "status": "SKIPPED",
+        "timestamp": "2026-09-08T19:44:00.066Z",
+        "errorMessage": "Skipped: SEP-2663 delivers notifications/tasks via the SEP-2575 subscriptions/listen stream, not via the tools/call POST SSE response that the prior harness observed. The harness needs a rewrite against the new channel; tracked as a follow-up.",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-required-task-error-2026-09-08T19-44-00-066Z/checks.json",
+      "check": {
+        "id": "sep-2663-server-returns-missing-capability-when-required",
+        "name": "Sep2663ServerReturnsMissingCapabilityWhenRequired",
+        "description": "tools/call for a TaskSupport=required tool MUST reject with code -32021 (Missing Required Client Capability) when the client did not declare io.modelcontextprotocol/tasks",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.070Z",
+        "errorMessage": "tools/call for failing_job returned error code -32602; spec requires -32021.",
+        "specReferences": [
+          {
+            "id": "SEP-2575",
+            "url": "https://modelcontextprotocol.io/seps/2575-stateless-mcp"
+          },
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ],
+        "details": {
+          "observedCode": -32602
+        }
+      }
+    },
+    {
+      "artifact": "results/server-input-required-result-basic-sampling-2026-09-08T19-43-59-638Z/checks.json",
+      "check": {
+        "id": "sep-2322-sampling-incomplete",
+        "name": "InputRequiredResultSamplingIncomplete",
+        "description": "Server returns InputRequiredResult with sampling inputRequest",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.642Z",
+        "errorMessage": "JSON-RPC error: Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/server-tasks-wire-fields-2026-09-08T19-44-00-006Z/checks.json",
+      "check": {
+        "id": "tasks-wire-field-renames",
+        "name": "TasksWireFieldRenames",
+        "description": "CreateTaskResult uses ttlMs + pollIntervalMs (integer milliseconds); legacy ttl / pollInterval keys absent",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.009Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-wire-fields-2026-09-08T19-44-00-006Z/checks.json",
+      "check": {
+        "id": "tasks-no-early-ttl-expiry",
+        "name": "TasksNoEarlyTtlExpiry",
+        "description": "Task remains accessible via tasks/get for the duration of its ttlMs",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.009Z",
+        "errorMessage": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ],
+        "details": {
+          "untestable": true,
+          "reason": "no task was created by the preceding step, so this check could not be exercised"
+        }
+      }
+    },
+    {
+      "artifact": "results/server-tasks-wire-fields-2026-09-08T19-44-00-006Z/checks.json",
+      "check": {
+        "id": "tasks-no-related-task-meta-on-inlined-result",
+        "name": "TasksNoRelatedTaskMetaOnInlinedResult",
+        "description": "tasks/get inlined result MUST NOT include the v1 io.modelcontextprotocol/related-task _meta key (taskId is at the root)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.012Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-request-headers-2026-09-08T19-44-00-029Z/checks.json",
+      "check": {
+        "id": "tasks-headers-tolerate-mcp-method-on-tools-call",
+        "name": "TasksHeadersTolerateMcpMethodOnToolsCall",
+        "description": "Server tolerates Mcp-Method request header on tools/call (sync tool dispatch unaffected)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.033Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2243",
+            "url": "https://modelcontextprotocol.io/seps/2243-http-standardization"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-request-headers-2026-09-08T19-44-00-029Z/checks.json",
+      "check": {
+        "id": "sep-2663-routing-headers-accepted-on-tasks-get",
+        "name": "Sep2663RoutingHeadersAcceptedOnTasksGet",
+        "description": "Server accepts matched Mcp-Method + Mcp-Name request headers on tasks/get and dispatches normally",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.035Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2243",
+            "url": "https://modelcontextprotocol.io/seps/2243-http-standardization"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-request-headers-2026-09-08T19-44-00-029Z/checks.json",
+      "check": {
+        "id": "sep-2663-server-rejects-mismatched-mcp-name-on-tasks-get",
+        "name": "Sep2663ServerRejectsMismatchedMcpNameOnTasksGet",
+        "description": "When Mcp-Name header disagrees with params.taskId on tasks/get, server MUST reject with -32020 HeaderMismatch",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.040Z",
+        "errorMessage": "routing-task fixture from Check 2 unavailable; cannot drive negative-path probe",
+        "specReferences": [
+          {
+            "id": "SEP-2243",
+            "url": "https://modelcontextprotocol.io/seps/2243-http-standardization"
+          },
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-input-required-result-multiple-input-requests-2026-09-08T19-43-59-699Z/checks.json",
+      "check": {
+        "id": "sep-2322-multiple-inputs-incomplete",
+        "name": "InputRequiredResultMultipleInputsIncomplete",
+        "description": "Server returns InputRequiredResult with multiple inputRequests of different types",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.703Z",
+        "errorMessage": "JSON-RPC error: Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/server-input-required-result-capability-check-2026-09-08T19-43-59-944Z/checks.json",
+      "check": {
+        "id": "sep-2322-respect-client-capabilities",
+        "name": "RespectClientCapabilities",
+        "description": "Server only includes inputRequests for declared client capabilities",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.947Z",
+        "errorMessage": "JSON-RPC error: Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ],
+        "details": {}
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "tasks-sync-tool-call",
+        "name": "TasksSyncToolCall",
+        "description": "Sync tool returns ToolResult (resultType:\"complete\"), no taskId at top level",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.965Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-result-type-task-on-create",
+        "name": "TasksServerTaskCreation",
+        "description": "Task-supporting tool returns flat CreateTaskResult (no nested `task` wrapper)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.968Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-tasks-get-status-working",
+        "name": "TasksGetDuringWorking",
+        "description": "tasks/get returns status + metadata for an active task",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.969Z",
+        "errorMessage": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ],
+        "details": {
+          "untestable": true,
+          "reason": "no task was created by the preceding step, so this check could not be exercised"
+        }
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-tasks-get-status-completed",
+        "name": "TasksGetTerminalInlinedResult",
+        "description": "Completed task tasks/get inlines result with content[] (no separate tasks/result method)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.969Z",
+        "errorMessage": "Not testable: no task was created by the preceding step, so this check could not be exercised",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ],
+        "details": {
+          "untestable": true,
+          "reason": "no task was created by the preceding step, so this check could not be exercised"
+        }
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-tool-error-uses-completed-status",
+        "name": "TasksToolErrorCompletedIsError",
+        "description": "Tool execution error reports as completed + result.isError (NOT failed)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.971Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-tasks-get-status-failed",
+        "name": "TasksProtocolErrorFailedShape",
+        "description": "Protocol-level error reports as failed + inlined error{code,message}, no result",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.973Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "sep-2663-cancel-ack-empty-result",
+        "name": "TasksCancelEmptyAck",
+        "description": "tasks/cancel returns {resultType:\"complete\"} ack; status settles to cancelled",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.975Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-lifecycle-2026-09-08T19-43-59-961Z/checks.json",
+      "check": {
+        "id": "tasks-cancel-terminal-idempotent-ack",
+        "name": "TasksCancelTerminalIdempotentAck",
+        "description": "tasks/cancel on a terminal task returns the same empty-ack as on an active task (idempotent)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:43:59.977Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-dispatch-and-envelope-2026-09-08T19-44-00-041Z/checks.json",
+      "check": {
+        "id": "tasks-server-directed-creation-no-hint",
+        "name": "TasksServerDirectedCreationNoHint",
+        "description": "tools/call with no client `task` hint param MUST still produce CreateTaskResult for task-supporting tools",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.051Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-dispatch-and-envelope-2026-09-08T19-44-00-041Z/checks.json",
+      "check": {
+        "id": "sep-2663-legacy-task-param-ignored",
+        "name": "TasksLegacyTaskParamIgnored",
+        "description": "tools/call with legacy `task` param against a sync tool MUST NOT error and MUST NOT be promoted to a task",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.053Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-dispatch-and-envelope-2026-09-08T19-44-00-041Z/checks.json",
+      "check": {
+        "id": "tasks-immediate-result-shortcut",
+        "name": "TasksImmediateResultShortcut",
+        "description": "For a fast operation, a task-supporting tool MAY skip task creation and return a sync ToolResult; either path is valid",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.056Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-dispatch-and-envelope-2026-09-08T19-44-00-041Z/checks.json",
+      "check": {
+        "id": "tasks-result-type-complete-on-non-task-responses",
+        "name": "TasksResultTypeCompleteOnNonTaskResponses",
+        "description": "Sync tools/call, tasks/get, tasks/update ack, and tasks/cancel ack MUST all carry resultType:\"complete\"",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.058Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-dispatch-and-envelope-2026-09-08T19-44-00-041Z/checks.json",
+      "check": {
+        "id": "sep-2663-durable-create-strong-consistency",
+        "name": "TasksStrongConsistencyImmediateGet",
+        "description": "tasks/get issued immediately after CreateTaskResult arrives MUST resolve (server MUST NOT return CreateTaskResult before the task is durably created)",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.060Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "results/server-tasks-mrtr-composition-2026-09-08T19-44-00-070Z/checks.json",
+      "check": {
+        "id": "sep-2663-mrtr-synchronous-before-task-creation",
+        "name": "Sep2663MrtrSynchronousBeforeTaskCreation",
+        "description": "MRTR loop gathers input then escalates to a task on the final round (SEP-2322 + SEP-2663 451f5e1).",
+        "status": "FAILURE",
+        "timestamp": "2026-09-08T19:44:00.073Z",
+        "errorMessage": "Unknown name",
+        "specReferences": [
+          {
+            "id": "SEP-2322",
+            "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+          },
+          {
+            "id": "SEP-2663",
+            "url": "https://modelcontextprotocol.io/seps/2663-tasks-extension"
+          }
+        ]
+      }
+    }
+  ]
+}

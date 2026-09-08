@@ -1,0 +1,43 @@
+raco setup: version: 9.2
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.2
+raco setup: variants: cs
+raco setup: main collects: /usr/share/racket/collects/
+raco setup: collects paths:
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/collects
+raco setup:   /usr/share/racket/collects/
+raco setup: main pkgs: /usr/share/racket/pkgs
+raco setup: pkgs paths:
+raco setup:   /usr/share/racket/pkgs
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/pkgs
+raco setup: links files:
+raco setup:   /usr/share/racket/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.racket/.local/share/racket/9.2/links.rktd
+raco setup: compiled-file roots:
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/compiled-9.2-effect
+raco setup: --- updating info-domain tables ---                    [15:21:57]
+raco setup: --- pre-installing collections ---                     [15:21:57]
+raco setup: --- installing foreign libraries ---                   [15:21:57]
+raco setup: --- installing shared files ---                        [15:21:57]
+raco setup: --- compiling collections ---                          [15:21:57]
+raco setup: --- parallel build using 8 jobs ---                    [15:21:57]
+raco setup: 7 making: <pkgs>/eli-tester/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger
+raco setup: 5 making: <pkgs>/racket-mcp/examples
+raco setup: 4 making: <pkgs>/racket-mcp/mcp
+raco setup: 3 making: <pkgs>/racket-mcp/tests
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/lang
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/private
+raco setup: 5 making: <pkgs>/racket-mcp/examples/extensions
+raco setup: --- creating launchers ---                             [15:24:35]
+raco setup: --- installing man pages ---                           [15:24:35]
+raco setup: --- installing collections ---                         [15:24:35]
+raco setup: --- post-installing collections ---                    [15:24:35]
+raco setup: --- checking package dependencies ---                  [15:24:35]
+raco test: (submod (file ".cache/distribution/racket-mcp/tests/mcp-persistence-boundaries.rkt") test)
+raco test: (submod (file ".cache/distribution/racket-mcp/tests/mcp-render-boundaries.rkt") test)
+raco test: (file ".cache/distribution/racket-mcp/tests/mcp-grammar-contracts.rkt")
+raco test: (submod (file ".cache/distribution/racket-mcp/tests/mcp-upstream-process-loss.rkt") test)
+raco test: (file ".cache/distribution/racket-mcp/tests/cli-artifacts.rkt")
+36 tests passed

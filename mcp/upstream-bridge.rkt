@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list file/sha1 "storage.rkt" "json.rkt" "clock.rkt" "error.rkt" "private/failure.rkt"
+(require (submod "build.rkt" private) racket/list file/sha1 "storage.rkt" "json.rkt" "clock.rkt" "error.rkt" "private/failure.rkt"
          "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide make-upstream-bridge upstream-bridge? upstream-bridge-credential-id
          bridge-upstream-request recover-upstream-request!
@@ -92,9 +92,10 @@
                                #:unless (hash-has-key? (hash-ref state 'accepted) id))
                      (values id (hash-ref entry 'request)))))]))
 (define (fingerprint bridge snapshot)
-  (bytes->hex-string (sha256-bytes (open-input-string
-    (json->string (hasheq 'snapshot snapshot 'bridge (upstream-bridge-identity bridge)
-                         'version (upstream-bridge-version bridge)))))))
+  (bind-build-identity
+    (bytes->hex-string (sha256-bytes (open-input-string
+      (json->string (hasheq 'snapshot snapshot 'bridge (upstream-bridge-identity bridge)
+                           'version (upstream-bridge-version bridge))))))))
 (define (check-binding! bridge snapshot instance credential arguments)
   (unless (and (equal? (stored-instance-version instance) "upstream/1")
                (equal? (stored-instance-fingerprint instance) (fingerprint bridge snapshot))

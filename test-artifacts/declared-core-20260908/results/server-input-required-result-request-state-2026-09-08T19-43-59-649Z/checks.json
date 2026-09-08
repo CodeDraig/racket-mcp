@@ -1,0 +1,83 @@
+[
+  {
+    "id": "sep-2322-request-state-incomplete",
+    "name": "InputRequiredResultRequestStateIncomplete",
+    "description": "Server returns InputRequiredResult with both inputRequests and requestState",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:43:59.687Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "inputRequests": {
+          "confirm": {
+            "method": "elicitation/create",
+            "params": {
+              "message": "Please confirm",
+              "mode": "form",
+              "requestedSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "ok"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "requestState": "4eee3bfeb26cdf772659de2c2b37bfb18ccaea9fdf3c8d1fb8647481711fb4df",
+        "resultType": "input_required"
+      }
+    }
+  },
+  {
+    "id": "sep-2322-request-state-complete",
+    "name": "InputRequiredResultRequestStateComplete",
+    "description": "Server validates echoed requestState and returns complete result",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:43:59.697Z",
+    "specReferences": [
+      {
+        "id": "SEP-2322",
+        "url": "https://modelcontextprotocol.io/specification/draft/basic/utilities/mrtr"
+      }
+    ],
+    "details": {
+      "result": {
+        "content": [
+          {
+            "text": "state-ok",
+            "type": "text"
+          }
+        ],
+        "resultType": "complete"
+      }
+    }
+  },
+  {
+    "id": "wire-schema-valid",
+    "name": "WireSchemaValid",
+    "description": "Every JSON-RPC message the implementation sent is valid per the spec JSON schema for the negotiated spec version",
+    "status": "SUCCESS",
+    "timestamp": "2026-09-08T19:43:59.698Z",
+    "specReferences": [
+      {
+        "id": "MCP-Schema",
+        "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.json"
+      }
+    ],
+    "details": {
+      "messagesValidated": 4,
+      "violations": []
+    }
+  }
+]

@@ -2,7 +2,8 @@
 
 Implementation in progress for MCP **2026-07-28**, targeting Racket **9.2**.
 This is not yet the completed seven-milestone release. See
-[IMPLEMENTATION.md](IMPLEMENTATION.md) for remaining work and validation evidence.
+[REMAINING.md](REMAINING.md) for mutable remaining work and
+[IMPLEMENTATION.md](IMPLEMENTATION.md) for recorded implementation evidence.
 
 ```racket
 #lang mcp
@@ -62,22 +63,24 @@ their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
-Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 5,969 native checks, 1,301 pinned core schema cases,
-86 optional regex cases, documentation, package checks and all fourteen Go probes;
-see `test-artifacts/resource-reference-contract-20260908`. The full 9.2 run at
-017af62 passed 5,785 native checks, the core and optional regex suites, and
-Scribble. The subsequent reference-compiler dependency fix passed the full 9.3
-run and focused source-only checks on 9.2; no newer full 9.2 run is claimed.
-The native total includes 242 pinned format cases tested
-through the separate MCP elicitation assertions. Five targeted independent MCP
-scenarios also passed all 16 checks; this is not full conformance.
-The earlier fresh 9.3 dependency bootstrap exposed an omitted development fixture
-retaining 9.2 bytecode. Validation scripts now compile every top-level development
-fixture; `test-artifacts/linux-9.3-current-20260907` retains that failure and fix.
-The first hosted matrix run was prevented from starting by an Actions budget;
-macOS and Windows remain unverified. See `test-artifacts/native-platform-2026-09-07`
-and the implementation ledger for the version-specific evidence.
+Linux x86_64 verification is recorded in `test-artifacts`. Before the declared-build
+integration, full runs passed on Racket 9.2 (6,256 native checks) and 9.3 (6,238,
+followed by 22 incremental checks), including 1,301 schema cases, 86 regex cases
+and Scribble. The new identity contract passed 63 targeted checks, both versions'
+installed-package dependency checks and 22 installed checks, plus Scribble.
+Final full runs are in progress in `test-artifacts/declared-build-20260908`.
+
+All fourteen official Go interoperability probes passed after the identity integration.
+Core and Tasks conformance were refreshed with unchanged qualified outcomes in
+`test-artifacts/declared-core-20260908` and `test-artifacts/declared-tasks-20260908`.
+The qualified MCP results are in `test-artifacts/conformance-closure-20260908`:
+144 core successes with four excluded roots/sampling fixture failures and one
+recorded MRTR warning; 43 Tasks successes with a header-specification disagreement
+and a harness notification skip; 62 client successes and four expected skips;
+and a real HTTPS CIMD/offline-access run with a 12/12 terminal pass. These results
+are not an unqualified conformance claim. The latest inspected hosted run failed
+before any native jobs started; its cause is not established. macOS and Windows
+remain unverified.
 
 The CLI is also available without package registration:
 
@@ -101,10 +104,23 @@ raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serv
 
 The library equivalent is `(load-interface path #:runtime-build-id id)`, available
 from `mcp` and `mcp/loader`. It returns native SDK descriptors and rejects changed
-captured helpers on resume. The ID is supplied by the application owner; automatic
-runtime provenance and conversion of the default/direct loading path remain open.
+captured helpers on resume. The ID is supplied by the application owner.
 The manual's “Loading interfaces with executable identity” section explains the
 contract, cache limitations, and prepared dynamic imports.
+
+For ordinary source or compiled loading, declare the identity of your complete
+application/runtime build:
+
+```sh
+racket application.rkt --build-id my-application/42 --state state.sqlite
+```
+
+Use `(make-runtime interface #:store store #:build-id "my-application/42")` in
+library code, or `call-with-build-identity` around workflow construction and
+low-level execution. The application must update this identity when executable
+dependencies change. It is a declaration, not automatic provenance. Changed IDs
+reject incompatible workflow, parent-rendering and upstream resumes; ordinary
+loading retains normal module-instantiation semantics.
 
 ## Implemented paths
 

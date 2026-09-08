@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
+(require "build.rkt" (submod "build.rkt" private) "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
@@ -7,18 +7,22 @@
          (struct-out exn:fail:recovery))
 ;; Stage procedures receive persistent JSON environments. Their result is saved
 ;; before the next stage runs. Only named adapters may cross effect boundaries.
-(struct captured-workflow workflow-descriptor (build) #:transparent)
+(struct identified-workflow workflow-descriptor (identity) #:transparent)
+(struct captured-workflow identified-workflow (build) #:transparent)
 (define (workflow-add-fingerprint-suffix workflow suffix)
   (define updated
     (struct-copy workflow-descriptor workflow
       [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
-  (if (captured-workflow? workflow)
-      (captured-workflow
-        (workflow-descriptor-name updated) (workflow-descriptor-version updated)
-        (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
-        (workflow-descriptor-key updated) (workflow-descriptor-changes updated)
-        (captured-workflow-build workflow))
-      updated))
+  (define fields
+    (list (workflow-descriptor-name updated) (workflow-descriptor-version updated)
+          (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
+          (workflow-descriptor-key updated) (workflow-descriptor-changes updated)))
+  (cond [(captured-workflow? workflow)
+         (apply captured-workflow (append fields (list (identified-workflow-identity workflow)
+                                                       (captured-workflow-build workflow))))]
+        [(identified-workflow? workflow)
+         (apply identified-workflow (append fields (list (identified-workflow-identity workflow))))]
+        [else updated]))
 (struct exn:fail:recovery exn:fail (handle stage) #:transparent)
 (define current-workflow-change-publisher (make-parameter void))
 (define current-workflow-store (make-parameter #f))
@@ -37,15 +41,18 @@
 (define current-workflow-task-handoff (make-parameter #f))
 (define (recovery instance stage message)
   (raise (exn:fail:recovery message (current-continuation-marks) (stored-instance-handle instance) stage)))
-(define (make-workflow name version fingerprint stages #:key [key #f] #:changes [changes (lambda (_arguments _result) '())])
+(define (make-workflow name version fingerprint stages #:key [key #f] #:changes [changes (lambda (_arguments _result) '())]
+                       #:build-id [build-id (current-build-identity)])
+  (set! build-id (normalize-build-identity build-id))
   (define codecs (check-workflow-program! name version fingerprint stages key changes))
   (define executable-fingerprint
     (if (null? codecs) fingerprint
         (string-append fingerprint ":codecs:" (json->string (for/list ([codec (in-list codecs)])
                                                              (hasheq 'name (value-codec-name codec) 'version (value-codec-version codec) 'schema (value-codec-schema codec)))))))
-  (if (current-executable-build)
-      (captured-workflow name version executable-fingerprint stages key changes (current-executable-build))
-      (workflow-descriptor name version executable-fingerprint stages key changes)))
+  (cond [(current-executable-build)
+         (captured-workflow name version executable-fingerprint stages key changes build-id (current-executable-build))]
+        [build-id (identified-workflow name version executable-fingerprint stages key changes build-id)]
+        [else (workflow-descriptor name version executable-fingerprint stages key changes)]))
 (define (record-workflow-changes! store principal keys #:handle handle #:stage stage)
   (unless (and (list? keys) (json-value? keys)) (error 'workflow "change keys must be a JSON list"))
   (unless (null? keys)
@@ -56,6 +63,10 @@
   (with-handlers ([non-break-failure? (lambda (e) (fprintf (current-error-port) "MCP change publication deferred: ~a\n" (failure-message e)))])
     ((current-workflow-change-publisher))))
 (define (workflow-executable-fingerprint workflow adapters)
+  (define own-identity (and (identified-workflow? workflow) (identified-workflow-identity workflow)))
+  (define runtime-identity (current-build-identity))
+  (when (and own-identity runtime-identity (not (equal? own-identity runtime-identity)))
+    (error 'workflow "workflow and runtime declare conflicting build identities"))
   (define fingerprint
     (if (captured-workflow? workflow)
         (string-append (workflow-descriptor-fingerprint workflow) ":build:"
@@ -69,8 +80,10 @@
                #:do [(define adapter (hash-ref adapters name #f))]
                #:when (versioned-effect-adapter? adapter))
       (list (symbol->string name) (symbol->string (effect-adapter-policy adapter)) (versioned-effect-adapter-version adapter))))
-  (if (null? versions) fingerprint
-      (string-append fingerprint ":adapters:" (json->string versions))))
+  (bind-build-identity
+    (if (null? versions) fingerprint
+        (string-append fingerprint ":adapters:" (json->string versions)))
+    (or own-identity runtime-identity)))
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
