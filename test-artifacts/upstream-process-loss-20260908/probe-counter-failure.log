@@ -1,0 +1,11 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (submod (file "/tmp/mcp-upstream-process-loss.rkt") test)
+--------------------
+tasks/update
+FAILURE
+name:       check-equal?
+location:   /tmp/mcp-upstream-process-loss.rkt:110:14
+actual:     '("tools/call" "tasks/update" "tools/call")
+expected:   '("tools/call" "tasks/update")
+--------------------
+1/2 test failures

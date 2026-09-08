@@ -5610,3 +5610,17 @@ terminal logs are in language-acceptance-20260908 and durability-boundaries-2026
 BUILD still covers automatic executable identity; CONFORMANCE/PLATFORM/RELEASE
 still require final-source verification. Completed reference analysis was not
 reopened; its stale manual status sentence was corrected.
+
+## Upstream acceptance closure (2026-09-08)
+
+Added two real-process HTTP Tasks crash checks. Killing the bridge after peer
+acknowledgement leaves a recorded uncertain intent; two fresh bridge generations
+retain the failed outcome and do not resend creation/update/cancellation. Both
+cases pass on Linux Racket 9.2 and 9.3. The initial authorization-callback counter
+was replaced by a wire-header counter; its failed probe is retained, not treated
+as an SDK regression. Existing compatibility, races, expiry, notification,
+credential, recovery and translation tests are mapped in
+ test-artifacts/upstream-process-loss-20260908/README.md.
+
+UPSTREAM is removed from REMAINING.md. No SDK implementation changed in this
+closure. BUILD, CONFORMANCE, PLATFORM and RELEASE remain.
