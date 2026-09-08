@@ -175,4 +175,7 @@ conformance exclusions, and unavailable native platform verification.
 
 Explicit dynamic registration requests and response validation are available in
 `mcp/oauth-registration`; see [the API and supported metadata profile](OAUTH-REGISTRATION.md).
-Automatic DCR selection and registration persistence are not yet integrated.
+Issuer-scoped SQLite persistence, secret expiry, and authorization-server changes
+are handled by `mcp/oauth-registration-store`. Opt-in authorizer integration
+selects DCR after pre-registration/CIMD and uses issued credentials for native
+token exchange and refresh.

@@ -5742,3 +5742,69 @@ This completes request/response handling only. Automatic DCR fallback selection,
 registration persistence and installing returned authentication into an authorizer
 are separate work, not claimed here. No independent conformance score changed,
 no hosted Actions were run, and no native macOS/Windows verification was added.
+
+### Registration persistence, expiry and issuer changes (2026-09-08)
+
+Completed the separate registration lifecycle objective. The public
+mcp/oauth-registration-store module provides ensure-oauth-registration! using
+existing SQLite/memory storage, transactions and process worker locks. The key is
+issuer plus canonical requested client metadata. Responses and issued secrets
+are committed before return and revalidated on load. Positive secret expiry at
+or before the supplied clock triggers replacement; zero remains non-expiring.
+Fresh discovery selecting a different issuer obtains separate credentials, even
+when client IDs match. Returning to a previous issuer reuses only that issuer's
+valid registration. Changed client metadata gets a separate registration.
+
+An intent is committed before registration I/O. Concurrent callers receive an
+in-progress error. Interrupted attempts remain uncertain across process restarts
+and require explicit retry authorization; that option never overrides a live
+worker lock. An expired or foreign-issuer adapter result cannot become ready.
+Calling from an existing store transaction is rejected so intent cannot remain
+uncommitted during network I/O. The new table stores plaintext credentials;
+OAUTH-REGISTRATION.md documents private filesystem/backup responsibilities and
+that this does not implement an encrypted credential vault.
+
+Validation on Linux Racket 9.2: raco make and raco test over tests/oauth*.rkt,
+tests/authorization*.rkt, tests/client-registration.rkt,
+tests/http-authorization.rkt and tests/authenticate.rkt passed 425 checks.
+The final focused storage run passed 32 checks, including five subsequently
+added checks for death after an actual native HTTP registration response and
+before persistence. Evidence includes real HTTP registration followed by a
+separate process loading the saved secret without network access, exact expiry,
+zero expiry, issuer changes, configuration separation, foreign/expired results,
+concurrent store connections, transaction nesting, and process exits on both
+sides of the request boundary. git diff --check passed.
+
+Automatic pre-registration/CIMD/DCR selection and feeding returned credentials
+into token exchange remain separate objectives. No independent conformance score
+change, hosted CI, or macOS/Windows verification is claimed.
+
+### Issued registration credentials integrated into token authentication (2026-09-08)
+
+make-oauth-authorizer now accepts paired #:registration-store and
+#:registration-metadata options, with an optional two-argument #:register adapter.
+DCR is opt-in and selected only after pre-registration and supported configured
+CIMD. The existing manual registration callback remains available when the AS
+has no dynamic endpoint. Returned client ID, secret and authentication method
+feed native Basic/Post/None code exchange and refresh. The method must also be
+supported by discovered AS metadata. Dynamic registration rejects conflicting
+static authentication before registration I/O and rejects custom token exchange
+configuration rather than silently bypassing its authentication ownership.
+
+The authorizer rechecks secret expiry before sending the code or refresh token,
+including time spent in browser interaction. It never re-registers mid-exchange.
+Issuer/client-ID/resource token isolation and existing token persistence callbacks
+are preserved. OAUTH-REGISTRATION.md and README document the complete opt-in path
+and ownership of the registration store.
+
+Linux Racket 9.2 validation: raco make and raco test over tests/oauth*.rkt,
+tests/authorization*.rkt, tests/client-registration.rkt,
+tests/http-authorization.rkt and tests/authenticate.rkt pass 517 checks, including
+87 new live HTTP registration-to-token integration checks. These inspect actual
+Basic credentials and POST fields, code and refresh grants, stored registration
+reuse by a new authorizer, issuer migration, expiry replacement, expiry during
+browser interaction, unsupported methods, pre-registration/CIMD precedence and
+custom-exchange rejection. The AS deliberately returns methods different from
+the requested method to prove issued metadata drives authentication.
+git diff --check passes. Independent conformance scenarios and scores were not
+rerun or changed; no hosted CI or native macOS/Windows checks were launched.

@@ -110,3 +110,6 @@
              (if token (list (string-append "Authorization: Bearer " token)) '())
              #:content-type "application/json" #:success-status 201))
   (oauth-registration-result issuer (validate-oauth-registration-response fields response)))
+
+;; SDK persistence reconstructs only after validating the stored metadata.
+(module+ private (provide oauth-registration-result request-metadata!))
