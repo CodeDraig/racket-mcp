@@ -1,6 +1,6 @@
 #lang racket/base
 (require "main.rkt" "cli.rkt" "completion.rkt" "private/registration.rkt" "private/module-observation.rkt" racket/splicing
-         (for-syntax racket/base racket/list syntax/parse "private/module-compiler.rkt"))
+         (for-syntax racket/base racket/list syntax/parse "private/module-compiler.rkt" "private/interface-binding.rkt"))
 (provide (except-out (all-from-out racket/base) #%module-begin module+ module*) (all-from-out "main.rkt")
          (rename-out [mcp-module-begin #%module-begin] [mcp-module+ module+] [mcp-module* module*]))
 ;; Compiled clients may bypass the reader. Install before their subsequent
@@ -37,17 +37,19 @@
          (hash-set! seen (syntax-e id) #t)))
      ;; mcp-interface is deliberately a conventional user-visible binding.
      (define interface-id (datum->syntax stx 'mcp-interface))
+     (define interface-runtime (car (generate-temporaries '(interface-value))))
      (define compiler-ids (generate-temporaries '(collect finish)))
      (define collect (car compiler-ids)) (define finish (cadr compiler-ids))
      #`(#%plain-module-begin
         (define declarations '())
         (define (register! descriptor) (set! declarations (cons descriptor declarations)))
-        (define-syntaxes (#,collect #,finish) (make-module-compilers #'register!))
+        (define-syntax #,interface-id (interface-binding (quote-syntax #,interface-runtime)))
+        (define-syntaxes (#,collect #,finish) (make-module-compilers #'register! (quote-syntax #,interface-runtime)))
         (splicing-syntax-parameterize ([register-declaration (make-rename-transformer (quote-syntax #,collect))]) #,@expanded)
         (define collected-servers (filter server-descriptor? declarations))
         (define mounted (filter interface-descriptor? declarations))
         (when (> (length collected-servers) 1) (error 'mcp "only one server declaration is allowed"))
-        (define #,interface-id (make-interface #:server (and (pair? collected-servers) (car collected-servers))
+        (define #,interface-runtime (make-interface #:server (and (pair? collected-servers) (car collected-servers))
                                               #:requirements (interface-requirements (apply mount-interfaces mounted))
                                               #:adapter-bindings (interface-adapter-bindings (apply mount-interfaces mounted))
                                               #:adapter-restrictions (interface-adapter-restrictions (apply mount-interfaces mounted))

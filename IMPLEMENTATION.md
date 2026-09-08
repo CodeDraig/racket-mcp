@@ -30,7 +30,7 @@ complete coverage of its surrounding milestone.
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
 | Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values and lexical effect adapters; renamed/re-exported schema, operation, resource and prompt queries covered at phases 0–2; remaining binding/manifest integration audit stays open |
-| Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, metadata, workflow stages/capability requirements and local/external resource identities including defining phase; complete dynamic/composed-manifest coverage remains open |
+| Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records schemas, metadata, workflow stages/capability requirements and resource identities including defining phase; imported fragments and literal mounts/views now compose metadata, while computed or conditional mounts are explicit unknowns; complete interface/compiler acceptance remains open |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
 | References and annotations | Local registry, anchors, dynamic refs, unevaluated properties/items | Covered by official core cases, including local remote fixtures; no network fetching |
@@ -5001,3 +5001,46 @@ the implemented workflow-capability and cross-module identity coverage instead
 of suggesting those facilities are wholly absent. Dynamic/composed-manifest and
 other release gates remain open. Evidence is in
 test-artifacts/manifest-provider-phases-20260908.
+
+## Static mounted interfaces and view manifests (2026-09-08)
+
+A regression reproduced an empty manifest for a mounted fragment containing a
+resource and a tool. The three initial cases failed: declarations disappeared,
+the resource reference disappeared, and generated documentation omitted the tool.
+The exported interface binding now carries private compiler identity while its
+expression value remains the ordinary descriptor. Static composition reads the
+provider's generated data-only manifest submodule through renamed re-exports;
+application and provider handlers are not instantiated. Compiler-time module
+origins are rebased to the imported file identity without changing schema data.
+
+Module-level imported fragments, mount-interfaces applications and literal views
+now contribute their tools, workflows, resources, prompts and completions.
+Resource IDs are rebased per mount; local handler references can resolve through
+mounted declaration origins. Literal views transform names, URI templates and
+completion targets, retain policy descriptions, and reject duplicate published
+identities, generated route overlaps and internal references to removed resources.
+Computed values, dynamic surface options and conditional mounts remain explicit
+unknown mount entries. Documentation and diagrams show those entries; diffs do
+not classify their unknown contents as established additions or removals.
+
+The 13 new cases cover renamed re-exports, nested composition, handler-free
+inspection, runtime descriptor/evaluation parity, resource and completion
+identity, literal transformations, unknown and conditional mounts, and four
+source-attached negative cases. Focused compilation and 355 checks passed on
+Linux Racket 9.2 and 9.3. Whole-interface reference acceptance and the other
+release gates remain open.
+
+Full 9.3 verification passed compilation, 6,065 native checks, all 1,301 core
+schema cases, all 86 optional regex cases and Scribble. This broad run preceded
+three additional composition cases and the final correction propagating unknown
+view policies to the declaration's dynamic-metadata summary. The individual
+policy descriptions were already correctly unknown; a direct probe reproduced
+the inconsistent summary before correction. The final composition file has 17
+cases, including this regression.
+
+Final focused compilation and 359 checks passed on Linux Racket 9.2 and 9.3 and
+from the installed 9.3 package; final installed dependency checks passed. All
+14 official Go probes passed before the last metadata-only correction. The
+broad runtime source hashes and that small subsequent patch are retained with
+the logs in test-artifacts/composed-manifests-20260908. Native macOS/Windows and
+the other full SDK release gates remain open.

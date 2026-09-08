@@ -2,7 +2,10 @@
 (require racket/list "descriptor.rkt" "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
 (provide mount mount-interfaces view role message image-content audio-content)
 (define-syntax (mount stx) (syntax-parse stx [(_ interface:expr ...)
-                                           #'(let ([result (mount-interfaces interface ...)]) (register-declaration result) result)]))
+                                           #`(let ([result (mount-interfaces interface ...)])
+                                               (register-declaration result #:mount (interface ...) #,stx view mount-interfaces
+                                                                     #,(eq? (syntax-local-context) 'module))
+                                               result)]))
 (define (mount-interfaces . interfaces)
   (make-interface #:tools (append-map interface-descriptor-tools interfaces)
                   #:resources (append-map interface-descriptor-resources interfaces)

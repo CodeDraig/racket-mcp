@@ -1855,7 +1855,8 @@ Each local resource has a @tt{local-id}. A reference's @tt{local-target} is that
 identifier when lexical binding resolves to a resource in this manifest, and
 @racket[#f] otherwise. These identifiers are local to this generated manifest;
 they are not wire names or stable identifiers across builds. Imported resources
-remain external even when their names and source files match a local declaration.
+remain external unless their declaration origins resolve to a resource supplied
+by a statically known mount; names and source files alone do not establish this.
 Generated bindings need no source location to establish a local target.
 
 References also record @tt{binding-provider}: the defining module's file or
@@ -1869,6 +1870,32 @@ The compiler emits the manifest after declaration right-hand sides expand, using
 Racket's module-lifting API. The resulting submodule uses @tt{racket/base} and
 quoted data only. Reading it does not instantiate the application or its imported
 resource providers. Compiling source still executes trusted transformers.
+
+The exported @tt{mcp-interface} binding carries private compiler metadata while
+its expression value remains the interface descriptor, including through
+@racket[dynamic-require]. Renamed imports and re-exports preserve this metadata.
+A module-level @racket[mount] reads only the provider's independent generated
+manifest. It includes tools, workflows, resources, prompts and completions, with
+fresh local identities for mounted resources. Local handler references can resolve
+to those resources through their recorded binding origins.
+
+Static composition recognizes imported interface bindings, @racket[mount-interfaces]
+applications, and @racket[view] applications with literal inclusion, exclusion,
+renaming, namespaces and URI maps. The literal grammar includes quoted data,
+literal hashes, and binding-checked @racket[list], @racket[hash], @racket[hasheq]
+and @racket[hasheqv] constructors over literals. It does not evaluate host helpers.
+Views retain declared policy expressions in @tt{composition-policies}; dynamic
+policy values remain marked unknown. Duplicate known published identities,
+overlapping generated URI routes and view removal of an internally referenced
+resource receive expansion errors.
+
+Computed interface values, dynamic surface transformations, and mounts inside
+host expression contexts are explicit @tt{mount} entries with @tt{known?} set to
+@racket[#f], source locations and the unevaluated expression. Their presence does
+not assert that their declarations are installed. Documentation and diagrams
+display these unknown mounts; diffs require review rather than classifying their
+unknown contents as established additions or removals. Runtime interface checks
+still apply to dynamically constructed compositions.
 
 Workflow manifest entries also record @tt{client-capabilities}, with @tt{required}
 and @tt{optional} objects using the protocol capability names and an @tt{analysis}

@@ -1,0 +1,66 @@
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: collects paths:
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/collects
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: main pkgs: /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup: pkgs paths:
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/pkgs
+raco setup: links files:
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.cache/ci/package-home-9.3-current/.local/share/racket/9.3/links.rktd
+raco setup: --- updating info-domain tables ---                    [9:22:10]
+raco setup: --- pre-installing collections ---                     [9:22:10]
+raco setup: --- installing foreign libraries ---                   [9:22:10]
+raco setup: --- installing shared files ---                        [9:22:10]
+raco setup: --- compiling collections ---                          [9:22:10]
+raco setup: --- parallel build using 8 jobs ---                    [9:22:10]
+raco setup: 7 making: <pkgs>/eli-tester/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger
+raco setup: 5 making: <pkgs>/racket-mcp/examples
+raco setup: 4 making: <pkgs>/racket-mcp/mcp
+raco setup: 3 making: <pkgs>/racket-mcp/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/check-requires
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/helper
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/tests
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/lang
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/private
+raco setup: 5 making: <pkgs>/racket-mcp/examples/extensions
+raco setup: --- creating launchers ---                             [9:22:47]
+raco setup: --- installing man pages ---                           [9:22:47]
+raco setup: --- building documentation ---                         [9:22:47]
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/family.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: running: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: skipping: <pkgs>/syntax-spec-v3/scribblings/main.scrbl
+raco setup: rendering: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: --- installing collections ---                         [9:22:58]
+raco setup: --- post-installing collections ---                    [9:22:58]
+raco setup: --- checking package dependencies ---                  [9:22:58]
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-composition.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/core.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/domain.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/declaration-manifest.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/reference-manifest.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-reference-bindings.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-external-identities.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-provider-phases.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-diagram.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-docs.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-diff.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/manifest-capability-parity.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/phase-exports.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/module-imports.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/extension-phase-matrix.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/view-scopes.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/view-adapters.rkt")
+raco test: (file ".cache/distribution/racket-mcp/tests/view-effects.rkt")
+359 tests passed

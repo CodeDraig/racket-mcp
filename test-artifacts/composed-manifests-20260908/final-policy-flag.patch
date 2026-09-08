@@ -1,0 +1,16 @@
+--- a/mcp/private/interface-manifest.rkt
++++ b/mcp/private/interface-manifest.rkt
+@@ -106,8 +106,11 @@
+              (for/hasheq ([(keyword value) (in-hash options)] #:when (memq keyword '(#:require-scopes #:adapters #:allow-adapters)))
+                (values (string->symbol (keyword->string keyword)) (described value))))
+            (if (zero? (hash-count policies)) transformed
+-               (hash-set transformed 'composition-policies
+-                 (append (hash-ref transformed 'composition-policies '()) (list policies))))))))
++               (hash-set* transformed 'composition-policies
++                 (append (hash-ref transformed 'composition-policies '()) (list policies))
++                 'dynamic-metadata
++                 (or (hash-ref transformed 'dynamic-metadata #f)
++                     (for/or ([policy (in-hash-values policies)]) (not (hash-ref policy 'known?))))))))))
+ (define (mount-manifest node index)
+   (define (resolve expression prefix)
+     (define imported (lookup-interface-manifest expression))

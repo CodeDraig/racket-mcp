@@ -7,7 +7,10 @@
 (define (contract entry)
   ;; Strip compiler-owned locations only. A schema property called "source" or
   ;; "line" is application data and must still participate in comparison.
-  (define base (without entry (cons 'local-id location-fields)))
+  (define stripped (without entry (cons 'local-id location-fields)))
+  (define base
+    (if (hash-ref stripped 'binding-origin #f)
+        (hash-set stripped 'binding-origin (without (hash-ref stripped 'binding-origin) '(line column position span))) stripped))
   (define stages
     (if (hash-has-key? base 'workflow-stages)
         (hash-set base 'workflow-stages
@@ -107,7 +110,11 @@
   (for/list ([id (in-list ids)])
     (define prior (hash-ref old id #f)) (define next (hash-ref new id #f))
     (define base (hasheq 'declaration (format "~a" id) 'behavior "not-compared"))
-    (cond [(not next) (hash-set* base 'change "breaking-removal" 'reasons (list "The published declaration was removed."))]
+    (cond [(or (and prior (eq? (hash-ref prior 'kind) 'mount))
+               (and next (eq? (hash-ref next 'kind) 'mount)))
+           (hash-set* base 'change "review-required"
+                      'reasons (list "The published surface of a dynamic mount is not established by the manifest."))]
+          [(not next) (hash-set* base 'change "breaking-removal" 'reasons (list "The published declaration was removed."))]
           [(not prior) (hash-set* base 'change "added" 'reasons '())]
           [else
            (define a (contract prior)) (define b (contract next))

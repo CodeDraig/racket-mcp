@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "declaration-ir.rkt" "resource-binding.rkt" (for-template racket/base))
+(require racket/list "declaration-ir.rkt" "resource-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
 (provide make-module-compilers)
 ;; Preserve the defining module, not an import alias or generated binding name.
 ;; Resolving an already expanded binding does not instantiate its provider.
@@ -14,12 +14,15 @@
                  'phase (list-ref binding 4)))))
 ;; Each module owns a lexical collector/finalizer pair. No process-wide table
 ;; communicates between modules or transformer instances.
-(define (make-module-compilers runtime-register)
+(define (make-module-compilers runtime-register interface-runtime)
   (define entries '())
   (define references '())
   (values
    (lambda (stx)
      (syntax-case stx ()
+       [(_ descriptor #:mount (expression ...) source view-id mount-id unconditional?)
+        (begin (set! entries (cons (mounted-node (syntax->list #'(expression ...)) #'source #'view-id #'mount-id (syntax-e #'unconditional?)) entries))
+               #`(#,runtime-register descriptor))]
        [(_ descriptor #:references owner (target ...))
         (begin (set! references (cons (cons #'owner (syntax->list #'(target ...))) references)) #'(void))]
        [(_ descriptor #:declaration kind name source #:workflow-nodes (stage ...))
@@ -46,7 +49,11 @@
                   [index (in-naturals)])
          (define entry
            (if (eq? (declaration-node-kind node) 'resource)
-               (hash-set base-entry 'local-id (format "declaration-~a" index)) base-entry))
+               (let ([target (car (findf (lambda (pair) (equal? (cdr pair) (format "declaration-~a" index))) local-resources))])
+                 (hash-set* base-entry 'local-id (format "declaration-~a" index)
+                            'binding-origin (and target
+                              (hash-set (or (syntax-property (resource-binding-target (lookup-resource-binding (declaration-node-name node))) 'mcp-resource-origin) (hasheq 'name #f 'known? #f))
+                                        'binding-provider (reference-provider target))))) base-entry))
          (define targets
            (append-map cdr (filter (lambda (group) (and (identifier? (declaration-node-name node)) (free-identifier=? (car group) (declaration-node-name node)))) references)))
          (define origins
@@ -64,8 +71,18 @@
                         'reference-analysis 'lexical-handler-syntax) entry)))
      ;; Called in the final generated RHS, after application RHS expansion.
      ;; Lift a fresh, independent module containing only quoted manifest data.
+     (define combined
+       (append compiled
+               (append-map (lambda (entry index)
+                             (cond [(mounted-node? entry) (mount-manifest entry index)]
+                                   [(declaration-node? entry) '()]
+                                   [else (list entry)])) ordered (range (length ordered)))))
+     (define manifest (resolve-mounted-references combined))
+     (when (ormap mounted-node? ordered)
+       (check-composed-manifest manifest (mounted-node-source (findf mounted-node? ordered))))
      (syntax-local-lift-module
-      #`(module manifest racket/base (provide manifest manifest-version)
+      #`(module manifest racket/base (provide manifest manifest-version manifest-provider)
           (define manifest-version 2)
-          (define manifest '#,(append compiled (filter (lambda (entry) (not (declaration-node? entry))) ordered)))))
+          (define manifest-provider '#,(reference-provider interface-runtime))
+          (define manifest '#,manifest)))
      #'(void))))

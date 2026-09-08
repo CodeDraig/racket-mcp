@@ -39,6 +39,12 @@
     (define metadata (hash-ref entry 'metadata (hasheq)))
     (paragraph "## ~a ~a" (prose kind) (code (hash-ref entry 'name)))
     (paragraph "Source: ~a." (code (format "~a:~a" (hash-ref entry 'source "unknown") (hash-ref entry 'line "unknown"))))
+    (when (eq? kind 'mount)
+      (paragraph "Dynamic interface expression: ~a. Its published declarations are not established by this manifest."
+                 (code (hash-ref entry 'expression "unknown"))))
+    (for ([policies (in-list (hash-ref entry 'composition-policies '()))])
+      (for ([key (in-list (sort (hash-keys policies) symbol<?))])
+        (paragraph "**View ~a:** ~a" (prose key) (described (hash-ref policies key)))))
     (when (hash-has-key? metadata 'description)
       (define description (hash-ref metadata 'description))
       (paragraph "~a" (if (and (hash-ref description 'known? #f) (string? (hash-ref description 'value)))

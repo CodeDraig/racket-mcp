@@ -45,7 +45,7 @@
   (node "interface" "Interface")
   (for ([pair (in-list declarations)])
     (define id (car pair)) (define d (cdr pair))
-    (node id (format "~a: ~a" (hash-ref d 'kind) (hash-ref d 'name)))
+    (node id (format "~a: ~a" (if (eq? (hash-ref d 'kind) 'mount) "dynamic mount" (hash-ref d 'kind)) (hash-ref d 'name)))
     (edge "interface" id))
   (for ([pair (in-list declarations)])
     (define id (car pair)) (define d (cdr pair))

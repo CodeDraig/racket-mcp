@@ -1,0 +1,2 @@
+raco test: (file "tests/manifest-composition.rkt")
+16 tests passed
