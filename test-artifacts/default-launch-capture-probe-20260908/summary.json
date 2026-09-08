@@ -1,0 +1,85 @@
+[
+  {
+    "file": "mcp-baseline-fresh-source-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/tmp/mcp-baseline-fresh-source-server.rkt"
+    ],
+    "unobserved": 108,
+    "predefined": 22,
+    "ordinary": 86
+  },
+  {
+    "file": "mcp-configure-capture-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/tmp/mcp-configure-capture-server.rkt"
+    ],
+    "unobserved": 105,
+    "predefined": 22,
+    "ordinary": 83
+  },
+  {
+    "file": "mcp-configure-fresh-source-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/tmp/mcp-configure-fresh-source-server.rkt"
+    ],
+    "unobserved": 665,
+    "predefined": 22,
+    "ordinary": 643
+  },
+  {
+    "file": "mcp-configure-scoped-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/tmp/mcp-configure-scoped-server.rkt"
+    ],
+    "unobserved": 22,
+    "predefined": 22,
+    "ordinary": 0
+  },
+  {
+    "file": "mcp-configure-seeded-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/tmp/mcp-configure-seeded-server.rkt"
+    ],
+    "unobserved": 109,
+    "predefined": 22,
+    "ordinary": 87
+  },
+  {
+    "file": "mcp-configure-source-long-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "-c",
+      "/tmp/mcp-configure-scoped-server.rkt"
+    ],
+    "unobserved": 651,
+    "predefined": 22,
+    "ordinary": 629
+  },
+  {
+    "file": "mcp-default-capture-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/srv/data/code/racket-mcp/dev/command-observation-server.rkt"
+    ],
+    "unobserved": 665,
+    "predefined": 22,
+    "ordinary": 643
+  },
+  {
+    "file": "mcp-default-capture-probe.jsonl",
+    "entry": [
+      "/sbin/racket",
+      "/srv/data/code/racket-mcp/mcp/command.rkt",
+      "serve",
+      "/srv/data/code/racket-mcp/dev/command-observation-server.rkt"
+    ],
+    "unobserved": 22,
+    "predefined": 22,
+    "ordinary": 0
+  }
+]

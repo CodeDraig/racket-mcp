@@ -5387,3 +5387,39 @@ All 14 Go probes, Scribble, installed Racket 9.3 dependency setup and 73 selecte
 installed checks passed. The source distribution was rebuilt twice and compared
 byte-for-byte. The broad SDK suite and independent conformance were not repeated
 for this focused correction; their release gates remain open.
+
+## Direct-launch runtime configuration probes (2026-09-08)
+
+Isolated Linux Racket 9.2 experiments tested Racket's documented configure-runtime
+submodule hook without changing SDK source. The existing compiled direct entry
+left 643 ordinary dependencies without identities; the cold command entry left
+none. Installing the observer from configure-runtime reduced that compiled-entry
+count to 83. Initializing the application inside kernel observation with a scoped
+handoff reduced it to zero. Each report also contained 22 predefined modules.
+
+The source controls prevent treating that compiled result as default integration.
+Existing fresh-source loading left 86 ordinary dependencies unknown. A new runtime
+scope without the earlier observation seed lost expansion-time evidence and left
+643 unknown; preserving the earlier seed left 87, with kernel-observation itself
+as the additional module. Disabling all compiled loading left 629 unknown and
+required more than the initial 30-second experimental request deadline; a separate
+120-second probe completed. Fresh-source, seeded and source-only controls each
+recorded exactly one application initialization. SDK timeouts were unchanged.
+
+Inputs, outputs, counts and reproduction notes are retained under
+ test-artifacts/default-launch-capture-probe-20260908. These probes establish the
+need for early reader/compiler bootstrap capture as well as compiled-entry
+runtime configuration and preservation of registry-scoped evidence. They do not
+install the proposed hook, seal default builds or supply runtime provenance.
+
+## Full source verification after subscription validation (2026-09-08)
+
+At source commit 6184c15, sh scripts/check.sh completed on Linux Racket 9.3:
+compilation, 6,193 native tests, all 1,301 core JSON Schema cases, all 86 optional
+regex cases, and Scribble passed. The SDK/test source remained unchanged during
+this run. The concurrently conducted direct-entry probes ran in separate 9.2
+processes using temporary inputs and an isolated compiled root. The full run's
+terminal log is retained in test-artifacts/subscription-full-refresh-20260908.
+This refresh supersedes the prior 6,148-test broad result for current source;
+it does not establish default workflow sealing, complete independent conformance,
+or native macOS/Windows acceptance. The full SDK release remains incomplete.
