@@ -1,0 +1,22 @@
+raco test: (file "tests/compiled-identity.rkt")
+--------------------
+loaded identity survives artifact deletion
+FAILURE
+name:       check-equal?
+location:   tests/compiled-identity.rkt:51:10
+actual:     ""
+expected:   "EXPAND\n"
+--------------------
+--------------------
+loaded identity survives artifact replacement
+FAILURE
+name:       check-equal?
+location:   tests/compiled-identity.rkt:51:10
+actual:     ""
+expected:   "EXPAND\n"
+--------------------
+raco test: (file "tests/observation-install.rkt")
+raco test: (file "tests/captured-submodules.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/executable-capture.rkt")
+2/57 test failures

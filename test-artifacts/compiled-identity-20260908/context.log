@@ -1,0 +1,18 @@
+raco test: (file "tests/compiled-identity.rkt")
+--------------------
+loaded identity survives artifact deletion
+FAILURE
+name:       check-equal?
+location:   tests/compiled-identity.rkt:50:10
+actual:     "EXPAND\n"
+expected:   ""
+--------------------
+--------------------
+loaded identity survives artifact replacement
+FAILURE
+name:       check-equal?
+location:   tests/compiled-identity.rkt:50:10
+actual:     "EXPAND\n"
+expected:   ""
+--------------------
+2/5 test failures

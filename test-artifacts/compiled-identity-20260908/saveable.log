@@ -1,0 +1,6 @@
+raco test: (file "tests/compiled-identity.rkt")
+raco test: (file "tests/observation-install.rkt")
+raco test: (file "tests/captured-submodules.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/executable-capture.rkt")
+54 tests passed

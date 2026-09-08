@@ -1,5 +1,5 @@
 #lang racket/base
-(require "module-code-tree.rkt")
+(require "module-code-tree.rkt" "compiled-identity.rkt")
 ;; This module deliberately imports no SDK or hashing libraries: command startup
 ;; installs its observer before those libraries are loaded. Evidence is scoped to
 ;; the actual module registry, never inferred from a source file after loading.
@@ -7,6 +7,10 @@
 (struct observation (registries lock))
 (define current-observations (make-parameter #f))
 (define current-observing-evaluator (make-parameter #f))
+(define current-observing-compiler (make-parameter #f))
+(define (make-observing-compiler compiler)
+  (lambda (expression immediate?)
+    (compile-with-module-identity expression immediate? compiler)))
 (define (observed-module-code identity [namespace (current-namespace)])
   (define observations (current-observations))
   (and observations
@@ -36,6 +40,10 @@
 ;; thunk. Installation is parameter-local and idempotent for the current hook.
 ;; A caller-supplied replacement evaluator is preserved beneath the new wrapper.
 (define (install-module-observation!)
+  (unless (eq? (current-compile) (current-observing-compiler))
+    (define compiler (make-observing-compiler (current-compile)))
+    (current-observing-compiler compiler)
+    (current-compile compiler))
   (unless (and (current-observations)
                (eq? (current-eval) (current-observing-evaluator)))
     (define observations
@@ -47,6 +55,8 @@
 (define (call-with-module-observation thunk)
   (define observations (observation (make-hasheq) (make-semaphore 1)))
   (define observe (make-observing-evaluator observations (current-eval)))
+  (define compiler (make-observing-compiler (current-compile)))
   (parameterize ([current-eval observe] [current-observations observations]
-                 [current-observing-evaluator observe])
+                 [current-observing-evaluator observe]
+                 [current-compile compiler] [current-observing-compiler compiler])
     (thunk)))

@@ -1,0 +1,11 @@
+Exit status: 1
+metadata already declared: #f
+read old identity: #f; read new identity: #t
+
+  location...:
+   /tmp/racket-mcp-stamp-loading-probe.rkt:28:6
+  context...:
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/rackunit-lib/rackunit/private/check.rkt:168:8
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/rackunit-lib/rackunit/private/check.rkt:125:32
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/rackunit-lib/rackunit/private/check.rkt:71:4
+   body of "/tmp/racket-mcp-stamp-loading-probe.rkt"

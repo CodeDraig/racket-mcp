@@ -4642,3 +4642,37 @@ preserves original submodules and can be read without parent instantiation.
 Unlike the failed normalization, it makes no post-rewrite hash equality claim.
 This is a candidate integration mechanism; transformations after stamping would
 need a new identity and complete default-path sealing remains unfinished.
+
+
+## Producer identities retained by compiled declarations (2026-09-08)
+
+A private compiler component now embeds a producer identity in module-language
+metadata. The installed observer wraps the compiler as well as the evaluator.
+Module compilation requests saveable code and invokes the underlying compiler
+once. It hashes the resulting artifact while the retained identity cell is empty,
+then fills the cell before returning. Nested hooks share that in-progress cell;
+reflection rejects incomplete or malformed identities. Existing language-info
+providers are delegated, and non-module compilation retains the caller's mode.
+
+Identity reads require a resolved, already declared module and do not load files
+or instantiate application handlers. Tests cover body changes, single compilation,
+original submodules and language-info delegation, rejected metadata loss, source
+and compiled MCP entry points, and deletion/replacement of files after declaration.
+The .zo fixtures select their adjacent compiled-file root explicitly so the
+isolated Racket 9.2 cache does not bypass the artifact under test. All 57 focused
+checks passed on 9.2; the final eight-case component suite passed on 9.3. All 14
+Go probes passed. Installed package dependency setup and 57 installed checks
+also passed. Full Racket 9.3 verification passed compilation, 5,939 native checks, all 1,301
+core schema cases, all 86 optional regex cases and Scribble.
+
+This corrects the earlier producer-submodule proposal: a compiled submodule can
+be loaded lazily from a replacement .zo and is not proof of the parent's loaded
+identity. The failing replacement probes are preserved alongside successful
+module-language metadata probes. Initial fixtures also exposed missing namespace
+context, compile-time visitation output and immediate-only nonserializable
+linklets; those failures and their corrected runs are retained in
+`test-artifacts/compiled-identity-20260908`.
+
+The identities describe trusted compiler output, not signatures or arbitrary
+program equivalence. This component does not yet seal complete default-path
+workflow dependency graphs; that release gate and the full SDK goal remain open.

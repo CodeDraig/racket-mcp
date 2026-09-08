@@ -1,0 +1,57 @@
+raco test: (file "tests/compiled-identity.rkt")
+--------------------
+single compiler call, changed bodies, declaration-only inspection
+ERROR
+name:       check-equal?
+location:   tests/compiled-identity.rkt:20:4
+
+module: unbound identifier;
+ also, no #%app syntax transformer is bound
+  at: module
+  in: (module application racket/base (require (for-syntax racket/base)) (begin-for-syntax (displayln "EXPAND")) (provide value) (define value "old") (displayln "RUN") (module child racket/base (provide value) (define value "child")))
+--------------------
+--------------------
+loaded identity survives artifact deletion
+ERROR
+name:       check-equal?
+location:   tests/compiled-identity.rkt:13:4
+
+module: unbound identifier;
+ also, no #%app syntax transformer is bound
+  at: module
+  in: (module application racket/base (require (for-syntax racket/base)) (begin-for-syntax (displayln "EXPAND")) (provide value) (define value "old") (displayln "RUN") (module child racket/base (provide value) (define value "child")))
+--------------------
+--------------------
+loaded identity survives artifact replacement
+ERROR
+name:       check-equal?
+location:   tests/compiled-identity.rkt:13:4
+
+module: unbound identifier;
+ also, no #%app syntax transformer is bound
+  at: module
+  in: (module application racket/base (require (for-syntax racket/base)) (begin-for-syntax (displayln "EXPAND")) (provide value) (define value "old") (displayln "RUN") (module child racket/base (provide value) (define value "child")))
+--------------------
+--------------------
+language information delegates without invoking application code
+ERROR
+
+module: unbound identifier;
+ also, no #%app syntax transformer is bound
+  at: module
+  in: (module application racket/base)
+--------------------
+--------------------
+non-modules pass through and dropped metadata is rejected
+FAILURE
+name:         check-exn
+location:     tests/compiled-identity.rkt:71:4
+params:
+  '(#rx"discarded producer metadata" #<procedure:...mpiled-identity.rkt:72:6>)
+message:      "Wrong exception raised"
+exn-message:
+  "module: unbound identifier;\n also, no #%app syntax transformer is bound\n  at: module\n  in: (module application racket/base)"
+exn:
+  #(struct:exn:fail:syntax "module: unbound identifier;\n also, no #%app syntax transformer is bound\n  at: module\n  in: (module application racket/base)" #<continuation-mark-set> (#<syntax module>))
+--------------------
+5/5 test failures

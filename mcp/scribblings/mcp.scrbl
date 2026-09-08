@@ -2267,6 +2267,17 @@ registry. Code loaded before the observer remains explicitly unknown. This is
 private capture infrastructure; it does not yet seal a complete executable
 identity for the default serving path.
 
+The compiler hook also retains a producer identity in the language metadata of
+module declarations it compiles. It requests saveable module code, compiles once,
+hashes the artifact with an unfilled metadata cell, and fills that cell before
+returning. The original language-information provider remains available through
+delegation. Identity reflection reads an already declared module without loading
+files or running its handlers; replacing or deleting its files cannot change the
+retained identity. This is trusted compiler metadata, not a signature or a proof
+of equivalence across different builds. Any transformation after identity creation
+requires a new identity. These per-module identities are not yet a complete
+default-path durable build fingerprint.
+
 Automatic runtime build provenance is not implemented yet. Serving without this
 option, including a generated direct executable entry point, still uses the
 existing loading path and retains its imported-helper compatibility limitation.
