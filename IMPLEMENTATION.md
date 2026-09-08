@@ -57,7 +57,7 @@ complete coverage of its surrounding milestone.
 | Workflow invocation keys | `workflow.rkt`, `tasks.rkt`; workflow, task-keys, task-key-restart and captured-task-key tests | MRTR and immediate tasks share keyed execution; concurrent task receipts, mixed-mode calls, failure without replay, restart, expiry and code checks covered; older immediate tasks that omitted keys cannot be retroactively deduplicated |
 | Task restart and notifications | Runtime startup scan and exclusive worker claims; task-restart tests | Automatic working-task recovery, policy checks, and opted-in notifications implemented; notification replay is not provided; repaired failed task gets no automatic new handle |
 | Interface views | `composition.rkt`; domain and view tests | Inclusion/exclusion/namespaces/names/URI mapping; completion and link names remap; additive scopes, versioned replacements and intersecting named adapter restrictions survive composition; arbitrary host effects remain explicitly unknown |
-| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`, `upstream-subscription.rkt`; upstream, bridge and subscription tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and explicit task observations translate; observed-outcome task replacement and explicit mutation retry are implemented; scoped resource forwarding has official Go peers in both directions; scoped task forwarding has local/stdio/HTTP native coverage; concurrent task observations, loss propagation policy and full task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
+| Upstream adapters | `upstream.rkt`, `upstream-bridge.rkt`, `upstream-subscription.rkt`; upstream, bridge and subscription tests | Pinned snapshots and conservative discovery/declaration compatibility checks; tools, resources, templates, prompts, and completions forward through views; opt-in stored MRTR translation for tools/resources/prompts, with explicit uncertain-outcome recovery; Tool Tasks creation/poll/update/cancel and explicit task observations translate; observed-outcome task replacement and explicit mutation retry are implemented; scoped resource forwarding has official Go peers in both directions; scoped task forwarding has local/stdio/HTTP native coverage; terminal/expiry competition is covered across memory and separate SQLite connections; loss propagation policy and remaining task failure coverage remain incomplete; completion MRTR is forbidden by the pinned protocol |
 | Freshness | `freshness.rkt`, `external-changes.rkt`; freshness and external-change tests | Resource dependencies, committed changes, private caches and SQLite outbox publication; external feed reconciliation now atomically persists event receipts and cursors with outbox entries, including process-restart coverage; complete shared-resource/cross-principal policy and integration coverage remain |
 | CLI and authored scenarios | `cli.rkt`, `scenario-session.rkt`, `scenario-process.rkt`; scenario and process tests, executable examples | Local/stdio/HTTP sessions, asynchronous handles, cancellation, disconnect/reconnect and process kill/restart implemented; complete authored fault scheduling and acceptance matrix remain |
 | Documentation and package | Scribble manual; isolated package registration and setup | Linux build and package dependency checks passed; complete API reference and native platform checks outstanding |
@@ -4548,3 +4548,20 @@ and Scribble. All 14 Go probes, installed dependency setup and 39 installed chec
 passed.
 Automatic default/direct executable provenance remains open; the explicit loader's
 runtime identity contract is unchanged.
+
+## Upstream task control competition (2026-09-08)
+
+Six authored race cases cover completion before competing observation/cancellation,
+expiry while polling holds the worker claim, and cancellation in flight before
+duplicate cancellation and a completion observation. Each runs against memory
+storage and separate SQLite connections. Checks establish terminal-state and
+revision immutability, owner rejection, no mutation after local expiry, and no
+duplicate upstream cancellation. Existing serialization satisfied these cases;
+no production change was needed.
+
+The new fixture plus observation, consumed-input and interrupted-mutation suites
+passed 75 checks on both Racket 9.2 and 9.3. Evidence and the fixture-only initial
+compile error are in `test-artifacts/upstream-task-races-20260908`. This closes
+these particular task control cases, not the remaining process-loss, subscription
+loss, remote-expiry translation or full task failure matrix. The full suite was
+not repeated for a tests-only change; the runtime baseline remains ad09e96.

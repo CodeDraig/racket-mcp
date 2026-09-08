@@ -1,0 +1,105 @@
+#lang racket/base
+(require rackunit racket/async-channel racket/file mcp mcp/upstream)
+(define caps (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))
+(define snapshot
+  (hasheq 'server/discover (hasheq 'supportedVersions '("2026-07-28")
+           'capabilities (hasheq 'tools (hasheq) 'extensions (hash-ref caps 'extensions)))
+          'tools/list (hasheq 'tools (list (hasheq 'name "work" 'inputSchema (hasheq 'type "object"))))
+          'resources/list (hasheq 'resources '())
+          'resources/templates/list (hasheq 'resourceTemplates '())
+          'prompts/list (hasheq 'prompts '())))
+(define base (hasheq 'taskId "upstream-private" 'status "working"
+                    'createdAt "2026-09-08T00:00:00Z" 'lastUpdatedAt "2026-09-08T00:00:00Z"
+                    'ttlMs 100000))
+(define completed (hash-set* base 'status "completed" 'result (text-result "finished")))
+(for* ([sqlite? '(#f #t)] [configuration '((poll #f) (poll #t) (cancel #f))])
+  (define cancel-first? (eq? (car configuration) 'cancel))
+  (define expire? (cadr configuration))
+  (test-case (format "queued task controls, sqlite: ~a, first: ~a, expiry: ~a" sqlite? (car configuration) expire?)
+    (define directory (make-temporary-file "upstream-task-races-~a" 'directory))
+    (define path (build-path directory "state.sqlite"))
+    (define first (if sqlite? (open-sqlite-store path) (open-memory-store)))
+    (define second (if sqlite? (open-sqlite-store path) first))
+    (define clock (make-manual-clock #:seconds 100))
+    (define entered (make-semaphore))
+    (define release (make-semaphore))
+    (define polls 0)
+    (define mutations 0)
+    (define (peer method params)
+      (cond [(hash-ref snapshot (string->symbol method) #f) => values]
+            [(equal? method "tools/call") (hash-set base 'resultType "task")]
+            [(equal? method "tasks/get")
+             (set! polls (add1 polls))
+             (semaphore-post entered)
+             (semaphore-wait release)
+             (hash-set completed 'resultType "complete")]
+            [(equal? method "tasks/cancel")
+             (set! mutations (add1 mutations))
+             (semaphore-post entered)
+             (semaphore-wait release)
+             (hasheq 'resultType "complete")]
+            [else (set! mutations (add1 mutations)) (hasheq 'resultType "complete")]))
+    (define interface (make-upstream-interface snapshot peer #:bridge
+      (make-upstream-bridge #:identity "task-races" #:version "1" #:credential-id (lambda (_) "credential"))))
+    (define a (make-runtime interface #:store first #:clock clock))
+    (define b (make-runtime interface #:store second #:clock clock))
+    (define (call rt method params)
+      (dispatch rt method (hash-set params '_meta (request-meta #:capabilities caps)) #:principal "owner"))
+    (define (spawn rt thunk)
+      (define result (make-async-channel))
+      (parameterize ([current-custodian (runtime-custodian rt)])
+        (thread (lambda () (async-channel-put result (with-handlers ([exn? values]) (thunk))))))
+      result)
+    (dynamic-wind void
+      (lambda ()
+        (define id (hash-ref (call a "tools/call" (hasheq 'name "work")) 'taskId))
+        (define args (hasheq 'taskId id))
+        (define before (stored-instance-revision (load-instance first id)))
+        (define poll (spawn a (lambda () (call a (if cancel-first? "tasks/cancel" "tasks/get") args))))
+        (check-not-false (sync/timeout 2 entered))
+        (define started (make-semaphore))
+        (define observation
+          (spawn b (lambda ()
+            (semaphore-post started)
+            (runtime-observe-upstream-task! b id (if cancel-first? completed base) #:principal "owner" #:capabilities caps))))
+        (define cancellation
+          (spawn b (lambda () (semaphore-post started) (call b "tasks/cancel" args))))
+        (check-not-false (sync/timeout 2 started))
+        (check-not-false (sync/timeout 2 started))
+        (check-false (sync/timeout 0 observation))
+        (check-false (sync/timeout 0 cancellation))
+        ;; A foreign owner is rejected before waiting on the active worker.
+        (check-exn exn:fail:mcp?
+          (lambda () (runtime-observe-upstream-task! b id base #:principal "foreign" #:capabilities caps)))
+        (when expire? (manual-clock-advance! clock 101))
+        (semaphore-post release)
+        (define polled (sync/timeout 5 poll))
+        (define observed (sync/timeout 5 observation))
+        (define cancelled (sync/timeout 5 cancellation))
+        (cond
+          [expire?
+           (for ([outcome (list polled observed cancelled)])
+             (check-true (exn:fail:mcp? outcome))
+             (check-equal? (exn:fail:mcp-code outcome) -32602)
+             (check-regexp-match #rx"expired" (exn-message outcome)))
+           (check-equal? (stored-instance-revision (load-instance first id)) before)]
+          [else
+           (if cancel-first?
+               (check-equal? polled (hasheq 'resultType "complete"))
+               (begin
+                 (check-equal? (hash-ref polled 'status) "completed")
+                 (check-equal? observed polled)))
+           (check-equal? (hash-ref observed 'status) "completed")
+           (check-equal? cancelled (hasheq 'resultType "complete"))
+           (define terminal (load-instance first id))
+           (check-equal? (hash-ref (hash-ref (stored-instance-state terminal) 'task) 'status) "completed")
+           (check-equal? (call b "tasks/get" args) observed)
+           (check-equal? (stored-instance-revision (load-instance second id)) (stored-instance-revision terminal))])
+        (check-equal? polls (if cancel-first? 0 1))
+        (check-equal? mutations (if cancel-first? 1 0)))
+      (lambda ()
+        (custodian-shutdown-all (runtime-custodian a))
+        (custodian-shutdown-all (runtime-custodian b))
+        (unless (eq? first second) (close-store! second))
+        (close-store! first)
+        (delete-directory/files directory)))))

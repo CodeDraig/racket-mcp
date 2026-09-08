@@ -1,0 +1,5 @@
+raco test: (file "tests/upstream-task-races.rkt")
+raco test: (file "tests/upstream-task-observation.rkt")
+raco test: (file "tests/upstream-task-stale-input.rkt")
+raco test: (file "tests/upstream-task-interruption.rkt")
+75 tests passed
