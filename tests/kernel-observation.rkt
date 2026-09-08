@@ -1,0 +1,117 @@
+#lang racket/base
+(require rackunit racket/file racket/port racket/runtime-path
+         mcp/private/kernel-observation mcp/private/module-observation)
+(define original-eval (current-eval))
+(define original-compile (current-compile))
+(define identity (make-resolved-module-path 'shared))
+(define (declare namespace value)
+  (parameterize ([current-namespace namespace] [current-module-declare-name identity])
+    (eval `(module shared racket/base (provide value) (define value ,value)))))
+(define (value namespace)
+  (parameterize ([current-namespace namespace]) (dynamic-require ''shared 'value)))
+(test-case "handoff keeps identical module names in separate registries"
+  (define first (make-base-namespace))
+  (define second (make-base-namespace))
+  (define later (make-base-namespace))
+  (call-with-kernel-observation
+    (lambda (transfer!)
+      (declare first "first")
+      (declare second "second")
+      (define seed (transfer!))
+      (check-exn #rx"already been transferred" transfer!)
+      (declare later "later")
+      (call-with-module-observation
+        (lambda ()
+          (define first-code (observed-module-code identity first))
+          (define second-code (observed-module-code identity second))
+          (check-true (compiled-module-expression? first-code))
+          (check-true (compiled-module-expression? second-code))
+          (check-false (observed-module-code identity later))
+          (check-equal? (value first) "first")
+          (check-equal? (value second) "second")
+          ;; Replay the recorded objects to verify which code each registry held.
+          (for ([code (list first-code second-code)] [expected '("first" "second")])
+            (define copy (make-base-namespace))
+            (parameterize ([current-namespace copy] [current-module-declare-name identity])
+              (eval code))
+            (check-equal? (value copy) expected))) #:seed seed)))
+  (check-eq? (current-eval) original-eval)
+  (check-eq? (current-compile) original-compile))
+(test-case "exception restores caller hooks and malformed seed cannot invoke body"
+  (check-exn #rx"interrupted"
+    (lambda () (call-with-kernel-observation (lambda (_) (error 'fixture "interrupted")))))
+  (check-eq? (current-eval) original-eval)
+  (check-eq? (current-compile) original-compile)
+  (define invoked? #f)
+  (check-exn exn:fail:contract?
+    (lambda () (call-with-module-observation (lambda () (set! invoked? #t)) #:seed '(malformed))))
+  (check-false invoked?)
+  (define handed-off? #f)
+  (check-exn exn:fail:contract?
+    (lambda ()
+      (call-with-module-observation void #:seed '(malformed)
+        #:handoff (lambda (_) (set! handed-off? #t) '()))))
+  (check-false handed-off?))
+(test-case "retained kernel hooks forward only during the SDK scope"
+  (define before (make-base-namespace))
+  (define during (make-base-namespace))
+  (define after (make-base-namespace))
+  (call-with-kernel-observation
+    (lambda (transfer!)
+      (define kernel-eval (current-eval))
+      (define sdk-parameters #f)
+      (declare before "before")
+      (check-exn #rx"interrupted"
+        (lambda ()
+          (call-with-module-observation
+            (lambda ()
+              (set! sdk-parameters (current-parameterization))
+              ;; Simulate a resolver retaining the earlier evaluator hook.
+              (parameterize ([current-eval kernel-eval]) (declare during "during"))
+              (check-true (compiled-module-expression? (observed-module-code identity before)))
+              (check-true (compiled-module-expression? (observed-module-code identity during)))
+              (error 'fixture "interrupted"))
+            #:handoff transfer!)))
+      (parameterize ([current-eval kernel-eval]) (declare after "after"))
+      (call-with-parameterization sdk-parameters
+        (lambda () (check-false (observed-module-code identity after)))))))
+(test-case "abandoned kernel scopes close retained hooks and snapshots"
+  (define retained-eval #f)
+  (define retained-transfer #f)
+  (define caller-eval (current-eval))
+  (define received-source? #f)
+  (define namespace (make-base-namespace))
+  (parameterize ([current-eval
+                  (lambda (expression)
+                    (set! received-source? (not (compiled-expression? expression)))
+                    (caller-eval expression))])
+    (check-exn #rx"abandoned"
+      (lambda ()
+        (call-with-kernel-observation
+          (lambda (transfer!)
+            (set! retained-eval (current-eval))
+            (set! retained-transfer transfer!)
+            (declare namespace "before exit")
+            (error 'fixture "abandoned")))))
+    (check-exn #rx"closed" retained-transfer)
+    ;; A retained hook must delegate unchanged after its scope has closed.
+    (set! received-source? #f)
+    (parameterize ([current-eval retained-eval]) (eval '(+ 1 2) namespace))
+    (check-true received-source?)))
+(define-runtime-path worker "../dev/kernel-observation-worker.rkt")
+(define-runtime-path example "../examples/greeter.rkt")
+(test-case "cold kernel entry observes all ordinary greeter dependencies"
+  (define-values (process out in err)
+    (subprocess #f #f #f (find-executable-path "racket") worker example))
+  (close-output-port in)
+  (define watchdog (thread (lambda () (unless (sync/timeout 30 process) (subprocess-kill process #t)))))
+  (define stdout (port->string out))
+  (define stderr (port->string err))
+  (subprocess-wait process) (thread-wait watchdog)
+  (close-input-port out) (close-input-port err)
+  (check-equal? (subprocess-status process) 0 stderr)
+  (define result (read (open-input-string stdout)))
+  (check-equal? (car result) 'ordinary)
+  (check-true (> (cadr result) 20))
+  (check-equal? (caddr result) 'predefined)
+  (check-true (> (cadddr result) 0)))

@@ -4711,3 +4711,29 @@ module graph on 9.2 and 9.3; the final missing entries are all predefined module
 Early failures used unavailable kernel forms and conflated parent/submodule names.
 The retained final prototype is not production startup: registry-scoped handoff,
 native runtime image identity and default workflow build contexts remain undone.
+
+## Registry-scoped kernel handoff (2026-09-08)
+
+The private kernel observer now transfers registry-specific compiled observations
+to the SDK observer. Retained kernel evaluator hooks forward later observations
+while the SDK scope is active. Snapshot-only transfer failed the cold greeter
+dependency walk; forwarding closes that observed gap. Separate registries with
+identical module names remain distinct, and exception exit disables SDK delivery.
+
+Focused compilation and 26 checks passed on Linux Racket 9.2 and 9.3. Evidence,
+including the initial failure, is in `test-artifacts/kernel-handoff-20260908`.
+The component is not integrated into serving or
+default workflow build sealing; native runtime identity remains unresolved.
+
+A new regression reproduced an abandoned kernel scope retaining its snapshot
+function. Scope exit now clears records and the receiver and rejects subsequent
+transfer/re-entry. The SDK synchronizes receiver shutdown with delivery and
+validates initial snapshots before consuming a handoff. The updated focused 9.3
+suite passes 27 checks, as does the updated focused 9.2 suite. The first full run
+was deliberately stopped to apply the lifetime fix. Fresh full 9.3 verification
+passed compilation, 5,947 native checks, all 1,301 core schema cases, all 86
+optional regex cases and Scribble.
+
+All 14 official Go probes and installed dependency checks plus 54 installed tests
+passed for the handoff change. A temporary kernel command entry also ran inspect
+on both versions; production command integration is still pending.

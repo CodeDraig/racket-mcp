@@ -1,0 +1,33 @@
+Pinned elicitation schema: 12 definitions verified
+Pinned task schema: 49 definitions verified
+raco test: (file "tests/authenticate.rkt")
+raco test: (file "tests/authorization-discovery.rkt")
+raco test: (file "tests/authorization.rkt")
+raco test: (file "tests/binding-provider.rkt")
+raco test: (file "tests/bootstrap-sdk-restart.rkt")
+raco test: (file "tests/branches.rkt")
+raco test: (file "tests/captured-build-restart.rkt")
+user breakuser break
+  context...:
+
+  context...:
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/port.rkt:118:0: /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rktcopy-port:
+   169:4: go
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/port.rkt:101:0/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt: :547port->string:
+   3
+   /srv/data/code/racket-mcp/tests/captured-build-restart.rkt:/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt29::428:227
+
+   body of "/srv/data/code/racket-mcp/tests/captured-build-restart.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt::43098::0: 2call-with-summary
+
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process).../private/map.rkt
+   body of top-level:
+40:19: loop
+   [repeats 6 more times]
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:430:0: call-with-summary
+   .../private/map.rkt:40:19: loop
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:1165:1: test
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

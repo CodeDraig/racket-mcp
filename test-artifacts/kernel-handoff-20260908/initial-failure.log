@@ -1,0 +1,29 @@
+raco test: (file "tests/kernel-observation.rkt")
+--------------------
+cold kernel entry observes all ordinary greeter dependencies
+FAILURE
+name:       check-equal?
+location:   tests/kernel-observation.rkt:60:2
+message:
+  "#<resolved-module-path:\"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/config.rkt\">ordinary module was not observed\n  context...:\n   /srv/data/code/racket-mcp/dev/kernel-observation-worker.rkt:17:20: visit\n   /srv/data/code/racket-mcp/dev/kernel-observation-worker.rkt:12:12\n   body of \"/srv/data/code/racket-mcp/dev/kernel-observation-worker.rkt\"\n"
+actual:     1
+expected:   0
+--------------------
+raco test: (file "tests/observation-install.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+instantiate-linklet: mismatch;
+ reference to a variable that is not exported
+  name: call-with-module-observation
+  exporting instance: "/srv/data/code/racket-mcp/mcp/private/module-observation.rkt"
+  importing instance: "/srv/data/code/racket-mcp/mcp/command.rkt"
+  possible reason: modules need to be recompiled because dependencies changed
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   body of "/srv/data/code/racket-mcp/mcp/command.rkt"
+   /srv/data/code/racket-mcp/tests/command-bootstrap.rkt:6:0
+   body of "/srv/data/code/racket-mcp/tests/command-bootstrap.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+command-bootstrap.rkt: raco test: non-zero exit: 1
+2/14 test failures

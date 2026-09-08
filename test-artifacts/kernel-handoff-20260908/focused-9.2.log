@@ -1,0 +1,4 @@
+raco test: (file "tests/kernel-observation.rkt")
+raco test: (file "tests/observation-install.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+27 tests passed

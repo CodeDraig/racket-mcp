@@ -1,0 +1,49 @@
+(#hasheq((arguments . ())
+         (column . 0)
+         (dynamic-metadata . #f)
+         (kind . server)
+         (line . 2)
+         (manifest-version . 2)
+         (metadata
+          .
+          #hasheq((name . #hasheq((known? . #t) (value . "greeter")))
+                  (version . #hasheq((known? . #t) (value . "0.1.0")))))
+         (name . "greeter")
+         (position . 11)
+         (source . "/srv/data/code/racket-mcp/examples/greeter.rkt")
+         (span . 43))
+ #hasheq((arguments
+          .
+          (#hasheq((name . name)
+                   (required . #t)
+                   (schema
+                    .
+                    #hasheq((known? . #t)
+                            (value . #hasheq((type . "string"))))))))
+         (column . 0)
+         (dynamic-metadata . #f)
+         (input-schema
+          .
+          #hasheq((known? . #t)
+                  (value
+                   .
+                   #hasheq((additionalProperties . #f)
+                           (properties
+                            .
+                            #hasheq((name . #hasheq((type . "string")))))
+                           (required . ("name"))
+                           (type . "object")))))
+         (kind . tool)
+         (line . 3)
+         (manifest-version . 2)
+         (metadata
+          .
+          #hasheq((description
+                   .
+                   #hasheq((known? . #t) (value . "Greet someone by name.")))))
+         (name . greet)
+         (position . 55)
+         (reference-analysis . lexical-handler-syntax)
+         (resource-references . ())
+         (source . "/srv/data/code/racket-mcp/examples/greeter.rkt")
+         (span . 116)))

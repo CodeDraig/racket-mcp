@@ -1,0 +1,10 @@
+raco test: (file "tests/kernel-observation.rkt")
+--------------------
+abandoned kernel scopes close retained hooks and snapshots
+FAILURE
+name:       check-exn
+location:   tests/kernel-observation.rkt:90:4
+params:     '(#rx"closed" #<procedure:transfer!>)
+message:    "No exception raised"
+--------------------
+1/5 test failures
