@@ -17,4 +17,12 @@
   (if identity
       (json->string (hasheq 'kind "declared-build/1" 'identity identity 'program fingerprint))
       fingerprint))
-(module* private #f (provide normalize-build-identity bind-build-identity))
+(define (fingerprint-build-identity fingerprint)
+  ;; Legacy program fingerprints are arbitrary strings. Only our tagged envelope
+  ;; contributes a declaration; ordinary version checks stay with the workflow.
+  (with-handlers ([exn:fail? (lambda (_) #f)])
+    (define value (string->json fingerprint))
+    (and (hash? value) (equal? (hash-ref value 'kind #f) "declared-build/1")
+         (let ([identity (hash-ref value 'identity #f)])
+           (and (string? identity) identity)))))
+(module* private #f (provide normalize-build-identity bind-build-identity fingerprint-build-identity))

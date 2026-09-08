@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/list "private/failure.rkt" (submod "workflow.rkt" private))
+(require "clock.rkt" racket/list "private/failure.rkt" (submod "workflow.rkt" private) (submod "build.rkt" private))
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
@@ -178,10 +178,11 @@
     (lambda ()
       (define instance (owned store id principal)) (define state (stored-instance-state instance)) (define task (hash-ref state 'task))
       (unless (equal? (hash-ref task 'status) "input_required") (mcp-error -32602 "Task is not awaiting input"))
-      ;; Reject incompatible code before consuming input or changing task state.
+      ;; A changed declaration rejects input before changing task state. Preserve
+      ;; the existing worker failure channel for ordinary adapter/program changes.
       (define flow (load-instance store (hash-ref state 'workflow)))
-      (unless (and flow (equal? (stored-instance-fingerprint flow) fingerprint)
-                   (equal? (stored-instance-version flow) (workflow-descriptor-version workflow)))
+      (unless (and flow (equal? (fingerprint-build-identity (stored-instance-fingerprint flow))
+                               (fingerprint-build-identity fingerprint)))
         (mcp-error -32603 "Task workflow build is incompatible"))
       (unless (hash? responses) (mcp-error -32602 "Input responses must be an object"))
       (define accepted

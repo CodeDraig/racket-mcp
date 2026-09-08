@@ -5661,3 +5661,13 @@ all 14 Go probes pass. Core and declared-ID Tasks conformance refreshes reproduc
 the prior qualified 144 and 43 successes and the same explicit exclusions/harness
 discrepancies. BUILD is removed. RELEASE is narrowed to the running final Linux
 checks, final evidence map and archive reproducibility; PLATFORM remains external.
+
+### Preserve adapter mismatch failure channels (2026-09-08)
+
+The subsequent full runs exposed one regression in view-adapters.rkt: the new
+pre-input guard compared all fingerprint components, moving an ordinary adapter
+mismatch out of its existing worker failure channel. The guard now compares only
+the declared-build identity. Changed declarations still reject input before
+persistence; ordinary adapter changes still fail before executing the next stage.
+The existing test is unchanged and passes with declared-build/tasks tests (32).
+Both failed full logs are retained and complete checks are being repeated.

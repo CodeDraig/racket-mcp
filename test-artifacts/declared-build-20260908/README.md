@@ -38,3 +38,18 @@ in that artifact directory. Neither is reported as a passing execution.
 Full Linux 9.2/9.3 source checks are running; their logs will be recorded terminally
 before release verification closes. The preceding full 9.2 run completed with 6,256
 native checks, 1,301 schema cases, 86 regex cases and Scribble.
+
+## Full-run regression and correction
+
+Both first full runs reached terminal failure in view-adapters.rkt (full-9.2.log:
+1/6251; full-9.3.log: 1/6255). The early guard compared the entire workflow fingerprint,
+which unintentionally changed the existing adapter-version mismatch from a worker
+failure into an input-request failure. The original expectation is preserved.
+
+The correction compares only the tagged declared identity before accepting input.
+Ordinary adapter/program compatibility still fails in the worker before executing
+the changed stage. adapter-regression-9.2.log passes all 32 declared-build,
+view-adapters and tasks checks. final-source-sha256.txt records this corrected source;
+the earlier source-sha256.txt remains the preceding verification snapshot.
+run-final.sh repeats all native tests with four independent test processes per
+version, then the pinned schema/regex runners and Scribble. Final logs are pending.
