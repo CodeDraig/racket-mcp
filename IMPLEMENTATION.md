@@ -29,7 +29,7 @@ complete coverage of its surrounding milestone.
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
-| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values and lexical effect adapters; full domain binding API audit remains open |
+| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values and lexical effect adapters; renamed/re-exported schema, operation, resource and prompt queries covered at phases 0–2; remaining binding/manifest integration audit stays open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
@@ -4973,3 +4973,17 @@ The summary now states that implemented boundary. It does not claim inference
 of arbitrary Racket matcher behavior or complete the other release gates.
 
 The 6,049-check full run above includes the URI overlap suite used in this audit.
+
+## Public extension phase matrix (2026-09-08)
+
+A public-API-only test now combines renamed re-exports with phase 0, 1 and 2
+schema, operation, resource and prompt queries. It checks original declaration
+metadata, host shadowing, unrelated host names, and wrong-kind diagnostics at the
+caller identifier. Application handlers fail if called. Compilation and all 41
+checks across the new matrix and existing extension/workflow/phase suites passed
+on Linux Racket 9.2 and 9.3. The same 41 checks passed from the installed 9.3
+source distribution. Runtime/compiler
+code is unchanged from d906531, so the broad protocol/crash suite is not repeated
+for this test-only change. Evidence is in
+test-artifacts/extension-phase-matrix-20260908. Other compiler and release gates
+remain open.

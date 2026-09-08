@@ -1,0 +1,6 @@
+raco test: (file "tests/extension-phase-matrix.rkt")
+raco test: (file "tests/extension-bindings.rkt")
+raco test: (file "tests/workflow-extension-bindings.rkt")
+raco test: (file "tests/workflow-effect-bindings.rkt")
+raco test: (file "tests/phase-exports.rkt")
+41 tests passed
