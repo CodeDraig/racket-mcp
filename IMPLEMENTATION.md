@@ -5517,3 +5517,22 @@ REFERENCES is removed. This does not claim inference through arbitrary host
 procedures, which remain dynamic under the approved plan, or complete the
 separate language/API parity audit. No existing SDK or test source changed during
 these audits; only the conflicting-input regression was added.
+
+## Shared-resource cache policy closure (2026-09-08)
+
+Shared application records now have a documented policy using existing APIs:
+record one change outbox entry per affected owner in the mutation transaction,
+including revoked owners whose entries require invalidation. Notification delivery
+rechecks current access. External feeds use distinct stable per-owner event IDs.
+The SDK does not infer the sharing relation or share private representations.
+Private zero-TTL list pages and uncached MRTR continuations remain deliberate
+supported policies, not missing positive-TTL implementations.
+
+The new SQLite-backed shared-resource regression passed on Linux Racket 9.2 and
+9.3; Scribble passed. It verifies three distinct private representations, rollback
+without publication, committed fanout, revocation suppression and freshness after
+regrant. Existing pagination, cache, workflow/task change and external-feed
+coverage supplies the other mapped requirements. Evidence is under
+ test-artifacts/shared-resource-policy-20260908. CACHE is removed from
+REMAINING.md. No SDK runtime behavior changed, so the already passing broad suite
+was not repeated for this policy documentation and its focused regression.

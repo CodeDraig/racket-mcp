@@ -1,0 +1,4 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/shared-resource-freshness.rkt")
+1 test passed

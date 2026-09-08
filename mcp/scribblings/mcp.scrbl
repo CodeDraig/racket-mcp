@@ -1509,7 +1509,26 @@ key; it must change when effective authority changes independently of the princi
 Opaque or mutable application principals should use that callback. Cache hits
 recheck read authorization for the resource and all transitively embedded URIs.
 Changes invalidate all cached authority contexts for their owner, including parent
-entries dependent on changed children. Cross-principal change policies remain open.
+entries dependent on changed children.
+
+A dependency key is scoped to its owner; using the same key for two principals
+does not grant access or share a cached representation. For application data
+shared by several owners, the application supplies its sharing relation explicitly.
+Record one @racket[record-committed-change!] per affected owner in the same
+@racket[store-transaction] as the shared mutation, then call
+@racket[runtime-drain-changes!] after commit. Include former owners whose retained
+entries must be invalidated after revocation. Delivery rechecks each subscriber's
+current authorization, so invalidation does not grant notification access.
+
+An external committed-change feed can likewise emit one @tt{external-change}
+per affected owner, with distinct stable event IDs. The existing feed transaction
+records the whole page and cursor together. For ephemeral integrations,
+@racket[runtime-report-change!] can be called for each owner after commit; durable
+applications should use the outbox or reconciled feed to survive interrupted
+publication. The SDK does not discover an application's sharing relation or
+broadcast private dependency keys to all principals. List pages remain private
+with zero TTL; a new listing refreshes them, while an existing cursor retains its
+snapshot. MRTR input-required results and continuation reads remain uncached.
 
 @racket[make-resource-cache] bounds entries with @racket[#:limit] (default 1024).
 Computation occurs outside its lock; concurrent loads can compute twice, but
