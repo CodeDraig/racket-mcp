@@ -5546,3 +5546,38 @@ hashes are in test-artifacts/wire-acceptance-20260908. All named native test fil
 are unchanged from the passing ed75ea8 full Linux 9.3 run. No redundant tests or
 transport changes were added. Final independent conformance, upstream integration
 and native platform requirements remain in their own rows.
+
+## Embedded bootstrap probe (2026-09-08)
+
+Embedding the existing kernel observer directly in an application
+configure-runtime submodule removes the separately imported observer gap on fresh
+source: zero ordinary and 22 predefined dependencies remain unobserved. The same
+application after raco make still leaves 643 ordinary and 22 predefined modules
+unobserved. Both probes terminated; the compiled result disproves this as a default
+compiled-loading solution. The module retains producer metadata and the generated
+configure-runtime submodule, but observation starts too late for dependencies
+already declared during compiled startup. No production source was changed.
+Evidence is in test-artifacts/embedded-bootstrap-probe-20260908. BUILD remains and
+requires a different earlier boundary or retained dependency identities.
+
+## Supported OAuth acceptance closure (2026-09-08)
+
+The applicable auth/offline-access-scope scenario now fetches the SDK-generated
+CIMD document through a temporary trusted HTTPS loopback server. The native
+conformance client accepts an explicitly supplied metadata URL. No SDK runtime,
+upstream harness or global TLS configuration changed. The harness exited zero;
+its terminal summary reports 12 passing checks, zero failures/warnings. Its
+shutdown-time grant_types check succeeded after a real HTTPS fetch.
+
+The harness saves checks.json before that shutdown-time check, so the stored JSON
+still contains the earlier informational uninspected-metadata entry. Both the
+original JSON and later terminal success are retained, with the fetched document
+and request log, under test-artifacts/oauth-offline-access-20260908. The optional
+offline_access scope was not requested and is reported as INFO.
+
+The same artifact maps all supported authorization requirements to existing native
+tests and the four prior applicable independent fixtures (29 successful checks),
+and identifies the remaining DCR-dependent complete fixtures. OAUTH is removed
+from REMAINING.md; the final-source CONFORMANCE gate remains. This closure does
+not claim a hosted authorization service or implement excluded DCR/other auth
+extensions. The failed compiled-bootstrap experiment is retained separately.

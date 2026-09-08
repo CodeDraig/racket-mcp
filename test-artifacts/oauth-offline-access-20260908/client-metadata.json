@@ -1,0 +1,1 @@
+{"client_id":"https://127.0.0.1:45355/client-metadata.json","client_name":"Racket MCP conformance","grant_types":["authorization_code","refresh_token"],"redirect_uris":["http://localhost:3080/callback"],"response_types":["code"],"token_endpoint_auth_method":"none"}

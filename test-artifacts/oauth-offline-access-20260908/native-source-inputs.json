@@ -1,0 +1,50 @@
+[
+  {
+    "file": "tests/authorization.rkt",
+    "sha256": "c92b604fc5e17f0a1b511823c0b3450009f303bbba2c69542eebf74c37c35d92"
+  },
+  {
+    "file": "tests/http-authorization.rkt",
+    "sha256": "91434f670c5409e5367463dabb951fa0dfa9337dbc2af1ed3f8b6a3fbd5c7727"
+  },
+  {
+    "file": "tests/authenticate.rkt",
+    "sha256": "6111c9aa409da6155786342c338932d4318f36d51ce2a16e28b2262bae6fb11c"
+  },
+  {
+    "file": "tests/authorization-discovery.rkt",
+    "sha256": "6e9ee6f6f034d344369ac7e4ebcc1e59f319f2625f484185b6fa705c5cac5b8c"
+  },
+  {
+    "file": "tests/oauth-metadata.rkt",
+    "sha256": "76a565c4cabd3165d57d2a2c6f023a14e8b166163fa7e496d44c742b8bbac241"
+  },
+  {
+    "file": "tests/client-registration.rkt",
+    "sha256": "624b3e889712a6da46b063c09ddf2681382fcfe571950fcce01c011595e04987"
+  },
+  {
+    "file": "tests/oauth-flow.rkt",
+    "sha256": "cb982a68bba53c9f662c74c94a082e746ddbdf37ca2515f585e759a342a5ab60"
+  },
+  {
+    "file": "tests/oauth-tokens.rkt",
+    "sha256": "5014e742ed5ec458206181760c882268b0c11fc628ed988c3f02badc6b6d12f5"
+  },
+  {
+    "file": "tests/oauth-http.rkt",
+    "sha256": "e8c6ae2a4116347fc5c4a6980e2c86a7739bc1f329e26f8de231927012981666"
+  },
+  {
+    "file": "tests/oauth-client-authentication.rkt",
+    "sha256": "7f6de2ff69a4221f3919e84ad9093990d10c14ceead4bc0db606faeebd2ffadf"
+  },
+  {
+    "file": "tests/oauth-http-client.rkt",
+    "sha256": "b77131a8966fdb58877b2c903941431416f5faaf5dc52db93342d55cafad0623"
+  },
+  {
+    "file": "tests/oauth-authorizer-policy.rkt",
+    "sha256": "6b044d45e4cfb23a635a6de0fa75ce4e220251fa728449b87fe3de3882fa972f"
+  }
+]

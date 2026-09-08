@@ -10,7 +10,9 @@
 (define context (let ([value (getenv "MCP_CONFORMANCE_CONTEXT")])
                   (if value (string->json value) (hasheq))))
 (define redirect "http://localhost:3080/callback")
-(define metadata-url "https://conformance-test.local/client-metadata.json")
+(define metadata-url
+  (or (getenv "MCP_CONFORMANCE_CLIENT_METADATA_URL")
+      "https://conformance-test.local/client-metadata.json"))
 (define (browse address)
   (define u (string->url address))
   (unless (and (equal? (url-scheme u) "http")
