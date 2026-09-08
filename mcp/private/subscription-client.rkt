@@ -1,6 +1,6 @@
 #lang racket/base
 (require "../json.rkt")
-(provide make-subscription-tracker observe-subscription! subscription-notification-id)
+(provide make-subscription-tracker observe-subscription! subscription-notification-id check-subscription-result!)
 
 ;; Each tracker belongs to a single request reader (or the stdio client lock).
 (struct subscription-tracker (id requested accepted) #:mutable)
@@ -58,3 +58,16 @@
           (member (hash-ref params 'taskId missing) (hash-ref accepted 'taskIds '()))]
          [else #t]))
      (unless allowed? (error 'subscription "Notification is outside the acknowledged subscription filter"))]))
+
+;; Establishment failures need no acknowledgement. Successful completion closes
+;; an established stream and must carry its identity, just like its events.
+(define (check-subscription-result! tracker message)
+  (when (and tracker (hash-has-key? message 'result))
+    (define result (hash-ref message 'result))
+    (unless (and (equal? (hash-ref result 'resultType "complete") "complete")
+                 (equal? (hash-ref (hash-ref result '_meta (hasheq))
+                                   'io.modelcontextprotocol/subscriptionId missing)
+                         (subscription-tracker-id tracker)))
+      (error 'subscription "Invalid subscription completion result or subscription ID"))
+    (unless (subscription-tracker-accepted tracker)
+      (error 'subscription "Completion precedes subscription acknowledgement"))))

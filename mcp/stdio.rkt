@@ -177,7 +177,9 @@
      (cond
        [response?
         (define pending (hash-ref (stdio-client-pending c) id #f))
-        (when pending (check-result-capabilities! m (pending-request-capabilities pending)))
+        (when pending
+          (check-result-capabilities! m (pending-request-capabilities pending))
+          (check-subscription-result! (pending-request-subscription pending) m))
         (finish-request! c id m)]
        [else
         (define params (hash-ref m 'params (hasheq)))

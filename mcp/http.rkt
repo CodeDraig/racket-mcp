@@ -294,6 +294,7 @@
                                    (define kind (check-server-message m #:expected-id id))
                                    (cond [(memq kind '(response uncorrelated-error))
                                           (check-result-capabilities! m request-caps)
+                                          (check-subscription-result! subscription-tracker m)
                                           (finish! m)]
                                          [(equal? (hash-ref m 'method) "notifications/cancelled")
                                           (define p (hash-ref m 'params (hasheq)))
@@ -314,6 +315,7 @@
                           (unless (memq (check-server-message m #:expected-id id) '(response uncorrelated-error))
                             (error 'http-client "Expected a JSON-RPC response"))
                           (check-result-capabilities! m request-caps)
+                          (check-subscription-result! subscription-tracker m)
                           (finish! m)))))
                   (lambda () (close-input-port in))))))))
   ;; The HTTP framing reader owns a copy worker as well as the exposed port.

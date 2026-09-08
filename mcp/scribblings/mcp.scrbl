@@ -570,6 +570,12 @@ since the client cannot infer their subset semantics. A malformed subscription
 notification fails the HTTP request; on stdio it closes the client under the
 shared reader's protocol-error policy. Late notifications for finished stdio
 requests are discarded. Progress and cancellation retain their separate routing.
+A successful subscription result must follow acknowledgement, have the
+@tt{complete} discriminator (including the protocol's missing-field default),
+and carry the matching subscription ID. Both HTTP JSON and SSE outcomes receive
+this check. A protocol error may reject establishment before acknowledgement;
+matching server cancellation notifications remain accepted under the recorded
+specification interpretation.
 
 @tt{close-subscriptions!} accepts a hub and optional @tt{#:matches?} predicate
 receiving each listener's principal and accepted filter. The default selects all

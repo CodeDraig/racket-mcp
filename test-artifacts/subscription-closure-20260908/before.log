@@ -1,0 +1,66 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/subscription-client-validation.rkt")
+--------------------
+stdio rejects invalid subscription completion: missing-id
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+stdio rejects invalid subscription completion: wrong-id
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+stdio rejects invalid subscription completion: input-result
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+http rejects invalid subscription completion: missing-id
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+http rejects invalid subscription completion: wrong-id
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+http rejects invalid subscription completion: input-result
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:105:28
+params:     '(#f)
+--------------------
+--------------------
+stdio rejects successful closure before acknowledgement
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:115:26
+params:     '(#f)
+--------------------
+--------------------
+http rejects successful closure before acknowledgement
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:115:26
+params:     '(#f)
+--------------------
+--------------------
+http-json rejects successful closure before acknowledgement
+FAILURE
+name:       check-true
+location:   tests/subscription-client-validation.rkt:115:26
+params:     '(#f)
+--------------------
+9/39 test failures

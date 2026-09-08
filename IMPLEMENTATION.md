@@ -5358,3 +5358,32 @@ package dependency setup plus 48 selected checks. Its selected source run passed
 1,009 checks on Racket 9.3. The manual source did not change after its successful
 build. These focused results do not replace the outstanding full release audit.
 The final selected Linux Racket 9.2 run also passed all 1,009 checks.
+
+## Subscription completion result validation (2026-09-08)
+
+The pinned SubscriptionsListenResult metadata requires the originating
+subscription ID, and the subscription prose requires acknowledgement as the
+first message carrying that ID. A raw-peer regression reproduced nine accepted
+invalid closures: missing/mismatched subscription IDs and input-required results
+on stdio/SSE, plus successful completion before acknowledgement on stdio/SSE/JSON.
+The baseline failed 9/39 cases; ordinary establishment errors and valid closures
+already passed. The HTTP fixture now exercises both response content types.
+
+Both clients now apply the shared subscription tracker to successful results.
+Completion must follow acknowledgement, use complete (including the existing
+missing-discriminator default), and carry the matching subscription ID. Protocol
+errors may still reject establishment before acknowledgement, and matching
+server cancellation retains the documented compatibility interpretation.
+
+The selected Linux Racket 9.3 transport/subscription/upstream suite passed 1,025
+checks. Evidence and reproduction details are in
+ test-artifacts/subscription-closure-20260908. Full reconnect/transport-loss and
+independent conformance matrices remain open. The GitHub run at 4bea66e completed
+with startup_failure, BuildFailed and zero jobs; no check runs supplied further
+diagnostics. This establishes no native macOS/Windows verification.
+
+The final selected run passed all 1,025 checks on Linux Racket 9.2 as well.
+All 14 Go probes, Scribble, installed Racket 9.3 dependency setup and 73 selected
+installed checks passed. The source distribution was rebuilt twice and compared
+byte-for-byte. The broad SDK suite and independent conformance were not repeated
+for this focused correction; their release gates remain open.
