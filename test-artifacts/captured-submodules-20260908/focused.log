@@ -1,0 +1,5 @@
+raco test: (file "tests/captured-submodules.rkt")
+raco test: (file "tests/executable-capture.rkt")
+raco test: (file "tests/loader.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+62 tests passed

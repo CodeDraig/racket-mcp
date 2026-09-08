@@ -1,0 +1,2 @@
+raco test: (file "tests/captured-submodules.rkt")
+5 tests passed

@@ -1,0 +1,9 @@
+raco test: (file "tests/captured-submodules.rkt")
+--------------------
+observation resolves nested submodules, compiled: #t
+FAILURE
+name:       check-true
+location:   tests/captured-submodules.rkt:59:14
+params:     '(#f)
+--------------------
+1/4 test failures

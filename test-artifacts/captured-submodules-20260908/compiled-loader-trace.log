@@ -1,0 +1,6 @@
+EVAL identity #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/tmp/submodule-observe-17888471121788847112334/observed.rkt">; code name observed; children ()/()
+OBSERVED () #t
+EVAL identity #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/tmp/submodule-observe-17888471121788847112334/observed.rkt">; code name (observed early); children ()/()
+OBSERVED (early) #f
+EVAL identity #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/tmp/submodule-observe-17888471121788847112334/observed.rkt">; code name (observed late); children ()/()
+OBSERVED (late) #f

@@ -1,0 +1,15 @@
+raco test: (file "tests/captured-submodules.rkt")
+--------------------
+captured loader accepts actual nested application code
+ERROR
+
+load-interface: application code was not captured; use a fresh loading process: (#<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-captured-submodules-17888468331788846833537/helper.rkt> early nested)
+--------------------
+--------------------
+observation resolves pre, post and nested compiled submodules
+FAILURE
+name:       check-true
+location:   tests/captured-submodules.rkt:30:14
+params:     '(#f)
+--------------------
+2/2 test failures

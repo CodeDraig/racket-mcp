@@ -1,0 +1,19 @@
+raco test: (file "tests/captured-submodules.rkt")
+--------------------
+captured loader accepts actual nested application code
+ERROR
+
+load-interface: application code was not captured; use a fresh loading process: #<path:/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/runtime-config.rkt>
+--------------------
+raco test: (file "tests/executable-capture.rkt")
+raco test: (file "tests/loader.rkt")
+load-interface: application code was not captured; use a fresh loading process: #<path:/srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/runtime-config.rkt>
+  context...:
+   /srv/data/code/racket-mcp/tests/loader.rkt:8:2
+   body of "/srv/data/code/racket-mcp/tests/loader.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+loader.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/command-bootstrap.rkt")
+2/37 test failures

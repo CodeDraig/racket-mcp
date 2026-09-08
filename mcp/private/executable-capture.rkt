@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt")
+(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt" "module-code-tree.rkt")
 (provide (struct-out module-code-capture) capture-module-export seal-module-code-capture!)
 
 ;; A capture is evidence about declarations actually evaluated under this loader,
@@ -32,17 +32,25 @@
     ;; Compile a source module exactly once and evaluate that same object. The
     ;; default compiled-file loader already supplies a compiled module object.
     (define code (if (module-source? expression) (compile expression) expression))
-    (define identity (current-module-declare-name))
-    (define digest
-      (and identity (compiled-module-expression? code)
-           (bytes->hex-string
-            (sha256-bytes
-             (open-input-bytes (call-with-output-bytes (lambda (out) (write code out))))))))
-    (if digest
+    (define declared (current-module-declare-name))
+    (define identity
+      (and declared (if (compiled-module-expression? code)
+                        (module-code-identity declared code) declared)))
+    (if (and identity (compiled-module-expression? code))
         (begin0 (original-eval code)
-          (let ([name (identity-name identity)])
+          ;; Traverse imports from evaluated roots and their actual references.
+          ;; Unused nested declarations (such as configure-runtime) are recorded
+          ;; code, but their unrequested imports are not loaded dependencies.
+          (hash-set! identities (identity-name identity) identity)
+          (for ([entry (in-list (module-code-tree identity code))])
+            (define identity (car entry))
+            (define name (identity-name identity))
+            (define digest
+              (bytes->hex-string
+                (sha256-bytes
+                  (open-input-bytes
+                    (call-with-output-bytes (lambda (out) (write (cdr entry) out)))))))
             (hash-set! observed name (string->immutable-string digest))
-            (hash-set! identities name identity)
             ;; Preserve imports in their declaration namespace, including modules
             ;; loaded dynamically while the application is instantiated.
             (hash-set! imports name (module-dependencies identity))))

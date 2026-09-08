@@ -1,4 +1,5 @@
 #lang racket/base
+(require "module-code-tree.rkt")
 ;; This module deliberately imports no SDK or hashing libraries: command startup
 ;; installs its observer before those libraries are loaded. Evidence is scoped to
 ;; the actual module registry, never inferred from a source file after loading.
@@ -30,6 +31,7 @@
         (call-with-semaphore (observation-lock observations)
           (lambda ()
             (define modules (hash-ref! (observation-registries observations) registry make-hash))
-            (hash-set! modules identity code))))))
+            (for ([entry (in-list (module-code-tree identity code))])
+              (hash-set! modules (car entry) (cdr entry))))))))
   (parameterize ([current-eval observe] [current-observations observations])
     (thunk)))

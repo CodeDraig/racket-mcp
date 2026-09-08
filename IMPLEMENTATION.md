@@ -4521,3 +4521,30 @@ contents; the CIMD harness establishes the flow, not hosted metadata contents.
 Evidence is in `test-artifacts/oauth-refresh-metadata-20260908`. The full suite was
 not repeated for this default-only follow-up; the preceding full OAuth validation
 remains scoped to its recorded source. Other SDK release gates remain open.
+
+## Captured submodule identities (2026-09-08)
+
+Captured loading rejected a fresh application's nested helper submodule. Source
+evaluation supplies nested compiled objects inside a parent; the observer had
+recorded only the parent. The compiled-file loader also supplies submodule objects
+with the parent file as current-module-declare-name, so the prior observer could
+overwrite the parent observation while missing the child. A retained evaluator
+trace establishes this behavior.
+
+Both capture paths now retain nested compiled objects under identities composed
+from the resolved file/symbol and compiled submodule suffix. Import traversal
+starts at evaluated roots and their references; recording an unused nested object
+does not assume its imports were loaded. Source and compiled parent observations
+remain distinct from their children.
+
+Two original regression cases failed before the fix. The final five cases pass
+on 9.3, covering source/compiled imports, pre/post/nested declarations, retained
+old code after file edits, rejection of incompatible pending work and fresh work
+using the edited helper. A preceding focused four-file run passed 62 checks;
+the final focused 9.2 run passed 39. Evidence is in
+`test-artifacts/captured-submodules-20260908`. Full Racket 9.3 validation passed
+5,890 native checks, 1,301 core schema cases, 86 optional regex cases, compilation
+and Scribble. All 14 Go probes, installed dependency setup and 39 installed checks
+passed.
+Automatic default/direct executable provenance remains open; the explicit loader's
+runtime identity contract is unchanged.

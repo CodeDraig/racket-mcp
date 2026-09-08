@@ -1,0 +1,20 @@
+#lang racket/base
+(require racket/file compiler/cm mcp/private/module-observation)
+(define dir (make-temporary-file "submodule-observe-~a" 'directory))
+(define path (build-path dir "observed.rkt"))
+(display-to-file "#lang racket/base\n(module early racket/base (provide greeting) (define (greeting) 'hello))\n(module* late #f (provide greeting) (define (greeting) 'late))\n" path)
+(managed-compile-zo path)
+(module-cache-clear!)
+(define original (current-eval))
+(parameterize ([current-namespace (make-base-namespace)]
+ [current-eval (lambda (code)
+    (when (compiled-module-expression? code)
+     (printf "EVAL identity ~s; code name ~s; children ~s/~s\n" (current-module-declare-name) (module-compiled-name code) (map module-compiled-name (module-compiled-submodules code #t)) (map module-compiled-name (module-compiled-submodules code #f))))
+    (original code))])
+ (call-with-module-observation
+  (lambda ()
+   (for ([suffix '(() (early) (late))])
+    (dynamic-require (if (null? suffix) path `(submod ,path ,@suffix)) #f)
+    (define id (make-resolved-module-path (if (null? suffix) path (cons path suffix))))
+    (printf "OBSERVED ~s ~s\n" suffix (and (observed-module-code id) #t))))))
+(delete-directory/files dir)

@@ -1,0 +1,5 @@
+CONFIGURE
+EVAL #<resolved-module-path:"/tmp/racket-mcp-runtime-config-probe-20260908/helper.rkt"> helper
+hello
+EVAL #<resolved-module-path:"/tmp/racket-mcp-runtime-config-probe-20260908/application.rkt"> (application main)
+MAIN
