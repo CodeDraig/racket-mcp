@@ -1,0 +1,12 @@
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+warning: tool "mcp" registered twice: "mcp" and #<path:/srv/data/code/racket-mcp/mcp>
+raco test: (file "tests/module-context-data-api.rkt")
+--------------------
+ordinary constructors and lifted host calls share the module build
+FAILURE
+name:       check-exn
+location:   tests/module-context-data-api.rkt:35:4
+params:     '(#rx"not sealed" #<procedure:...ontext-data-api.rkt:35:31>)
+message:    "No exception raised"
+--------------------
+1/1 test failures

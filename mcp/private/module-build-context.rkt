@@ -93,6 +93,9 @@
         body ...)
      (define ctx (car (generate-temporaries '(module-context))))
      #`(module-begin/finish #:finish (finish-context! #,ctx)
+                          #:parameterize ([current-executable-build
+                                           (or (current-executable-build) (module-build-context-build #,ctx))])
+                          #:exclude (#,ctx)
                           #:module-begin original
          (define #,ctx (make-context (#%variable-reference)))
          (splicing-syntax-parameterize

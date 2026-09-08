@@ -5285,3 +5285,35 @@ GitHub run 34249649722 for preceding commit 1f1f82c ended in startup_failure wit
 zero jobs, so native macOS/Windows remain unverified. All remaining release
 requirements, including default language integration and runtime identity, remain
 open; these results do not close the full SDK goal.
+
+## Ordinary workflow construction within module contexts (2026-09-08)
+
+A new regression reproduced a parity gap: ordinary make-workflow calls inside
+the private module boundary returned uncaptured workflows while generated DSL
+construction retained the build. The finalization boundary now applies the build
+parameter to phase-zero initialization expressions after context acquisition,
+including lifted forms and multiple-value definitions. Earlier compiler setup,
+transformer phases, submodule bodies, acquisition itself and final capture keep
+their own scopes. Missing acquisition bindings fail expansion instead of silently
+leaving the entire initialization unscoped. Boundaries without parameter bindings
+retain their existing expanded forms unchanged.
+
+The correction preserves evaluation order/count and restores the caller's build
+parameter on failure. Direct, indirect, multiple-value and lifted constructors
+all reject fingerprint access before the shared context is sealed, then execute
+through the ordinary workflow API after explicit sealing. Initial correction
+experiments exposed nested-expansion scope loss and early compiler bookkeeping;
+the final implementation uses the existing expansion boundary and starts after
+acquisition rather than re-expanding a second module-begin layer.
+
+Both Linux versions passed 33 grouped context/restart checks. The final test file,
+including the added missing-acquisition regression, passed all three cases on
+both versions. Installed verification is recorded in
+ test-artifacts/module-context-data-api-20260908. Default language integration,
+automatic runtime identity and full release gates remain open. The preceding
+6,148-test full result predates this private compiler correction.
+
+Installed source verification passed dependency setup and all 34 combined cases
+on Linux Racket 9.3. The source distribution was built twice and byte-compared;
+logs and hashes are recorded in the data-API context evidence bundle. This does
+not establish default integration or any broader conformance/platform gate.
