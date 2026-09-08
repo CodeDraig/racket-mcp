@@ -29,7 +29,7 @@ complete coverage of its surrounding milestone.
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
-| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; full domain binding API remains open |
+| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; workflow-stage queries cannot yet recognize workflow arguments, and full domain binding API remains open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
@@ -4231,3 +4231,31 @@ installed `raco mcp check` passed. The focused selection passed 119 checks on
 full 9.2 run or native macOS/Windows verification. Evidence is retained in
 `test-artifacts/workflow-contracts-20260907`. Complete API parity, compiler and
 extension semantics, executable provenance and the other release gates remain.
+
+
+## Separate collection extension interoperability (2026-09-07)
+
+The new `examples/collections.rkt` defines two collections through the separately
+imported extension. An official Go client checks generated tool names, resource
+templates, encoded resource reads, independent structured search results and
+completion targets. Its expected results do not come from compiler metadata.
+The native regression checks renamed imports, colliding helper names, once-only
+entry evaluation, namespaces and URI-remapped completion. The collection protocol probes required no runtime changes. Installed CLI
+validation subsequently exposed a relative-import resolution defect: `check`
+used the working directory instead of the checked module directory. It now sets
+the load-relative directory and counts source lines. Three regressions check
+absolute/relative paths, source diagnostics, and absence of runtime instantiation.
+
+Linux/Racket 9.3 validation passed 38 focused extension checks, then 55 focused
+CLI/extension checks after the command fix, and all 14 Go probes via `sh scripts/check-interop.sh`, plus Scribble, distribution construction
+and installed CLI expansion checks. The collection regression separately passed eight source-only checks on 9.2,
+and the three CLI regressions also passed there. The previous full native/schema baseline is unchanged;
+no new full run or other-platform verification is claimed. Evidence is in
+`test-artifacts/collection-extension-20260907`.
+
+A separate probe identified the next public extension defect: stage expansion
+runs before workflow environment bindings are available, so a workflow extension
+cannot use `require-mcp-binding` to recognize an argument as a workflow value.
+The failing source and diagnostic are retained separately. Independent collection
+interoperability closes that specific prior acceptance gap; it does not close
+workflow binding semantics or the complete extension/compiler/release gates.

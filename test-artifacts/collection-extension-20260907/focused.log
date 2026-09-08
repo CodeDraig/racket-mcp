@@ -1,0 +1,4 @@
+raco test: (file "tests/collection-extension.rkt")
+raco test: (file "tests/extension-bindings.rkt")
+raco test: (file "tests/extensions.rkt")
+38 tests passed

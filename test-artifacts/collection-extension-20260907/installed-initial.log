@@ -1,0 +1,12 @@
+.cache/distribution/racket-mcp/examples/collections.rkt::20: cannot open module file
+  module path: #<path:/srv/data/code/racket-mcp/extensions/collection.rkt>
+  path: /srv/data/code/racket-mcp/extensions/collection.rkt
+  system error: no such file or directory; rkt_err=3
+  location...:
+   .cache/distribution/racket-mcp/examples/collections.rkt::20
+  context...:
+   /srv/data/code/racket-mcp/.cache/distribution/racket-mcp/mcp/cli.rkt:61:0: main
+   body of (submod "/srv/data/code/racket-mcp/.cache/distribution/racket-mcp/mcp/command.rkt" main)
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

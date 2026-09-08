@@ -47,6 +47,10 @@ func main() {
 		panic(err)
 	}
 	defer session.Close()
+	if len(os.Args) > 2 && os.Args[2] == "collections" {
+		checkCollections(ctx, session)
+		return
+	}
 	if len(os.Args) > 2 && os.Args[2] == "pagination" {
 		checkPagination(ctx, session)
 		return

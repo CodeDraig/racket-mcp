@@ -134,8 +134,9 @@ racket tests/schema-suite.rkt
 raco scribble +m --htmls --dest .cache/manual mcp/scribblings/mcp.scrbl
 ```
 
-Run `sh scripts/check-interop.sh` for the pinned official Go SDK probes: basic
+Run `sh scripts/check-interop.sh` for fourteen pinned official Go SDK probes: basic
 discovery/tool calls, pagination, multi-content resource/prompt/tool rendering,
+the separate collection extension’s generated search/resource/completion interface,
 and progress/cancellation in both client/server directions. Cancellation probes verify that the remote handler actually stops
 and the same connection accepts another request. Go is a development dependency;
 binaries and build caches stay under `.cache`.

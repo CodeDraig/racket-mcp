@@ -71,8 +71,13 @@
     [(inspect) (pretty-write (read-manifest path))]
     [(diagram) (display (manifest->mermaid (read-manifest path)))]
     [(docs) (display (manifest->markdown (read-manifest path) #:title (file-name-from-path path)))]
-    [(check) (parameterize ([current-namespace (make-base-namespace)])
-               (expand (call-with-input-file path (lambda (in) (parameterize ([read-accept-reader #t]) (read-syntax path in))))))
+    [(check) (define source (path->complete-path path))
+             (parameterize ([current-namespace (make-base-namespace)]
+                            [current-load-relative-directory (path-only source)])
+               (expand (call-with-input-file source
+                         (lambda (in)
+                           (port-count-lines! in)
+                           (parameterize ([read-accept-reader #t]) (read-syntax source in))))))
              (displayln "Expansion checks passed.")]
     [(scenario) (void (run-scenarios path))]
     [(snapshot) (define client (make-http-client path))

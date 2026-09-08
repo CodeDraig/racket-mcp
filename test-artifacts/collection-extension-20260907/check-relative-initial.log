@@ -1,0 +1,33 @@
+raco test: (file "tests/cli-check-relative.rkt")
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/cli-check-relative.rkt:16:8
+
+/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/application/main.rkt::20: cannot open module file
+  module path: #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>
+  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt
+  system error: no such file or directory; rkt_err=3
+--------------------
+--------------------
+ERROR
+name:       check-equal?
+location:   tests/cli-check-relative.rkt:16:8
+
+../application/main.rkt::20: cannot open module file
+  module path: #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>
+  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt
+  system error: no such file or directory; rkt_err=3
+--------------------
+--------------------
+FAILURE
+name:         check-exn
+location:     tests/cli-check-relative.rkt:23:6
+params:       '(#<procedure:...-check-relative.rkt:24:7> #<procedure:main>)
+message:      "Wrong exception raised"
+exn-message:
+  "/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/application/main.rkt::20: cannot open module file\n  module path: #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>\n  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt\n  system error: no such file or directory; rkt_err=3"
+exn:
+  #(struct:exn:fail:syntax:missing-module "/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/application/main.rkt::20: cannot open module file\n  module path: #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>\n  path: /srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt\n  system error: no such file or directory; rkt_err=3" #<continuation-mark-set> (#<syntax:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/application/main.rkt::20 #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>>) #<path:/srv/data/code/racket-mcp/.cache/tmp/mcp-check-relative17888325111788832511616/elsewhere/helper.rkt>)
+--------------------
+3/3 test failures

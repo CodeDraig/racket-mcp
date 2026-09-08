@@ -1,0 +1,31 @@
+#lang racket/base
+(require rackunit racket/file racket/path racket/port mcp/cli)
+(define root (make-temporary-file "mcp-check-relative~a" 'directory))
+(dynamic-wind void
+  (lambda ()
+    (define application (build-path root "application"))
+    (define elsewhere (build-path root "elsewhere"))
+    (make-directory application)
+    (make-directory elsewhere)
+    (define source (build-path application "main.rkt"))
+    (define helper (build-path application "helper.rkt"))
+    (display-to-file "#lang racket/base\n(provide label)\n(define label \"ok\")\n(error 'helper \"must not instantiate\")\n" helper)
+    (display-to-file "#lang mcp\n(require \"helper.rkt\")\n(tool (greet) (text-result label))\n(error 'application \"must not instantiate\")\n" source)
+    (parameterize ([current-directory elsewhere])
+      (for ([path (in-list (list source (find-relative-path elsewhere source)))])
+        (check-equal?
+         (parameterize ([current-command-line-arguments (vector "check" (path->string path))])
+           (with-output-to-string main))
+         "Expansion checks passed.\n")))
+    (display-to-file "#lang mcp\n(require \"helper.rkt\")\n(tool (bad [name String] [name String]) (text-result name))\n" source #:exists 'truncate)
+    (parameterize ([current-directory elsewhere]
+                   [current-command-line-arguments (vector "check" (path->string source))])
+      (check-exn
+       (lambda (e)
+         (and (exn:fail:syntax? e)
+              (for/or ([s (in-list (exn:fail:syntax-exprs e))])
+                (and (equal? (syntax-source s) source)
+                     (equal? (syntax-line s) 3)
+                     (eq? (syntax-e s) 'name)))))
+       main)))
+  (lambda () (delete-directory/files root)))

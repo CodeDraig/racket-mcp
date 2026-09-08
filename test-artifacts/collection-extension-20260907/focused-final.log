@@ -1,0 +1,7 @@
+raco test: (file "tests/cli-check-relative.rkt")
+raco test: (file "tests/command-bootstrap.rkt")
+raco test: (file "tests/command-process.rkt")
+raco test: (file "tests/collection-extension.rkt")
+raco test: (file "tests/extension-bindings.rkt")
+raco test: (file "tests/extensions.rkt")
+55 tests passed
