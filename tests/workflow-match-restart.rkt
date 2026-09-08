@@ -1,0 +1,16 @@
+#lang racket/base
+(require rackunit racket/file racket/runtime-path racket/system)
+(define-runtime-path worker "../dev/workflow-match-worker.rkt")
+(define dir (make-temporary-file "mcp-match-process-~a" 'directory))
+(define state (build-path dir "state.sqlite"))
+(define continuation (build-path dir "continuation.json"))
+(define counter (build-path dir "counter.txt"))
+(dynamic-wind void
+  (lambda ()
+    (check-true (system* (find-executable-path "racket") "-c" worker "start" state continuation counter))
+    (check-equal? (file->string counter) "matched\n")
+    (check-true (system* (find-executable-path "racket") "-c" worker "resume" state continuation counter))
+    (check-equal? (file->string counter) "matched\n")
+    (check-true (system* (find-executable-path "racket") "-c" worker "resume" state continuation counter))
+    (check-equal? (file->string counter) "matched\n"))
+  (lambda () (delete-directory/files dir)))

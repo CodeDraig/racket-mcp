@@ -1,8 +1,9 @@
 #lang racket/base
 (require "scenario-process.rkt" "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
-         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-binding-context.rkt" "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
+         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-match.rkt" "private/workflow-binding-context.rkt" "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform task-boundary completion scenario define-mcp-extension)
 (begin-for-syntax
+  (struct match-binding (record index))
   (define (check-literal-uri! uri ids)
     (define text (syntax-parse uri #:literals (quote)
                    [text:str (syntax-e #'text)] [(quote text:str) (syntax-e #'text)] [_ #f]))
@@ -269,7 +270,15 @@
      (define (compile-sequence forms bound prefix wrap [join #f])
        (when (null? forms) (raise-syntax-error #f "workflow requires a completion expression" stx))
        (define (proc expression)
-         #`(mcp-owned-handler name (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
+         #`(mcp-owned-handler name (env)
+             (workflow-environment
+              (#,@(for/list ([binding (in-list bound)])
+                    (define reference (cdr binding))
+                    #`[#,(car binding)
+                       #,(if (match-binding? reference)
+                             #`(list-ref (cadr (hash-ref env '#,(match-binding-record reference))) #,(match-binding-index reference))
+                             #`(hash-ref env '#,reference missing))]))
+              #,(wrap expression))))
        (define first
          (call-with-workflow-binding-context (map car bound)
            (lambda () (expand-workflow-extension (car forms)))))
@@ -337,16 +346,27 @@
          [(match subject [pattern body ...+] ...+)
           (define after (continuation))
           (define subject-id (string->symbol (string-append prefix "$subject")))
+          (define capture-id (string->symbol (string-append prefix "$match-values")))
           (define branch-id (string->symbol (string-append prefix "$match")))
           (define patterns (syntax->list #'(pattern ...)))
           (define bodies (map syntax->list (syntax->list #'((body ...) ...))))
+          (define-values (capture pattern-bindings)
+            (compile-match-capture first #`(hash-ref env '#,subject-id) patterns))
           (define branches
-            (for/list ([pattern (in-list patterns)] [body (in-list bodies)] [i (in-naturals)])
-              (compile-sequence body bound (format "~acase~a/" prefix i)
-                                (lambda (expr) (wrap #`(match (hash-ref env '#,subject-id) [#,pattern #,expr]))) (destination after))))
-          (define selector #`(match (hash-ref env '#,subject-id) #,@(for/list ([pattern (in-list patterns)] [i (in-naturals)]) #`[#,pattern #,i])))
+            (for/list ([names (in-list pattern-bindings)] [body (in-list bodies)] [i (in-naturals)])
+              (define binders (map syntax-local-identifier-as-binding names))
+              (define outer
+                (filter (lambda (binding)
+                          (not (ormap (lambda (id) (bound-identifier=? id (car binding))) binders))) bound))
+              (define captured
+                (for/list ([id (in-list binders)] [index (in-naturals)])
+                  (cons id (match-binding capture-id index))))
+              (compile-sequence body (append outer captured) (format "~acase~a/" prefix i)
+                                wrap (destination after))))
+          (define selector #`(car (hash-ref env '#,capture-id)))
           (define targets (map (lambda (branch) (workflow-node-id (car branch))) branches))
           (append (list (node subject-id 'checkpoint #'Any (proc #'subject))
+                        (node capture-id 'checkpoint #'Any (proc capture))
                         (node branch-id 'branch #'Integer (proc selector) targets))
                   (apply append branches) after)]
          [value:expr

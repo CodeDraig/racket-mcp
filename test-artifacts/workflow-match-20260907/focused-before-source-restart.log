@@ -1,0 +1,8 @@
+raco test: (file "tests/workflow-match.rkt")
+raco test: (file "tests/branches.rkt")
+raco test: (file "tests/control-flow.rkt")
+raco test: (file "tests/control-stage-lock.rkt")
+raco test: (file "tests/workflow-extension-bindings.rkt")
+raco test: (file "tests/manifest-diagram.rkt")
+raco test: (file "tests/manifest-docs.rkt")
+187 tests passed

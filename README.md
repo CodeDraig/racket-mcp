@@ -62,11 +62,12 @@ passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
 Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 5,747 native checks, 1,301 pinned core schema cases,
+Racket 9.3 run passed 5,778 native checks, 1,301 pinned core schema cases,
 86 optional regex cases, documentation, package checks and all fourteen Go probes;
-see `test-artifacts/elicitation-formats-20260907`. The last full 9.2 run passed
+see `test-artifacts/workflow-match-20260907`. The last full 9.2 run passed
 4,928 native checks. Subsequent changes have focused 9.2 evidence, including
-448 checks for elicitation formats, durable input and interaction behavior; this is not
+448 checks for elicitation formats, durable input and interaction behavior, and
+31 checks for durable match bindings and fresh-source restart; this is not
 a new full 9.2 run. The native total includes 242 pinned format cases tested
 through the separate MCP elicitation assertions. Five targeted independent MCP
 scenarios also passed all 16 checks; this is not full conformance.

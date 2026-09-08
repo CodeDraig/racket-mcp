@@ -1,0 +1,5 @@
+raco test: (file "test-artifacts/workflow-match-20260907/replay-probe.rkt")
+raco test: (file "tests/branches.rkt")
+raco test: (file "tests/control-flow.rkt")
+raco test: (file "tests/workflow-extension-bindings.rkt")
+27 tests passed

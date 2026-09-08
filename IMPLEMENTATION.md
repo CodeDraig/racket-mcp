@@ -4370,3 +4370,39 @@ successfully in a fresh temporary copy. Final full validation via
 86 optional regex cases and Scribble on Racket 9.3.
 Evidence is in `test-artifacts/elicitation-formats-20260907`. The SDK goal and
 full conformance/platform release gates remain open.
+
+
+## Persisted workflow match bindings (2026-09-08)
+
+The initial match probe ran an `app` expression three times before suspension
+and a fourth time on resume. Workflow extension queries also could not recognize
+pattern variables. The compiler now checkpoints the selected branch and bound
+values, then restores those bindings without matching again. This preserves
+predicate decisions and transformed values across retries and restart. Pattern
+computations must be replay-safe until checkpoint commit; captured values use
+the built-in JSON representation and non-JSON values fail before branch entry.
+
+A private compiler adapter parses each Racket pattern once and passes the same
+private pattern representation to binding discovery and code generation. It
+preserves match-expander scopes and does not expose Racket's IR in the public
+extension API. Branch-local bindings shadow outer workflow values without
+escaping into the join. The source-aware IR includes the match-value checkpoint.
+
+Authored tests cover ellipses, alternatives, repeated variables, nested patterns,
+shadowing, imported and renamed match expanders, private temporaries, expansion
+count, shifted phases, non-JSON rejection and fingerprint equality. SQLite reopen
+occurs after changing a predicate so re-matching would choose another branch.
+A separate child-process fixture refuses to run its matcher after restart and
+uses an independent counter file. Its fresh-source runs use `racket -c` in every
+child, verifying compatibility without shared bytecode artifacts.
+
+The focused 9.3 selection passed 194 checks, and 31 checks passed on 9.2, including
+fresh-source process restart. All 14 Go probes and installed dependency checks
+passed; the installed package passed 31 focused checks. The final 9.3 full run
+passed 5,778 native checks, 1,301 core schema cases, 86 optional regex cases and
+Scribble. A separate five-check language probe verifies one match expansion and
+execution, plus manifest access without parent instantiation. Evidence is in
+`test-artifacts/workflow-match-20260907`.
+A separate probe in `test-artifacts/workflow-effect-query-20260908` confirms that
+effect-space queries inside workflow extensions remain unresolved; no forward or
+branch-scope behavior is inferred from that failure. The full SDK goal remains open.

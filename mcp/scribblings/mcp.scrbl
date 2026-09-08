@@ -259,13 +259,23 @@ input does not turn a pending task into a failed task.
 The implemented grammar is a sequence of @racket[checkpoint],
 @racket[await-input], and @racket[perform] stages, followed by a result expression.
 @racket[if] and @tt{match} blocks may contain persistent stages in tail or
-non-tail position. Decisions and match subjects are persisted; branch exits join
+non-tail position. Decisions, match subjects and selected pattern bindings are persisted; branch exits join
 the following stages without re-evaluating the decision. @racket[let] blocks
 persist initializers from left to right, each in the outer lexical environment,
 then introduce their bindings for the block. Initializers must be replay-safe
 JSON computations. Inner bindings may shadow outer bindings and do not escape
 the block. @racket[begin] groups a sequence of stages. The private compiler retains
 source-aware workflow nodes and checks branch/join destinations before emission.
+Pattern predicates and @tt{app} computations run when the match snapshot is
+constructed. After that checkpoint commits, later stages restore its bindings
+without matching again, including across restart. Such computations must be
+replay-safe until the checkpoint commits. Match-bound values use the built-in
+JSON representation; closures, ports and other non-JSON values cannot cross this
+boundary. Ordinary Racket helpers can perform computations confined to one stage.
+Pattern variables are visible to workflow extension binding queries only within
+their branch. The private compiler adapter parses each Racket match pattern once
+and reuses that representation for code generation, preserving match-expander
+hygiene without exposing Racket's pattern IR through the extension API.
 Host expressions cannot hide suspension forms. Persistent stage values must be
 JSON encodable and satisfy the stage schema, or use a @racket[value-codec] in
 place of that schema. @racket[make-value-codec] takes a name, version, JSON schema,

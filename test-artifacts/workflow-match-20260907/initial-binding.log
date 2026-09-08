@@ -1,0 +1,25 @@
+test-artifacts/workflow-match-20260907/binding-probe.rkt:5:44: mcp-extension: expected MCP workflow-value binding
+  at: captured
+  in: (checkpoint-copy (saved String) captured)
+  compilation context...:
+   /srv/data/code/racket-mcp/test-artifacts/workflow-match-20260907/binding-probe.rkt
+  location...:
+   test-artifacts/workflow-match-20260907/binding-probe.rkt:5:44
+  context...:
+   /srv/data/code/racket-mcp/mcp/extension.rkt:24:0: require-mcp-binding
+   .../private/parse-interp.rkt:654:50
+   [repeats 1 more time]
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:126:0: call-expand-function
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:485:0: map/trees
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:194:23
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:98:0: update-pvar*
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-spec.rkt:155:0: expand-top
+   /srv/data/code/racket-mcp/mcp/forms.rkt:269:5: compile-sequence
+   .../private/parse-interp.rkt:654:50
+   [repeats 1 more time]
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/wrap-modbeg.rkt:46:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:461:15
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:447:12: build
+   ...

@@ -1,0 +1,18 @@
+raco test: (file "test-artifacts/workflow-match-20260907/replay-probe.rkt")
+--------------------
+FAILURE
+name:       check-equal?
+location:   test-artifacts/workflow-match-20260907/replay-probe.rkt:17:2
+message:    "Match expression should run once before suspension"
+actual:     3
+expected:   1
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   test-artifacts/workflow-match-20260907/replay-probe.rkt:21:2
+message:    "Completed match work must not replay after input"
+actual:     4
+expected:   1
+--------------------
+2/3 test failures
