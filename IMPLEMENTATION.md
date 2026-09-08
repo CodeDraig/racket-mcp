@@ -29,7 +29,7 @@ complete coverage of its surrounding milestone.
 | Duplicate binders and resource-reference arity | `forms.rkt`, private resource binding; core/domain tests | Covered source-attached expansion errors; complete phase/hygiene matrix outstanding |
 | Macro and data API share runtime values | `descriptor.rkt`, generated handlers; core/domain/upstream tests | Shared metadata/callback checks cover factories, raw interface assembly and runtime installation; workflow programs and raw codecs also receive construction checks; complete API parity audit remains |
 | syntax-spec-v3 | Private handler and domain binding interfaces | Schema/resource/operation/effect/workflow classes wired into declarations and stages; whole-interface reference analysis remains |
-| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; workflow-stage queries cannot yet recognize workflow arguments, and full domain binding API remains open |
+| Public extension API | `define-mcp-extension`, `examples/extensions/collection.rkt`, compiler tests | Distinct syntax-spec declaration/workflow extension classes and stage expansion implemented; separate collection extension has official Go coverage; scoped stage queries recognize available workflow values; full domain binding API audit remains open |
 | Manifest without parent instantiation | Private collector/finalizer, `cli.rkt`; throwing parent fixture in compiler tests | Version 2 records local schemas, arguments, metadata, source locations, and normalized workflow stages; full capabilities and cross-module references remain incomplete |
 | Exact JSON, bounds, duplicate keys | `json.rkt`; core/schema tests | Direct decoder now counts UTF-8 bytes and rejects malformed encodings; transports separately bound frames |
 | JSON Schema 2020-12 core suite | `schema.rkt`, private pattern layer; `tests/schema-suite.rkt` | 1,301 pinned core cases passed; no failed/skipped core cases |
@@ -4259,3 +4259,37 @@ cannot use `require-mcp-binding` to recognize an argument as a workflow value.
 The failing source and diagnostic are retained separately. Independent collection
 interoperability closes that specific prior acceptance gap; it does not close
 workflow binding semantics or the complete extension/compiler/release gates.
+
+
+## Workflow value queries during extension expansion (2026-09-07)
+
+The compiler now exposes its parsed lexical value context to public binding
+queries during each workflow-stage expansion. Identifiers are compared with
+scopes after normalizing the current introduction and use-site scopes. This
+recognizes workflow arguments and preceding checkpoint/input/effect/let values
+without evaluating expressions or creating a global registration table. Pending
+values shadow outer declaration metadata, while unrelated scopes and host
+bindings retain their distinction.
+
+The original query probe then exposed a second defect: a locally defined
+extension's output binder retained a use-site scope and was inaccessible to a
+later stage. Checkpoint, input, effect and lexical-block binding positions now
+normalize use-site scopes. Expression scopes and macro-private identifiers are
+preserved. The separate `checkpoint-copy` example uses only the public query API
+and emits core checked syntax.
+
+Tests cover nested and renamed extensions, earlier/future values, blocks and
+branches, fresh scopes, host shadowing, schema shadowing, shifted phases, grouped
+inputs and effect results. Repeating a completed continuation returns its saved
+outcome without repeating the effect. The first unsuccessful context match and
+scope trace, the output-binder error, and two fixture mistakes are retained.
+
+Linux/Racket 9.3 validation passed 62 focused checks, then 5,129 native checks,
+all 1,301 pinned core schema cases and Scribble via `sh scripts/check.sh`.
+All 14 Go probes passed, as did distribution construction, installed package
+dependency setup and installed CLI checks. The new regression passed nine
+source-only checks on 9.2. Evidence is in
+`test-artifacts/workflow-extension-bindings-20260907`. This closes the recorded
+workflow-argument query defect; the complete domain API audit, executable
+provenance, other integration/release gates and native macOS/Windows verification
+remain unfinished.

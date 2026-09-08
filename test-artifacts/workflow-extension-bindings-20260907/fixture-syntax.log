@@ -1,0 +1,20 @@
+tests/workflow-extension-bindings.rkt:27:5: #%datum: keyword misused as an expression
+  at: #:with
+  compilation context...:
+   /srv/data/code/racket-mcp/tests/workflow-extension-bindings.rkt
+  location...:
+   tests/workflow-extension-bindings.rkt:27:5
+  context...:
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/stxparam.rkt:57:2
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:461:15
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:447:12: build
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:418:0: maybe-compile-zo
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:221:0: compile-root
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:109:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt:69:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

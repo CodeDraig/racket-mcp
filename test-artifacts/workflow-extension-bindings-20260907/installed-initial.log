@@ -1,0 +1,9 @@
+open-input-file: cannot open input file
+  path: /srv/data/code/racket-mcp/.cache/distribution/racket-mcp/test-artifacts/collection-extension-20260907/workflow-binding-probe.rkt
+  system error: No such file or directory; errno=2
+  context...:
+   /srv/data/code/racket-mcp/.cache/distribution/racket-mcp/mcp/cli.rkt:61:0: main
+   body of (submod "/srv/data/code/racket-mcp/.cache/distribution/racket-mcp/mcp/command.rkt" main)
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/main.rkt"

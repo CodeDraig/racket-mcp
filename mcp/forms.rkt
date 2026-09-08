@@ -1,6 +1,6 @@
 #lang racket/base
 (require "scenario-process.rkt" "clock.rkt" "scenario-session.rkt" racket/match "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "completion.rkt" "authorization.rkt" "codec.rkt" "private/domain-bindings.rkt" "private/extensions.rkt" "private/handler.rkt" "private/registration.rkt"
-         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
+         (for-syntax racket/base racket/list racket/syntax syntax/parse "private/workflow-binding-context.rkt" "private/workflow-ir.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt" "uri-template.rkt" (only-in "schema.rkt" check-schema!)))
 (provide server tool resource prompt schema shape workflow checkpoint await-input perform task-boundary completion scenario define-mcp-extension)
 (begin-for-syntax
   (define (check-literal-uri! uri ids)
@@ -270,7 +270,10 @@
        (when (null? forms) (raise-syntax-error #f "workflow requires a completion expression" stx))
        (define (proc expression)
          #`(mcp-owned-handler name (env) (workflow-environment (#,@(for/list ([binding (in-list bound)]) #`[#,(car binding) (hash-ref env '#,(cdr binding) missing)])) #,(wrap expression))))
-       (define first (expand-workflow-extension (car forms))) (define tail (cdr forms))
+       (define first
+         (call-with-workflow-binding-context (map car bound)
+           (lambda () (expand-workflow-extension (car forms)))))
+       (define tail (cdr forms))
        (define (node id kind schema procedure [adapter #f] [policy #f])
          (check-literal-schema! schema)
          (workflow-node id kind schema procedure adapter policy first))
@@ -282,7 +285,7 @@
           (cons (node (stage-key prefix #'id) 'task-boundary #'Any (proc #'json-null))
                 (compile-sequence tail bound prefix wrap join))]
          [(await-input ([id:id spec:expr request:expr] ...+))
-          (define names (syntax->list #'(id ...)))
+          (define names (map syntax-local-identifier-as-binding (syntax->list #'(id ...))))
           (check-binders (append (map car bound) names) stx)
           (define keys (map (lambda (id) (stage-key prefix id)) names))
           (define group-id (string->symbol (string-append prefix "$inputs/" (symbol->string (car keys)))))
@@ -294,20 +297,22 @@
                       (proc #`(hasheq #,@(append-map (lambda (key request) (list #`'#,key request)) keys requests))) keys)
                 (compile-sequence tail (append bound (map cons names keys)) prefix wrap join))]
          [((~and kind (~or checkpoint await-input)) [id:id spec:expr] value:expr)
-          (check-binders (append (map car bound) (list #'id)) stx)
+          (define binder (syntax-local-identifier-as-binding #'id))
+          (check-binders (append (map car bound) (list binder)) stx)
           (define wire-id (stage-key prefix #'id))
           (cons (node wire-id (if (free-identifier=? #'kind #'checkpoint) 'checkpoint 'input) #'spec (proc #'value))
-                (compile-sequence tail (append bound (list (cons #'id wire-id))) prefix wrap join))]
+                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join))]
          [(perform [id:id spec:expr] #:adapter adapter:id #:policy policy:id value:expr)
           (unless (memq (syntax-e #'policy) '(transactional idempotent manual)) (raise-syntax-error #f "unknown effect policy" stx #'policy))
-          (check-binders (append (map car bound) (list #'id)) stx)
+          (define binder (syntax-local-identifier-as-binding #'id))
+          (check-binders (append (map car bound) (list binder)) stx)
           (define wire-id (stage-key prefix #'id))
           (cons (node wire-id 'effect #'spec (proc #'value) #'adapter (syntax-e #'policy))
-                (compile-sequence tail (append bound (list (cons #'id wire-id))) prefix wrap join))]
+                (compile-sequence tail (append bound (list (cons binder wire-id))) prefix wrap join))]
          [(begin body ...+)
           (compile-sequence (append (syntax->list #'(body ...)) tail) bound prefix wrap join)]
          [(let ([id:id value:expr] ...) body ...+)
-          (define names (syntax->list #'(id ...)))
+          (define names (map syntax-local-identifier-as-binding (syntax->list #'(id ...))))
           (check-binders names stx)
           (define after (continuation))
           (define inner-prefix (string-append prefix "let/"))

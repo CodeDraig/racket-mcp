@@ -1537,6 +1537,22 @@ Its generated reference still receives core arity checks and interface mapping.
 This API does not prove the presence of dynamically composed targets or infer
 references hidden in arbitrary Racket computation.
 
+During workflow-stage extension expansion, binding queries also recognize the
+workflow arguments and values introduced by preceding checkpoints, input stages,
+effects and workflow @racket[let] bindings. Visibility follows the current branch
+and lexical block: future values, sibling-branch values and values from a finished
+block are unavailable. A pending workflow value shadows a same-named outer schema
+or operation for these queries. Ordinary host bindings retain their own behavior.
+The compiler exposes this context only while expanding the stage; it does not
+register identifiers globally or evaluate value expressions to discover metadata.
+
+@tt{examples/extensions/checkpoint-copy.rkt} demonstrates the query in a separately
+implemented workflow extension. @tt{(checkpoint-copy [saved String] name)} requires
+@tt{name} to be an available workflow value and emits a normal checked checkpoint.
+Nested extensions and renamed imports retain their scopes. Caller-supplied output
+binders are normalized as binding positions so later stages can refer to them;
+macro-introduced private identifiers keep their hygiene.
+
 @section{Declarations at shifted phases}
 
 The SDK uses a locally patched syntax-spec-v3 dependency, based on upstream commit

@@ -62,12 +62,12 @@ passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
 Local Linux x86_64 verification passed on Racket 9.2 and 9.3. The latest full
-Racket 9.3 run passed 5,109 native checks, 1,301 pinned core schema cases,
-documentation, package checks and all thirteen Go probes; see
-`test-artifacts/workflow-contracts-20260907`. The last full 9.2 run passed
-4,928 native checks; current declaration/wire-binding tests separately passed
-103 focused checks on 9.2, and the new workflow/codec construction regression
-passed another 43 focused checks.
+Racket 9.3 run passed 5,129 native checks, 1,301 pinned core schema cases,
+documentation, package checks and all fourteen Go probes; see
+`test-artifacts/workflow-extension-bindings-20260907`. The last full 9.2 run passed
+4,928 native checks. Subsequent changes have focused 9.2 evidence, including
+nine checks for the latest workflow-extension binding regression; this is not
+a new full 9.2 run.
 The earlier fresh 9.3 dependency bootstrap exposed an omitted development fixture
 retaining 9.2 bytecode. Validation scripts now compile every top-level development
 fixture; `test-artifacts/linux-9.3-current-20260907` retains that failure and fix.

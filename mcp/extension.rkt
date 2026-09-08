@@ -1,6 +1,6 @@
 #lang racket/base
 (require racket/list racket/string
-         "private/resource-binding.rkt" "private/prompt-binding.rkt"
+         "private/workflow-binding-context.rkt" "private/resource-binding.rkt" "private/prompt-binding.rkt"
          (for-template racket/base "private/domain-bindings.rkt"))
 (provide (struct-out mcp-binding-info) lookup-mcp-binding require-mcp-binding)
 
@@ -12,6 +12,7 @@
   (unless (syntax-transforming?) (error 'lookup-mcp-binding "only available during syntax expansion"))
   (cond
     [(eq? space 'effect) (and (lookup-domain-kind id #:space 'effect) (mcp-binding-info 'effect #f #f))]
+    [(workflow-context-binding? id) (mcp-binding-info 'workflow-value #f #f)]
     [else
      (define resource (lookup-resource-binding id))
      (define prompt (and (not resource) (lookup-prompt-binding id)))

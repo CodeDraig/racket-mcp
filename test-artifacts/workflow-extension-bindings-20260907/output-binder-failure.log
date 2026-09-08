@@ -1,0 +1,43 @@
+.cache/tmp/workflow-extension-binding-probe.rkt:10:15: saved: unbound identifier
+  in: saved
+  context...:
+   #(25698 module) #(27572 intdef-outside) #(27573 intdef) #(27586 local)
+   #(27595 intdef) [common scopes]
+  other binding...:
+   local
+   #(25698 module) #(27124 use-site) #(27572 intdef-outside)
+   #(27573 intdef) [common scopes]
+  other binding...:
+   local
+   #(27557 intdef-outside) #(27558 intdef) #(27580 macro) #(27586 local)
+   [common scopes]
+  common scopes...:
+   #(51399/2 module workflow-extension-binding-probe)
+   #(27289 intdef-outside) #(27290 intdef) #(27296 intdef-outside)
+   #(27297 intdef) #(27300 local) #(27301 intdef) #(27531 local)
+   #(27532 letrec-body) #(27536 intdef) #(27539 local) #(27540 intdef)
+   #(27543 intdef-outside) #(27544 intdef) #(27552 intdef-outside)
+   #(27553 intdef) #(27564 local) #(27565 intdef) #(27568 local)
+   #(27569 intdef)
+  compilation context...:
+   /srv/data/code/racket-mcp/.cache/tmp/workflow-extension-binding-probe.rkt
+  location...:
+   .cache/tmp/workflow-extension-binding-probe.rkt:10:15
+  context...:
+   .../private/parse-interp.rkt:654:50
+   /srv/data/code/racket-mcp/.cache/patched-dependencies/syntax-spec-v3/private/runtime/binding-operations.rkt:169:0: get-racket-referenced-identifiers/proc
+   .../private/parse-interp.rkt:654:50
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/stxparam.rkt:57:2
+   [repeats 1 more time]
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:461:15
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:447:12: build
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:418:0: maybe-compile-zo
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:221:0: compile-root
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:109:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt:69:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/make.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt:41:0
+   body of "/srv/data/code/racket-mcp/.cache/racket-9.3/collects/raco/raco.rkt"
+   ...
