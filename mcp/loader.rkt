@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/path racket/port file/sha1 "private/module-observation.rkt" (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt" "private/module-identity.rkt")
+(require racket/path racket/port file/sha1 "private/module-observation.rkt" (only-in syntax/module-reader) "descriptor.rkt" "private/executable-capture.rkt" "private/module-imports.rkt" "private/module-identity.rkt" "private/compiled-identity.rkt")
 (provide load-interface)
 (define-namespace-anchor sdk-home)
 (define sdk-language
@@ -54,9 +54,10 @@
              (observed-module-code identity (namespace-anchor->namespace sdk-home))))
       (values name
         (if code
-            (bytes->hex-string
-             (sha256-bytes
-              (open-input-bytes (call-with-output-bytes (lambda (out) (write code out))))))
+            (or (compiled-module-producer-identity code)
+                (bytes->hex-string
+                 (sha256-bytes
+                  (open-input-bytes (call-with-output-bytes (lambda (out) (write code out)))))))
             (string-append "explicit-runtime-build/1:" runtime-build-id)))))
   (void (seal-module-code-capture! capture #:dependencies dependencies))
   (module-code-capture-value capture))

@@ -1,0 +1,4 @@
+/tmp/racket-mcp-kernel-bootstrap-probe.rkt:10:17: and: unbound identifier
+  in: and
+  location...:
+   /tmp/racket-mcp-kernel-bootstrap-probe.rkt:10:17

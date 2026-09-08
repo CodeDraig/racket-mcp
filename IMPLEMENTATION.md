@@ -4676,3 +4676,38 @@ linklets; those failures and their corrected runs are retained in
 The identities describe trusted compiler output, not signatures or arbitrary
 program equivalence. This component does not yet seal complete default-path
 workflow dependency graphs; that release gate and the full SDK goal remain open.
+
+
+## Retained identities in executable capture (2026-09-08)
+
+Executable capture now prefers producer identities retained in observed compiled
+code and recognizes identities retained by previously declared dependencies.
+It reads that metadata only from declared modules. Unstamped preloaded code stays
+unresolved, even if the replacement file now has a stamp. The public captured
+loader uses the same preference for observed SDK bootstrap code; its explicit
+runtime identity remains necessary for the unresolved runtime baseline.
+
+Three new authored cases check the stamped/unstamped distinction and a SQLite
+workflow using a preloaded stamped helper. Replacing that helper's artifact cannot
+change the original captured executable. A new capture with the changed helper
+rejects the old pending continuation before completion work executes; the original
+capture still resumes it and a new invocation uses the new implementation. The
+helper's retained identity and absence from unresolved dependencies are asserted
+before the fixture supplies an explicit identity for the remaining SDK baseline.
+
+The initial three-file existing suite passed 51 checks. The new three-case suite
+passed on 9.3, and the broader five-file suite, including process-restart coverage,
+passed 68 checks on 9.2. All 14 Go probes passed. Installed package dependency
+setup and 54 installed checks passed. Full Racket 9.3 verification passed compilation, 5,942 native checks, all 1,301
+core schema cases, all 86 optional regex cases and Scribble. Evidence is in
+`test-artifacts/retained-capture-20260908`.
+
+This integrates producer evidence into the captured path. It does not yet create
+and seal complete build contexts for ordinary default-loaded workflow descriptors;
+that gate, unknown runtime baseline handling and the full release remain open.
+
+A separate raw-kernel startup probe observed the greeter's complete ordinary file
+module graph on 9.2 and 9.3; the final missing entries are all predefined modules.
+Early failures used unavailable kernel forms and conflated parent/submodule names.
+The retained final prototype is not production startup: registry-scoped handoff,
+native runtime image identity and default workflow build contexts remain undone.

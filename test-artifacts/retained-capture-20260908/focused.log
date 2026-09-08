@@ -1,0 +1,2 @@
+raco test: (file "tests/retained-capture.rkt")
+3 tests passed

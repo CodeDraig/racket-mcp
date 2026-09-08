@@ -2216,7 +2216,8 @@ uncaptured application code. A package version reused across changed development
 builds does not meet this contract.
 
 Application module code is captured as it is evaluated, including helpers loaded
-during instantiation. Unobserved application declarations cause an error; Racket's
+during instantiation. Application declarations without observed code or a retained
+producer identity cause an error; Racket's
 compiled-module cache can require using a fresh loading process. No resume-time
 file hashing substitutes for the loaded executable. User-written definitions and
 imports execute with normal module-instantiation semantics. Constructing the
@@ -2258,6 +2259,13 @@ stdio and HTTP APIs. Captured tool, resource and prompt workflows use the same
 validation and authorization paths. A changed build currently reaches stdio
 clients through the runtime's ordinary internal-error channel; local workflow
 calls retain the recovery diagnostic.
+
+Executable capture uses retained producer identities when available, including
+for dependencies declared before its scope began. Otherwise it hashes code that
+it actually observed being evaluated. A preloaded dependency without either kind
+of evidence remains unresolved; a replacement file is never used to identify it.
+The same identity selection applies to observed SDK bootstrap code. The explicit
+runtime identity is still required for the remaining unobserved runtime baseline.
 
 The language reader and runtime install an idempotent code observer before
 subsequent application dependencies load. Source and compiled imports retain the

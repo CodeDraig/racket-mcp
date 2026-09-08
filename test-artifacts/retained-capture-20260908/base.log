@@ -1,0 +1,4 @@
+raco test: (file "tests/executable-capture.rkt")
+raco test: (file "tests/loader.rkt")
+raco test: (file "tests/captured-submodules.rkt")
+51 tests passed

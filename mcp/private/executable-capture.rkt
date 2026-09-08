@@ -1,9 +1,9 @@
 #lang racket/base
-(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt" "module-code-tree.rkt")
+(require racket/list racket/port racket/runtime-path file/sha1 "executable-build.rkt" "module-imports.rkt" "module-identity.rkt" "module-code-tree.rkt" "compiled-identity.rkt")
 (provide (struct-out module-code-capture) capture-module-export seal-module-code-capture!)
 
-;; A capture is evidence about declarations actually evaluated under this loader,
-;; not a hash of files that might differ from already loaded code. Unobserved
+;; A capture records code evaluated under this loader or identities retained by
+;; loaded declarations, never hashes of possibly replaced files. Unobserved
 ;; dependencies remain explicit; callers must not treat a partial capture as a
 ;; complete executable build fingerprint.
 (struct module-code-capture (value observed unobserved build namespace resolver predefined) #:transparent)
@@ -46,10 +46,11 @@
             (define identity (car entry))
             (define name (identity-name identity))
             (define digest
-              (bytes->hex-string
-                (sha256-bytes
-                  (open-input-bytes
-                    (call-with-output-bytes (lambda (out) (write (cdr entry) out)))))))
+              (or (compiled-module-producer-identity (cdr entry))
+                  (bytes->hex-string
+                    (sha256-bytes
+                      (open-input-bytes
+                        (call-with-output-bytes (lambda (out) (write (cdr entry) out))))))))
             (hash-set! observed name (string->immutable-string digest))
             ;; Preserve imports in their declaration namespace, including modules
             ;; loaded dynamically while the application is instantiated.
@@ -66,7 +67,13 @@
       (unless (hash-ref visited name #f)
         (hash-set! visited name #t)
         (when (module-predefined? identity) (hash-set! predefined name #t))
-        (unless (hash-has-key? observed name) (hash-set! missing name #t))
+        (unless (hash-has-key? observed name)
+          (define retained
+            (and (module-declared? identity #f)
+                 (declared-module-producer-identity identity)))
+          (if retained
+              (hash-set! observed name retained)
+              (hash-set! missing name #t)))
         (for ([dependency (in-list (hash-ref imports name (lambda () (module-dependencies identity))))])
           (visit dependency))))
     (visit root)

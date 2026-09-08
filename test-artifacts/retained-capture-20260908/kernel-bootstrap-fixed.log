@@ -1,0 +1,4 @@
+/tmp/racket-mcp-kernel-bootstrap-probe.rkt:20:5: hash-keys: unbound identifier
+  in: hash-keys
+  location...:
+   /tmp/racket-mcp-kernel-bootstrap-probe.rkt:20:5
