@@ -1,0 +1,30 @@
+raco test: (file "tests/http-raised-values.rkt")
+uncaught exception: 'network-denied
+--------------------
+HTTP network policy failure settles the handle: network-denied
+FAILURE
+name:       check-true
+location:   tests/http-raised-values.rkt:23:12
+params:     '(#f)
+--------------------
+uncaught exception: #f
+--------------------
+HTTP network policy failure settles the handle: #f
+FAILURE
+name:       check-true
+location:   tests/http-raised-values.rkt:23:12
+params:     '(#f)
+--------------------
+base exception
+  context...:
+   /srv/data/code/racket-mcp/tests/http-raised-values.rkt:6:0
+   body of "/srv/data/code/racket-mcp/tests/http-raised-values.rkt"
+   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/compiler-lib/compiler/commands/test.rkt:209:16
+--------------------
+HTTP network policy failure settles the handle: #(struct:exn "base exception" #<continuation-mark-set>)
+FAILURE
+name:       check-true
+location:   tests/http-raised-values.rkt:23:12
+params:     '(#f)
+--------------------
+3/4 test failures

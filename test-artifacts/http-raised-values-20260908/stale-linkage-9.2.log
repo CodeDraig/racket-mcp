@@ -1,0 +1,19 @@
+raco test: (file "tests/http-raised-values.rkt")
+raco test: (file "tests/http-lifecycle.rkt")
+raco test: (file "tests/http.rkt")
+instantiate-linklet: mismatch;
+ reference to a variable that is not exported
+  name: http-client-call84.1
+  exporting instance: "/srv/data/code/racket-mcp/mcp/http.rkt"
+  importing instance: "/srv/data/code/racket-mcp/mcp/cli.rkt"
+  possible reason: modules need to be recompiled because dependencies changed
+  possible solution: running `racket -y`, `raco make`, or `raco setup`
+  context...:
+   body of "/srv/data/code/racket-mcp/mcp/cli.rkt"
+   /usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt:98:2
+   body of (submod "/usr/share/racket/pkgs/compiler-lib/compiler/commands/test.rkt" process)
+   body of top-level
+http.rkt: raco test: non-zero exit: 1
+raco test: (file "tests/http-streams.rkt")
+raco test: (file "tests/stdio-raised-values.rkt")
+1/207 test failures

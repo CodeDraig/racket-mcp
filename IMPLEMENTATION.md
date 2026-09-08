@@ -38,7 +38,7 @@ complete coverage of its surrounding milestone.
 | Regex and optional format assertions | Private pattern compatibility layer; schema-patterns and schema-unicode-ranges regressions | 86 pinned optional regex cases pass separately from 1,301 core cases; complete ECMAScript regex and optional format assertions remain outside the tested profile |
 | MCP elicitation formats | Private elicitation-format/input-response validators; 242 pinned format cases and authored integration tests | Date, date-time, email and URI assertions apply to form responses; workflow/client requests checked before persistence/callbacks; ordinary schema format remains annotation-only |
 | Shapes and codecs | Generated constructor/accessors/JSON codecs; domain tests | Required fields and generated shape codecs implemented; checkpoint/effect codec registry and restart tests added |
-| Resources, RFC 6570, links, embeds | `descriptor.rkt`, `uri-template.rkt`, `runtime.rkt`; domain tests and MCP fixtures | Text/binary and remapped reference identity covered; ambiguous URI overlap analysis incomplete |
+| Resources, RFC 6570, links, embeds | `descriptor.rkt`, `uri-template.rkt`, `runtime.rkt`; domain tests and MCP fixtures | Text/binary and remapped reference identity covered; generated simple-route overlaps rejected at construction/expansion, custom-matcher ambiguity rejected at dispatch; composite inverses require explicit adapters |
 | Prompts and completion | Runtime, composition, completion descriptors; domain and MCP fixtures | Wire strings and multi-content role lowering; renamed/removed completion targets covered; explicit string-codec syntax and JSON domain values implemented |
 | Nested input-required rendering | `rendering.rkt`, tool/prompt dispatch; embedded-workflow tests | Persistent content layouts, child namespaces, source order and retained results implemented; nested text/JSON/binary presentations now supported; full crash/compatibility matrix remains open |
 | Discovery and capability/version metadata | `runtime.rkt`; core and official stateless checks | No initialization/session state; discovery-capabilities covers 12 core declaration combinations, view removal and the storage/workflow Tasks boundary; broader upstream facility advertisement audit remains |
@@ -4937,3 +4937,39 @@ policy. Stdio client construction, request-handle inspection, cancellation and
 close also have indexed references. Separate Scribble builds passed. Evidence is
 in test-artifacts/declaration-reader-literals-20260908. This closes these specific
 literal cases, not the remaining whole-interface and release acceptance gates.
+
+## HTTP arbitrary raised-value cleanup (2026-09-08)
+
+A network security guard raising a symbol, false, or a base exn could terminate
+an HTTP worker without settling its handle. All three failures were reproduced
+with deadlines disabled; ordinary exn:fail was the passing control. The worker
+now catches non-break failures, preserves exception identity, and wraps other
+values in exn:fail:http:transport with a cause field. Token reservations are
+released through the existing terminal transition, and the request custodian
+is reaped by the existing worker-exit monitor.
+
+Focused 9.3 compilation and 218 checks passed. Five strengthened cases passed on
+9.2 and 9.3, including synchronous false-failure delivery, token reuse and cleanup
+of a blocked child created by the network guard. The broader 9.2 suite encountered
+stale compiled CLI linkage after the export change. Rebuilding all public SDK
+modules resolved it; all 218 focused checks then passed on 9.2.
+Installed package dependency checks and all 218 focused checks passed on 9.3;
+all 14 official Go probes passed. Full 9.3 verification passed compilation, 6,049
+native checks, all 1,301 core schema cases, all 86 optional regex cases and
+Scribble. Evidence is in test-artifacts/http-raised-values-20260908. Broader transport race and
+complete-release coverage remains open.
+
+## URI overlap ledger reconciliation (2026-09-08)
+
+The summary row still called URI overlap analysis incomplete after the dated
+2026-09-07 implementation entry had closed generated simple-matcher overlap
+checking. Reinspection confirmed finite-state intersection with fail-closed
+budget exhaustion in uri-matchers-overlap, construction checks shared by mounts
+and views, source-attached literal checks, and dispatch rejection when custom
+matchers produce multiple candidates. tests/uri-overlap.rkt independently checks
+witnesses, bounded route enumeration, custom-matcher non-execution during
+construction, runtime ambiguity, Unicode boundaries and transformations.
+The summary now states that implemented boundary. It does not claim inference
+of arbitrary Racket matcher behavior or complete the other release gates.
+
+The 6,049-check full run above includes the URI overlap suite used in this audit.

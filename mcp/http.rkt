@@ -1,12 +1,14 @@
 #lang racket/base
-(require "private/http-request.rkt" (only-in web-server/private/connection-manager connection-custodian connection-i-port) (only-in racket/tcp tcp-addresses) "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
+(require "private/failure.rkt" "private/http-request.rkt" (only-in web-server/private/connection-manager connection-custodian connection-i-port) (only-in racket/tcp tcp-addresses) "clock.rkt" racket/string racket/list racket/port racket/async-channel net/base64 net/url
          web-server/http web-server/web-server web-server/servlet-dispatch web-server/safety-limits
          "subscription.rkt" "authorization.rkt" "private/http-wire.rkt" "private/sse.rkt" "private/wire-message.rkt" "private/request-message.rkt" "private/progress.rkt" "json.rkt" "runtime.rkt" "descriptor.rkt" "stdio.rkt" "header-schema.rkt")
 (provide serve-http make-http-handler encode-header-value decode-header-value request-headers
          make-http-client http-client-request http-client-call (struct-out http-client)
-         (struct-out exn:fail:http:authorization) (struct-out exn:fail:http:timeout))
+         (struct-out exn:fail:http:authorization) (struct-out exn:fail:http:timeout)
+         (struct-out exn:fail:http:transport))
 (struct exn:fail:http:authorization exn:fail (status headers body challenges resource request-token) #:transparent)
 (struct exn:fail:http:timeout exn:fail (phase seconds) #:transparent)
+(struct exn:fail:http:transport exn:fail (cause) #:transparent)
 (define (check-timeout who v)
   (unless (or (not v) (and (rational? v) (positive? v)))
     (raise-argument-error who "positive finite real or #f" v)))
@@ -245,7 +247,12 @@
   (define worker
     (parameterize ([current-custodian custodian])
     (thread (lambda ()
-              (with-handlers ([exn:fail? finish!])
+              (with-handlers ([non-break-failure?
+                               (lambda (failure)
+                                 (finish! (if (exn? failure) failure
+                                              (exn:fail:http:transport
+                                                "HTTP transport raised a non-exception value"
+                                                (current-continuation-marks) failure))))])
                 (define u request-url)
                 (define ssl? (equal? (url-scheme u) "https"))
                 (define relative (url->string (struct-copy url u [scheme #f] [user #f] [host #f] [port #f] [fragment #f])))

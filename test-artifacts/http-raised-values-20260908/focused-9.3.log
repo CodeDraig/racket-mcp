@@ -1,0 +1,6 @@
+raco test: (file "tests/http-raised-values.rkt")
+raco test: (file "tests/http-lifecycle.rkt")
+raco test: (file "tests/http.rkt")
+raco test: (file "tests/http-streams.rkt")
+raco test: (file "tests/stdio-raised-values.rkt")
+218 tests passed

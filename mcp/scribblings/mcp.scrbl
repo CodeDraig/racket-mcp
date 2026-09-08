@@ -639,6 +639,13 @@ Timeouts produce @racket[exn:fail:http:timeout], whose @racket[phase] is
 @racket['headers] or @racket['request] and whose @racket[seconds] records the limit.
 The asynchronous handle returns the exception; the synchronous call raises it.
 A deadline closes the request's ports and workers without retrying the operation.
+Non-break failures from request workers, including application network security
+guards, also settle the handle and release its progress-token reservation.
+Existing exception objects retain their identity. Other raised values, including
+@racket[#f], become @racket[exn:fail:http:transport] exceptions whose
+@racket[exn:fail:http:transport-cause] field retains the original value. A
+synchronous call raises the exception instead of returning it as a protocol
+outcome. The request custodian is reaped when its worker exits.
 Completion, cancellation, and timeout select one terminal outcome; only successful
 completion can publish discovered schemas. Cancelling a completed handle leaves
 its result unchanged.
