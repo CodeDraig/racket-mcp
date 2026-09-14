@@ -1,5 +1,9 @@
 # Native Racket MCP and `#lang mcp`
 
+Original racket-mcp code and documentation are licensed under the [MIT License](LICENSE).
+Bundled third-party material and derived extracts retain their respective licenses;
+see [third-party notices](THIRD-PARTY-NOTICES.md) for scope, attribution, and license texts.
+
 Native SDK and language for MCP **2026-07-28**, targeting Racket **9.2**.
 The approved implementation scope is complete, with qualified conformance results
 and Linux verification on Racket 9.2/9.3. Native macOS/Windows testing was removed

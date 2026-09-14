@@ -7,10 +7,11 @@ destination = root / ".cache" / "distribution" / "racket-mcp"
 if destination.exists():
     shutil.rmtree(destination)
 destination.mkdir(parents=True)
-for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev"):
+for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev", "LICENSES"):
     shutil.copytree(root / name, destination / name,
                     ignore=shutil.ignore_patterns("compiled", "node_modules", ".git", "results", "__pycache__", "*.pyc"))
-for name in ("info.rkt", "README.md", "IMPLEMENTATION.md", "REMAINING.md"):
+for name in ("info.rkt", "README.md", "IMPLEMENTATION.md", "REMAINING.md",
+             "LICENSE", "THIRD-PARTY-NOTICES.md"):
     shutil.copy2(root / name, destination / name)
 print(destination)
 archive = destination.parent / "racket-mcp-0.1.zip"
