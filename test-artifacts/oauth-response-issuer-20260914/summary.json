@@ -1,0 +1,56 @@
+{
+  "racket": "9.3",
+  "native_checks": 553,
+  "regression_cases": 36,
+  "before_fix_failed_cases": 4,
+  "conformance": "six issuer scenarios; locally corrected registration fixture, not unmodified conformance",
+  "results": [
+    {
+      "result": "results/auth/iss-normalized-2026-09-14T12-24-02-261Z/checks.json",
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      }
+    },
+    {
+      "result": "results/auth/iss-not-advertised-2026-09-14T12-23-56-735Z/checks.json",
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      }
+    },
+    {
+      "result": "results/auth/iss-supported-2026-09-14T12-23-55-282Z/checks.json",
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      }
+    },
+    {
+      "result": "results/auth/iss-supported-missing-2026-09-14T12-23-58-130Z/checks.json",
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      }
+    },
+    {
+      "result": "results/auth/iss-unexpected-2026-09-14T12-24-00-892Z/checks.json",
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      }
+    },
+    {
+      "result": "results/auth/iss-wrong-issuer-2026-09-14T12-23-59-475Z/checks.json",
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      }
+    }
+  ],
+  "sources": {
+    "mcp/authorization.rkt": "eb51109a0e797fe9cb0e8d4ed8abef997e449f0ba3c91b9a55c37bb928096787",
+    "tests/oauth-response-issuer.rkt": "d637d201d4d1f95fdb1c9717653b8654cc17f9a8875332f3f13c1f75ffa8d9a4",
+    "mcp/scribblings/mcp.scrbl": "39d992a361e2138daeefab06df3533ae2d36e96f873d544e48948523736d5059"
+  }
+}

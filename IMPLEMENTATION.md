@@ -5850,3 +5850,19 @@ registration-fixture-repair-20260909. CONFORMANCE-FIXTURE.md contains the reques
 seven-section evolvability design note and reproduction commands. Patched results
 are not unmodified conformance credit. No upstream issue or contribution was
 published, no dependencies were installed, and no hosted Actions were launched.
+
+### OAuth response issuer support respected (2026-09-14)
+
+`finish-authorization` now permits an absent `iss` when authorization-server
+metadata does not advertise support. A present issuer still requires exact string
+equality, and advertised support still requires its presence before token exchange.
+This corrects the previously retained `auth/iss-not-advertised` SDK defect without
+changing scope step-up or resource-identity behavior.
+
+The new 36-case regression failed four cases before the fix and passes afterward.
+The broader OAuth/authorization suite passes 553 checks on Linux Racket 9.3;
+compilation, Scribble, and `git diff --check` pass. All six issuer scenarios pass
+against the pinned harness with the existing registration-fixture correction,
+with no failures or warnings. This is not unmodified or full-suite conformance
+credit. Commands, logs, source hashes, environment repairs, and the fixture
+boundary are recorded in `test-artifacts/oauth-response-issuer-20260914`.

@@ -974,6 +974,11 @@ metadata fetches. The low-level adapter binds an endpoint; the authorizer also
 checks issuer, registration and advertised method.
 
 OAuth functions create PKCE requests and validate state and issuer during exchange.
+A present authorization-response @tt{iss} must exactly match the recorded issuer,
+without URL normalization. A missing @tt{iss} is rejected when the authorization
+server advertises @tt{authorization_response_iss_parameter_supported} as true;
+when that metadata field is false or absent, the response may proceed through
+the remaining state, error, and authorization-code checks.
 Applications can use the native fetch/exchange callbacks or supply their own.
 Browser interaction and credential persistence remain application callbacks.
 Hosted authorization services

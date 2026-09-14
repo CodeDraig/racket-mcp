@@ -1,0 +1,116 @@
+[
+  {
+    "scenario": "auth/iss-supported",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-supported",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  },
+  {
+    "scenario": "auth/iss-not-advertised",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-not-advertised",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  },
+  {
+    "scenario": "auth/iss-supported-missing",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-supported-missing",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  },
+  {
+    "scenario": "auth/iss-wrong-issuer",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-wrong-issuer",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  },
+  {
+    "scenario": "auth/iss-unexpected",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-unexpected",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  },
+  {
+    "scenario": "auth/iss-normalized",
+    "exit": 0,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/node_modules/.bin/tsx",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/conformance/src/index.ts",
+      "client",
+      "--command",
+      "/usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt",
+      "--scenario",
+      "auth/iss-normalized",
+      "--spec-version",
+      "2026-07-28",
+      "--timeout",
+      "60000",
+      "--output-dir",
+      "/srv/data/code/racket-mcp/.cache/oauth-response-issuer-20260914/results"
+    ]
+  }
+]

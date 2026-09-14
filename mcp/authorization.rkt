@@ -255,7 +255,13 @@
 (define (finish-authorization pending response exchange #:clock [clock mcp-current-seconds])
   (unless (equal? (hash-ref response 'state #f) (oauth-pending-state pending)) (error 'finish-authorization "OAuth state mismatch"))
   (define registration (oauth-pending-registration pending))
-  (unless (equal? (hash-ref response 'iss #f) (oauth-registration-issuer registration)) (error 'finish-authorization "OAuth response issuer mismatch"))
+  ;; A present issuer always requires exact comparison, even when unadvertised.
+  ;; Only servers advertising support must include it (MCP 2026-07-28).
+  (when (or (hash-has-key? response 'iss)
+            (hash-ref (oauth-pending-metadata pending)
+                      'authorization_response_iss_parameter_supported #f))
+    (unless (equal? (hash-ref response 'iss #f) (oauth-registration-issuer registration))
+      (error 'finish-authorization "OAuth response issuer mismatch")))
   (when (hash-has-key? response 'error) (error 'finish-authorization "authorization declined: ~a" (hash-ref response 'error)))
   (unless (and (string? (hash-ref response 'code #f)) (positive? (string-length (hash-ref response 'code))))
     (error 'finish-authorization "nonempty authorization code is required"))
