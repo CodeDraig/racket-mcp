@@ -5808,3 +5808,45 @@ custom-exchange rejection. The AS deliberately returns methods different from
 the requested method to prove issued metadata drives authentication.
 git diff --check passes. Independent conformance scenarios and scores were not
 rerun or changed; no hosted CI or native macOS/Windows checks were launched.
+
+### All twenty previously excluded OAuth scenarios exercised (2026-09-08)
+
+The conformance auth client now uses the SDK registration store and issued
+credentials. All twenty requested scenarios ran locally against the pinned
+unmodified harness: zero scored passes, mostly blocked by malformed registration
+responses (missing mandatory secret expiry and inconsistent/omitted registration
+metadata). The SDK's validator was not weakened. An isolated response-fixture
+correction, with unchanged checks, enabled a second run of all twenty: seventeen
+clean passes, one warning-only scenario and two failures. These are diagnostic
+results, not unmodified conformance credit.
+
+Evidence and the exact per-scenario matrix are in
+test-artifacts/oauth-all-scenarios-20260908. Retained artifacts include both sets
+of logs/checks/exits/commands, source hashes, the isolated fixture patch, and a
+machine-readable summary. Runtime harness src matches the pinned vendor source.
+Findings: unconditional missing-iss rejection is an SDK defect; scope union on
+step-up is a SHOULD warning; metadata-var2 remains a resource-identity
+interpretation discrepancy (origin in root metadata versus requested /mcp).
+No SDK behavior was changed to hide those results. The requested wiring and
+execution objective is complete; fixing the findings is separate work.
+Compilation and git diff --check pass. No hosted CI, dependency installation,
+macOS/Windows execution or unqualified conformance claim was made.
+
+### Reproducible registration fixture correction (2026-09-09)
+
+The malformed registration response is corrected in a prepared development
+harness using scripts/prepare-conformance.py. The upstream pin and all 279 source
+hashes are checked before preparing a copy. Only the registration response block
+changes: secret expiry, grant/response metadata and consistent selected token
+authentication. A manifest and exact patch identify the local correction. The
+vendor snapshot, SDK validator and scenario assertions remain unchanged.
+
+Validation: six preparation tests pass, including source drift/unknown revision,
+ambiguous patch and existing-output rejection. All 67 native registration tests
+pass. All twenty OAuth scenarios run against the prepared harness: seventeen
+clean passes, one scope warning, two unrelated failures; none stops on malformed
+registration metadata. Logs/commands/manifests are retained in
+registration-fixture-repair-20260909. CONFORMANCE-FIXTURE.md contains the requested
+seven-section evolvability design note and reproduction commands. Patched results
+are not unmodified conformance credit. No upstream issue or contribution was
+published, no dependencies were installed, and no hosted Actions were launched.

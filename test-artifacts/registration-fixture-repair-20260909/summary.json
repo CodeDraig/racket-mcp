@@ -1,0 +1,165 @@
+[
+  {
+    "scenario": "auth/metadata-default",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 18
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/metadata-var1",
+    "counts": {
+      "INFO": 20,
+      "SUCCESS": 18
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/metadata-var2",
+    "counts": {
+      "INFO": 6,
+      "SUCCESS": 1,
+      "FAILURE": 6
+    },
+    "exit": 1
+  },
+  {
+    "scenario": "auth/metadata-var3",
+    "counts": {
+      "INFO": 22,
+      "SUCCESS": 18
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/scope-from-www-authenticate",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 14
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/scope-from-scopes-supported",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 14
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/scope-omitted-when-undefined",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 14
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/scope-step-up",
+    "counts": {
+      "INFO": 28,
+      "SUCCESS": 24,
+      "WARNING": 1
+    },
+    "exit": 1
+  },
+  {
+    "scenario": "auth/scope-retry-limit",
+    "counts": {
+      "INFO": 15,
+      "SUCCESS": 11
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/token-endpoint-auth-basic",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 19
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/token-endpoint-auth-post",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 19
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/token-endpoint-auth-none",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 19
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/offline-access-not-supported",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 14
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/authorization-server-migration",
+    "counts": {
+      "INFO": 30,
+      "SUCCESS": 27
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/iss-supported",
+    "counts": {
+      "INFO": 18,
+      "SUCCESS": 14
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/iss-not-advertised",
+    "counts": {
+      "INFO": 10,
+      "SUCCESS": 7,
+      "FAILURE": 1
+    },
+    "exit": 1
+  },
+  {
+    "scenario": "auth/iss-supported-missing",
+    "counts": {
+      "INFO": 10,
+      "SUCCESS": 8
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/iss-wrong-issuer",
+    "counts": {
+      "INFO": 10,
+      "SUCCESS": 8
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/iss-unexpected",
+    "counts": {
+      "INFO": 10,
+      "SUCCESS": 8
+    },
+    "exit": 0
+  },
+  {
+    "scenario": "auth/iss-normalized",
+    "counts": {
+      "INFO": 10,
+      "SUCCESS": 8
+    },
+    "exit": 0
+  }
+]

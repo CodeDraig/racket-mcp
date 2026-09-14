@@ -179,3 +179,7 @@ Issuer-scoped SQLite persistence, secret expiry, and authorization-server change
 are handled by `mcp/oauth-registration-store`. Opt-in authorizer integration
 selects DCR after pre-registration/CIMD and uses issued credentials for native
 token exchange and refresh.
+
+The pinned conformance registration fixture has a reproducible local correction.
+See [preparation, boundaries, and validation](CONFORMANCE-FIXTURE.md). Prepared
+harness results remain explicitly distinct from unmodified conformance credit.

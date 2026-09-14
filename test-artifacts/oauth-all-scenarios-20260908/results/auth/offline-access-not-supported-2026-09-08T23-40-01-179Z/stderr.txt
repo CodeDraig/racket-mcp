@@ -1,0 +1,14 @@
+oauth-registration: invalid or incompatible registration field: client_secret_expires_at
+  context...:
+   /srv/data/code/racket-mcp/mcp/oauth-registration.rkt:91:0: register-oauth-client!
+   /srv/data/code/racket-mcp/mcp/oauth-registration-store.rkt:40:6
+   /srv/data/code/racket-mcp/mcp/private/worker-lock.rkt:23:9
+   /srv/data/code/racket-mcp/mcp/oauth-registration-store.rkt:6:0: ensure-oauth-registration!
+   /srv/data/code/racket-mcp/mcp/oauth.rkt:82:8: fallback
+   /srv/data/code/racket-mcp/mcp/authorization.rkt:184:0: select-oauth-registration
+   /srv/data/code/racket-mcp/mcp/oauth.rkt:62:2: run
+   /srv/data/code/racket-mcp/mcp/oauth-http-client.rkt:4:0: authorize-http-client!
+   /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt:60:21: with-handlers-handler30
+   /usr/share/racket/collects/racket/private/more-scheme.rkt:160:2: select-handler/no-breaks
+   /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt:57:0: call
+   body of "/srv/data/code/racket-mcp/dev/conformance-auth-client.rkt"

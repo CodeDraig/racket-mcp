@@ -1,0 +1,7 @@
+{
+  "dev/conformance-auth-client.rkt": "dc354e64f817a5ed246ce927382b09593045b7ac7b90ebb3c0d22f08072cfe39",
+  "mcp/oauth.rkt": "40b0d3a83c528ccf063804234bf32cc6fa1a935f99a15bf2c6ba9819a8b2f21f",
+  "mcp/oauth-registration.rkt": "18b12c3d4c2a3e5fb5b824f436171687c3d1d3ea359d73747b2dac7b189ffcd6",
+  "mcp/oauth-registration-store.rkt": "db650eb373f1bb4fa47c5eaf1a75fd080ffaf6a9652531b9329502744e098dfe",
+  "mcp/authorization.rkt": "8b43f0225eda339987782a9de19b88ce7b490810a2767b9910d29f307939787c"
+}

@@ -1,0 +1,21 @@
+--- a/src/scenarios/client/auth/helpers/createAuthServer.ts
++++ b/src/scenarios/client/auth/helpers/createAuthServer.ts
+@@ -776,12 +776,14 @@
+ 
+     res.status(201).json({
+       client_id: clientId,
+-      ...(clientSecret && { client_secret: clientSecret }),
++      ...(clientSecret && { client_secret: clientSecret, client_secret_expires_at: 0 }),
+       client_name: req.body.client_name || 'test-client',
+       redirect_uris: req.body.redirect_uris || [],
+-      ...(tokenEndpointAuthMethod && {
+-        token_endpoint_auth_method: tokenEndpointAuthMethod
+-      })
++      grant_types: req.body.grant_types || ['authorization_code'],
++      response_types: req.body.response_types || ['code'],
++      token_endpoint_auth_method: tokenEndpointAuthMethod ??
++        (tokenEndpointAuthMethodsSupported.includes(req.body.token_endpoint_auth_method)
++          ? req.body.token_endpoint_auth_method : tokenEndpointAuthMethodsSupported[0])
+     });
+   });
+ 

@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/list racket/port racket/string net/url
          mcp/authorization mcp/http mcp/json mcp/oauth mcp/oauth-http mcp/oauth-http-client
-         mcp/private/http-wire)
+         mcp/private/http-wire mcp/storage)
 ;; The pinned fixture grants authorization immediately and redirects to the
 ;; supplied callback. This development callback reads that redirect without
 ;; navigating to it; production applications supply their own browser integration.
@@ -38,9 +38,15 @@
 (define issuer (hash-ref context 'issuer #f))
 (define client-id (hash-ref context 'client_id #f))
 (define secret (hash-ref context 'client_secret #f))
+(define registration-store (open-memory-store))
 (define authorizer
   (make-oauth-authorizer #:resource resource #:redirect-uri redirect #:browse browse
     #:allow-loopback-http? #t
+    #:registration-store registration-store
+    #:registration-metadata (hasheq 'application_type "native" 'client_name "Racket MCP conformance"
+                                   'redirect_uris (list redirect)
+                                   'grant_types '("authorization_code" "refresh_token")
+                                   'response_types '("code") 'token_endpoint_auth_method "none")
     #:pre-registered (if (and issuer client-id)
                         (hash issuer (oauth-registration issuer client-id redirect resource '())) (hash))
     #:client-authentication (if secret
@@ -67,3 +73,5 @@
     (for/hasheq ([(key schema) (in-hash (hash-ref (hash-ref tool 'inputSchema) 'properties (hasheq)))])
       (values key (hash-ref schema 'default (lambda () (default-argument schema))))))
   (void (call "tools/call" (hasheq 'name (hash-ref tool 'name) 'arguments arguments))))
+
+(close-store! registration-store)

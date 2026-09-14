@@ -1,0 +1,57 @@
+(node:527018) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: auth/metadata-default
+Executing client: /usr/bin/racket /srv/data/code/racket-mcp/dev/conformance-auth-client.rkt http://localhost:44189/mcp
+(node:527018) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/test-artifacts/registration-fixture-repair-20260909/results/auth/metadata-default-2026-09-09T04-17-04-024Z
+Checks:
+[90m2026-09-09T04:17:04.728Z[0m [incoming-request                   ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-09-09T04:17:04.729Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 401 response for POST /mcp (method: server/discover)
+
+[90m2026-09-09T04:17:04.731Z[0m [incoming-request                   ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource/mcp
+[90m2026-09-09T04:17:04.731Z[0m [prm-pathbased-requested            ] [32mSUCCESS[0m Client requested PRM metadata at path-based location
+[90m2026-09-09T04:17:04.731Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-protected-resource/mcp
+
+[90m2026-09-09T04:17:04.732Z[0m [incoming-auth-request              ] [36mINFO   [0m Received GET request for /.well-known/oauth-authorization-server
+[90m2026-09-09T04:17:04.732Z[0m [authorization-server-metadata      ] [32mSUCCESS[0m Client requested authorization server metadata
+[90m2026-09-09T04:17:04.732Z[0m [outgoing-auth-response             ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-authorization-server
+
+[90m2026-09-09T04:17:04.734Z[0m [incoming-auth-request              ] [36mINFO   [0m Received POST request for /register
+[90m2026-09-09T04:17:04.734Z[0m [client-registration                ] [32mSUCCESS[0m Client registered with authorization server
+[90m2026-09-09T04:17:04.735Z[0m [sep-837-application-type-present   ] [32mSUCCESS[0m Client specified application_type "native" during Dynamic Client Registration
+[90m2026-09-09T04:17:04.735Z[0m [outgoing-auth-response             ] [36mINFO   [0m Sent 201 response for POST /register
+
+[90m2026-09-09T04:17:04.736Z[0m [incoming-auth-request              ] [36mINFO   [0m Received GET request for /authorize
+[90m2026-09-09T04:17:04.736Z[0m [authorization-request              ] [32mSUCCESS[0m Client made authorization request
+[90m2026-09-09T04:17:04.736Z[0m [pkce-code-challenge-sent           ] [32mSUCCESS[0m Client sent code_challenge in authorization request
+[90m2026-09-09T04:17:04.736Z[0m [pkce-s256-method-used              ] [32mSUCCESS[0m Client used S256 code challenge method
+[90m2026-09-09T04:17:04.736Z[0m [outgoing-auth-response             ] [36mINFO   [0m Sent 302 response for GET /authorize
+
+[90m2026-09-09T04:17:04.738Z[0m [incoming-auth-request              ] [36mINFO   [0m Received POST request for /token
+[90m2026-09-09T04:17:04.738Z[0m [token-request                      ] [32mSUCCESS[0m Client requested access token
+[90m2026-09-09T04:17:04.738Z[0m [pkce-code-verifier-sent            ] [32mSUCCESS[0m Client sent code_verifier in token request
+[90m2026-09-09T04:17:04.738Z[0m [pkce-verifier-matches-challenge    ] [32mSUCCESS[0m code_verifier correctly matches code_challenge (S256)
+[90m2026-09-09T04:17:04.738Z[0m [outgoing-auth-response             ] [36mINFO   [0m Sent 200 response for POST /token
+
+[90m2026-09-09T04:17:04.739Z[0m [incoming-request                   ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-09-09T04:17:04.739Z[0m [valid-bearer-token                 ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-09T04:17:04.739Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 200 response for POST /mcp (method: server/discover)
+
+[90m2026-09-09T04:17:04.740Z[0m [incoming-request                   ] [36mINFO   [0m Received POST request for /mcp (method: tools/list)
+[90m2026-09-09T04:17:04.740Z[0m [valid-bearer-token                 ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-09T04:17:04.740Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/list)
+
+[90m2026-09-09T04:17:04.741Z[0m [incoming-request                   ] [36mINFO   [0m Received POST request for /mcp (method: tools/call)
+[90m2026-09-09T04:17:04.741Z[0m [valid-bearer-token                 ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-09-09T04:17:04.741Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/call)
+
+[90m2026-09-09T04:17:04.754Z[0m [resource-parameter-in-authorization] [32mSUCCESS[0m Client included resource parameter in authorization request
+[90m2026-09-09T04:17:04.754Z[0m [resource-parameter-in-token        ] [32mSUCCESS[0m Client included resource parameter in token request
+[90m2026-09-09T04:17:04.754Z[0m [resource-parameter-valid-uri       ] [32mSUCCESS[0m Resource parameter is a valid canonical URI (has scheme, no fragment)
+[90m2026-09-09T04:17:04.754Z[0m [resource-parameter-consistency     ] [32mSUCCESS[0m Resource parameter is consistent between authorization and token requests
+[90m2026-09-09T04:17:04.754Z[0m [resource-parameter-matches-prm     ] [32mSUCCESS[0m Client sent the resource identifier exactly as published in protected resource metadata
+
+Test Results:
+Passed: 18/18, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

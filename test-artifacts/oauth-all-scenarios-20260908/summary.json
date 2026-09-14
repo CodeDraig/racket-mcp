@@ -1,0 +1,702 @@
+{
+  "unmodified": [
+    {
+      "scenario": "auth/metadata-default",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 4
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "authorization-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-request"
+        },
+        {
+          "id": "token-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: token-request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/metadata-var1",
+      "exit": 1,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 4,
+        "FAILURE": 4
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "authorization-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-request"
+        },
+        {
+          "id": "token-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: token-request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/metadata-var2",
+      "exit": 1,
+      "counts": {
+        "INFO": 6,
+        "SUCCESS": 1,
+        "FAILURE": 6
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "authorization-server-metadata",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-server-metadata"
+        },
+        {
+          "id": "client-registration",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: client-registration"
+        },
+        {
+          "id": "authorization-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-request"
+        },
+        {
+          "id": "token-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: token-request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/metadata-var3",
+      "exit": 1,
+      "counts": {
+        "INFO": 12,
+        "SUCCESS": 4,
+        "FAILURE": 4
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "authorization-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-request"
+        },
+        {
+          "id": "token-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: token-request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-from-www-authenticate",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "scope-from-www-authenticate",
+          "status": "FAILURE",
+          "description": "Client did not complete authorization flow - scope check could not be performed"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-from-scopes-supported",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "scope-from-scopes-supported",
+          "status": "FAILURE",
+          "description": "Client did not complete authorization flow - scope check could not be performed"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-omitted-when-undefined",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "scope-omitted-when-undefined",
+          "status": "FAILURE",
+          "description": "Client did not complete authorization flow - scope check could not be performed"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-step-up",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 3
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "scope-step-up-initial",
+          "status": "FAILURE",
+          "description": "Client did not make an initial authorization request"
+        },
+        {
+          "id": "scope-step-up-escalation",
+          "status": "FAILURE",
+          "description": "Client did not make a second authorization request for scope escalation"
+        },
+        {
+          "id": "sep-2350-scope-union-on-reauth",
+          "status": "FAILURE",
+          "description": "Client did not make a second authorization request - scope union check could not be performed"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-retry-limit",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "scope-retry-limit",
+          "status": "FAILURE",
+          "description": "Client did not make any authorization requests"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-basic",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 3
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "token-endpoint-auth-method",
+          "status": "FAILURE",
+          "description": "Client did not make a token request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-post",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 3
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "token-endpoint-auth-method",
+          "status": "FAILURE",
+          "description": "Client did not make a token request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-none",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 3
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "token-endpoint-auth-method",
+          "status": "FAILURE",
+          "description": "Client did not make a token request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/offline-access-not-supported",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2207-offline-access-not-requested",
+          "status": "FAILURE",
+          "description": "Client did not complete authorization flow \u2014 offline_access scope check could not be performed"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/authorization-server-migration",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 6,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2352-reregister-on-as-change",
+          "status": "FAILURE",
+          "description": "Client MUST re-register with the new authorization server when PRM authorization_servers changes (SEP-2352); no registration request was observed at the new AS"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-supported",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-compare-iss-supported",
+          "status": "FAILURE",
+          "description": "Client did not proceed to token exchange after receiving a correct iss from a server that advertised support"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-not-advertised",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-proceed-no-iss",
+          "status": "FAILURE",
+          "description": "Client did not proceed to token exchange \u2014 should proceed when iss is absent and not advertised"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-supported-missing",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-reject-missing-iss",
+          "status": "FAILURE",
+          "description": "Client MUST reject authorization response when server advertised iss support but iss is absent from redirect"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-wrong-issuer",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-compare-iss-supported",
+          "status": "FAILURE",
+          "description": "Client MUST reject authorization response when iss does not match the authorization server issuer"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-unexpected",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-compare-iss-unadvertised",
+          "status": "FAILURE",
+          "description": "Client MUST compare a present iss against the recorded issuer regardless of metadata advertisement, and reject on mismatch"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-normalized",
+      "exit": 1,
+      "counts": {
+        "INFO": 8,
+        "SUCCESS": 4,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-no-normalization",
+          "status": "FAILURE",
+          "description": "Client MUST NOT apply scheme/host case folding, default-port elision, trailing-slash, or percent-encoding normalization to iss before comparison; a trailing-slash variant of the issuer must be treated as a mismatch"
+        }
+      ]
+    }
+  ],
+  "registration_fixture_corrected": [
+    {
+      "scenario": "auth/metadata-default",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 18
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/metadata-var1",
+      "exit": 0,
+      "counts": {
+        "INFO": 20,
+        "SUCCESS": 18
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/metadata-var2",
+      "exit": 1,
+      "counts": {
+        "INFO": 6,
+        "SUCCESS": 1,
+        "FAILURE": 6
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "authorization-server-metadata",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-server-metadata"
+        },
+        {
+          "id": "client-registration",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: client-registration"
+        },
+        {
+          "id": "authorization-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: authorization-request"
+        },
+        {
+          "id": "token-request",
+          "status": "FAILURE",
+          "description": "Expected Check Missing: token-request"
+        },
+        {
+          "id": "resource-parameter-in-authorization",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in authorization request per RFC 8707"
+        },
+        {
+          "id": "resource-parameter-in-token",
+          "status": "FAILURE",
+          "description": "Client MUST include resource parameter in token request per RFC 8707"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/metadata-var3",
+      "exit": 0,
+      "counts": {
+        "INFO": 22,
+        "SUCCESS": 18
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/scope-from-www-authenticate",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/scope-from-scopes-supported",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/scope-omitted-when-undefined",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/scope-step-up",
+      "exit": 1,
+      "counts": {
+        "INFO": 28,
+        "SUCCESS": 24,
+        "WARNING": 1
+      },
+      "scored_pass": true,
+      "issues": [
+        {
+          "id": "sep-2350-scope-union-on-reauth",
+          "status": "WARNING",
+          "description": "Client SHOULD compute the union of previously requested scopes and newly challenged scopes when initiating re-authorization (SEP-2350); previously-granted scope was dropped"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/scope-retry-limit",
+      "exit": 0,
+      "counts": {
+        "INFO": 15,
+        "SUCCESS": 11
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-basic",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 19
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-post",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 19
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/token-endpoint-auth-none",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 19
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/offline-access-not-supported",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/authorization-server-migration",
+      "exit": 0,
+      "counts": {
+        "INFO": 30,
+        "SUCCESS": 27
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/iss-supported",
+      "exit": 0,
+      "counts": {
+        "INFO": 18,
+        "SUCCESS": 14
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/iss-not-advertised",
+      "exit": 1,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 7,
+        "FAILURE": 1
+      },
+      "scored_pass": false,
+      "issues": [
+        {
+          "id": "sep-2468-client-proceed-no-iss",
+          "status": "FAILURE",
+          "description": "Client did not proceed to token exchange \u2014 should proceed when iss is absent and not advertised"
+        }
+      ]
+    },
+    {
+      "scenario": "auth/iss-supported-missing",
+      "exit": 0,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/iss-wrong-issuer",
+      "exit": 0,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/iss-unexpected",
+      "exit": 0,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      },
+      "scored_pass": true,
+      "issues": []
+    },
+    {
+      "scenario": "auth/iss-normalized",
+      "exit": 0,
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 8
+      },
+      "scored_pass": true,
+      "issues": []
+    }
+  ]
+}

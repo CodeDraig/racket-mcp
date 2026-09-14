@@ -1,0 +1,22 @@
+{
+  "auth/metadata-default": 0,
+  "auth/metadata-var1": 0,
+  "auth/metadata-var2": 1,
+  "auth/metadata-var3": 0,
+  "auth/scope-from-www-authenticate": 0,
+  "auth/scope-from-scopes-supported": 0,
+  "auth/scope-omitted-when-undefined": 0,
+  "auth/scope-step-up": 1,
+  "auth/scope-retry-limit": 0,
+  "auth/token-endpoint-auth-basic": 0,
+  "auth/token-endpoint-auth-post": 0,
+  "auth/token-endpoint-auth-none": 0,
+  "auth/offline-access-not-supported": 0,
+  "auth/authorization-server-migration": 0,
+  "auth/iss-supported": 0,
+  "auth/iss-not-advertised": 1,
+  "auth/iss-supported-missing": 0,
+  "auth/iss-wrong-issuer": 0,
+  "auth/iss-unexpected": 0,
+  "auth/iss-normalized": 0
+}

@@ -1,0 +1,3 @@
+HTTP authorization required (403)
+  context...:
+   /srv/data/code/racket-mcp/mcp/http.rkt:274:18

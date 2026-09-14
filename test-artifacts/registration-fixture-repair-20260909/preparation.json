@@ -1,0 +1,12 @@
+{
+  "upstream_commit": "7022d786071e6d868dcd5cf19a8c30db7d811537",
+  "classification": "locally corrected fixture; not unmodified conformance",
+  "changed_files": {
+    "src/scenarios/client/auth/helpers/createAuthServer.ts": {
+      "before": "80ab767d2ed318f087ecd99bcf0cdae7422be34891755ef62569f176a0ad2067",
+      "after": "ed18e3bb700b6bddbb0fa7c6f13ec908509240bf2f371a07f8cd0d5714e5ff46"
+    }
+  },
+  "source_files_verified": 279,
+  "node_modules": "/tmp/racket-mcp-conformance-elicitation-20260907/node_modules"
+}
