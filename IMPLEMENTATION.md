@@ -5866,3 +5866,13 @@ against the pinned harness with the existing registration-fixture correction,
 with no failures or warnings. This is not unmodified or full-suite conformance
 credit. Commands, logs, source hashes, environment repairs, and the fixture
 boundary are recorded in `test-artifacts/oauth-response-issuer-20260914`.
+
+### Source archive documentation membership corrected (2026-09-14)
+
+`scripts/package.py` now includes `OAUTH-REGISTRATION.md` and
+`CONFORMANCE-FIXTURE.md` alongside the existing license and third-party notices.
+Archive inspection verifies the included documents against the source bytes,
+resolves local links from README and the notice documents, and checks ZIP
+integrity and exclusion of caches, compiled files, node_modules, Git data, and
+test-artifacts. Two consecutive builds produce identical archive bytes and a
+matching SHA256SUMS entry. Runtime code is unchanged; no runtime suite was rerun.

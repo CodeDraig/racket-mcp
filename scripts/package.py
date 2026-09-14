@@ -11,7 +11,8 @@ for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev", "LICENSES")
     shutil.copytree(root / name, destination / name,
                     ignore=shutil.ignore_patterns("compiled", "node_modules", ".git", "results", "__pycache__", "*.pyc"))
 for name in ("info.rkt", "README.md", "IMPLEMENTATION.md", "REMAINING.md",
-             "LICENSE", "THIRD-PARTY-NOTICES.md"):
+             "LICENSE", "THIRD-PARTY-NOTICES.md", "OAUTH-REGISTRATION.md",
+             "CONFORMANCE-FIXTURE.md"):
     shutil.copy2(root / name, destination / name)
 print(destination)
 archive = destination.parent / "racket-mcp-0.1.zip"
