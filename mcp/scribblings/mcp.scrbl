@@ -515,6 +515,22 @@ and policy fields. The boundary does not invoke that procedure or save a value.
 @tt{start-workflow-task} accepts @racket[#:state] and
 @racket[#:responses] for the preparation's MRTR retries.
 
+Task execution omits absent optional arguments before computing invocation keys
+or saving arguments, just as synchronous workflow execution does. Explicit false
+and JSON null values remain present; defaults are evaluated once during binding.
+Local task completion checks the complete tool-result shape and the tool's declared
+output schema before publishing a completed status. Invalid output fails the task;
+an intentional @tt{isError} result is exempt from the structured-output schema.
+Validation does not replay completed workflow effects.
+
+The lower-level task APIs accept @racket[#:output-schema].
+@tt{start-workflow-task} defaults to no output schema and saves the supplied schema
+with the task. @tt{resume-task!}, @tt{update-task!}, and @tt{retry-recovered-task!}
+use that saved schema unless explicitly overridden. Runtime entry points supply
+the current tool descriptor's schema, including for legacy records without a saved
+schema. Polling through the runtime also rejects invalid legacy completed results
+without rewriting their stored history.
+
 @racket[#:restore-principal] maps the stored principal key to a current application
 principal. Its default returns the key itself, suitable for string identities.
 Applications using verified principals supply their identity/policy lookup. Recovery
@@ -981,8 +997,9 @@ when that metadata field is false or absent, the response may proceed through
 the remaining state, error, and authorization-code checks.
 Applications can use the native fetch/exchange callbacks or supply their own.
 Browser interaction and credential persistence remain application callbacks.
-Hosted authorization services
-and dynamic client registration are outside the package scope.
+Hosted authorization services are outside the package scope. Dynamic client
+registration and its durable registration store are provided by
+@tt{mcp/oauth-registration} and @tt{mcp/oauth-registration-store}.
 
 @subsection{Explicit interaction runner}
 @defmodule[mcp/interaction]
@@ -1065,13 +1082,23 @@ Versions of adapters referenced by effect stages contribute to persisted workflo
 compatibility. Changing a referenced adapter version or policy rejects an existing
 execution before its next stage; unchanged explicit versions permit reconstruction
 of procedures after restart. Versions are an application compatibility promise,
-not a hash or proof of procedure equivalence. Imported helper fingerprint coverage
-remains incomplete. New tasks additionally retain the published tool name so sibling
+not a hash or proof of procedure equivalence. Captured application builds include
+observed imported helper code; ordinary uncaptured workflows require an explicit
+build identity to cover changes outside their generated stages.
+Prompt and resource workflow renaming preserves both declared identities and
+captured executable context. Legacy prompt/resource continuations saved with
+discarded build identity are rejected as incompatible before accepting input or
+advancing stages; their missing provenance cannot be inferred safely. Before
+upgrading, finish those continuations under their originating application build,
+or retain the records for explicit application-level recovery. No automatic
+fingerprint migration or effect replay is performed.
+New tasks additionally retain the published tool name so sibling
 mounts resolve their own bindings during updates and startup recovery. Failed tasks
 remain terminal when their workflow requires recovery.
 
 These replacements are named effect bindings, not interception of arbitrary Racket
-I/O. Enforced effect restrictions and upstream MRTR/Tasks bridging remain incomplete.
+I/O. Interface restrictions enforce the declared adapter surface; they do not
+sandbox arbitrary application code. Upstream MRTR/Tasks bridging is described below.
 
 @subsection{Pinned upstream interfaces}
 @tt{mcp/upstream} exports @racket[capture-snapshot],

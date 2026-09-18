@@ -1,5 +1,5 @@
 #lang racket/base
-(require "build.rkt" (submod "build.rkt" private) "private/handler-info.rkt" "private/task-observation.rkt")
+(require "build.rkt" (submod "build.rkt" private) "private/handler-info.rkt" "private/task-observation.rkt" "private/tool-result.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
@@ -253,6 +253,7 @@
         (parameterize ([current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
                        [current-task-notify (task-notifier rt)])
         (resume-task! (tool-descriptor-workflow tool) store (stored-instance-handle instance) identity
+                      #:output-schema (tool-descriptor-output-schema tool)
                       #:adapters (operation-adapters rt tool) #:custodian (runtime-custodian rt) #:wait? #f
                       #:authorize
                       (lambda ()
@@ -323,7 +324,7 @@
     (when (and (ormap (lambda (s) (memq (workflow-stage-kind s) '(input input-group))) (workflow-descriptor-stages program))
                (not (hash-has-key? caps 'elicitation)))
       (mcp-error -32021 "Client elicitation capability is required" (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
-    (run-workflow (struct-copy workflow-descriptor program [name (string-append method ":" (workflow-descriptor-name program))])
+    (run-workflow (workflow-rename program (string-append method ":" (workflow-descriptor-name program)))
                   (runtime-store rt) (for/hasheq ([(key value) (in-hash arguments)] #:unless (missing? value)) (values key value))
                   #:principal (principal-key principal) #:state (current-workflow-state)
                   #:responses (current-workflow-responses) #:adapters (current-workflow-adapters)
@@ -433,6 +434,7 @@
        (define result (render-call (lambda () (if task?
                           (begin (unless (runtime-store rt) (mcp-error -32603 "Task storage is not configured"))
                                  (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
+                                                      #:output-schema (tool-descriptor-output-schema d)
                                                       #:state (current-workflow-state) #:responses (current-workflow-responses)
                                                       #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))
                           (invoke-handler)))
@@ -447,10 +449,8 @@
          (mcp-error -32603 "Handler returned an invalid tool result"))
        (when (equal? (hash-ref result 'resultType) "complete")
          (set! result (embedded-json (hash-set result 'content (expand-content-items (hash-ref result 'content))))))
-       (when (and (equal? (hash-ref result 'resultType) "complete") (tool-descriptor-output-schema d) (not (hash-ref result 'isError #f))
-                  (or (not (hash-has-key? result 'structuredContent))
-                      (not (valid? (tool-descriptor-output-schema d) (hash-ref result 'structuredContent)))))
-         (mcp-error -32603 "Tool output failed its declared schema")) result]
+       (when (equal? (hash-ref result 'resultType) "complete")
+         (validate-complete-tool-result result (tool-descriptor-output-schema d))) result]
       [(completion/complete)
        (define ref (hash-ref params 'ref (hasheq))) (define arg (hash-ref params 'argument (hasheq)))
        (define completion
@@ -549,7 +549,13 @@
                (mcp-error -32001 "Upstream task operation is not authorized"))
              ((task-handler-dispatch (tool-descriptor-handler task-tool)) method task-id params))
        (case (string->symbol method)
-         [(tasks/get) (get-task (runtime-store rt) task-id (principal-key principal))]
+         [(tasks/get)
+          (define detail (get-task (runtime-store rt) task-id (principal-key principal)))
+          ;; Also guard completed records written before completion validation.
+          (when (and task-tool (tool-descriptor-workflow task-tool)
+                     (equal? (hash-ref detail 'status) "completed"))
+            (validate-complete-tool-result (hash-ref detail 'result #f) (tool-descriptor-output-schema task-tool)))
+          detail]
          [(tasks/cancel) (cancel-task! (runtime-store rt) task-id (principal-key principal))]
          [(tasks/update)
           (define instance (load-instance (runtime-store rt) task-id))
@@ -558,7 +564,9 @@
           (unless tool (mcp-error -32603 "Task executable is unavailable"))
           (unless ((runtime-authorize rt) principal "tools/call" (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance)))
             (mcp-error -32001 "Resumed operation is not authorized"))
-          (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq)) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]))]
+          (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq))
+                        #:output-schema (tool-descriptor-output-schema tool)
+                        #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]))]
       [(resources/list)
        (listing 'resources (for/list ([d (in-list (interface-descriptor-resources iface))] #:when (null? (resource-descriptor-arguments d)))
                               (hasheq 'name (resource-descriptor-name d) 'uri (resource-descriptor-uri d)
@@ -699,4 +707,5 @@
                  [current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
                  [current-task-notify (task-notifier rt)])
     (retry-recovered-task! (tool-descriptor-workflow tool) store id identity
+      #:output-schema (tool-descriptor-output-schema tool)
       #:adapters (operation-adapters rt tool) #:custodian (runtime-custodian rt) #:authorize authorize)))

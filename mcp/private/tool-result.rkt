@@ -1,0 +1,12 @@
+#lang racket/base
+(require "../schema.rkt" "../error.rkt")
+(provide validate-complete-tool-result)
+(define (validate-complete-tool-result result output-schema)
+  (unless (and (hash? result) (equal? (hash-ref result 'resultType #f) "complete")
+               (list? (hash-ref result 'content #f)))
+    (mcp-error -32603 "Handler returned an invalid tool result"))
+  (when (and output-schema (not (hash-ref result 'isError #f))
+             (or (not (hash-has-key? result 'structuredContent))
+                 (not (valid? output-schema (hash-ref result 'structuredContent)))))
+    (mcp-error -32603 "Tool output failed its declared schema"))
+  result)

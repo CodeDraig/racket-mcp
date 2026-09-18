@@ -10,9 +10,13 @@
 (struct identified-workflow workflow-descriptor (identity) #:transparent)
 (struct captured-workflow identified-workflow (build) #:transparent)
 (define (workflow-add-fingerprint-suffix workflow suffix)
-  (define updated
+  (copy-workflow workflow
     (struct-copy workflow-descriptor workflow
-      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
+      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)])))
+(define (workflow-rename workflow name)
+  (copy-workflow workflow (struct-copy workflow-descriptor workflow [name name])))
+;; Descriptor transformations must retain captured code and declared identity.
+(define (copy-workflow workflow updated)
   (define fields
     (list (workflow-descriptor-name updated) (workflow-descriptor-version updated)
           (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
@@ -416,4 +420,4 @@
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
 
-(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))
+(module+ private (provide workflow-add-fingerprint-suffix workflow-rename current-workflow-task-handoff workflow-invocation-key))
