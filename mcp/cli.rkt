@@ -1,5 +1,5 @@
 #lang racket/base
-(require "build.rkt" (submod "build.rkt" private) racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
+(require "build.rkt" (submod "build.rkt" private) racket/async-channel racket/cmdline racket/file racket/path racket/list racket/pretty racket/string
          "loader.rkt" "scenario.rkt" "private/manifest-diagram.rkt" "private/manifest-docs.rkt" "private/manifest-diff.rkt" "descriptor.rkt" "runtime.rkt" "storage.rkt" "stdio.rkt" "http.rkt" "json.rkt" "upstream.rkt")
 (provide run-scenarios main serve-interface serve-interface-command read-manifest read-manifest-examples manifest-diff manifest->mermaid manifest->markdown)
 (define (module-path path) `(file ,(path->string (path->complete-path path))))
@@ -30,8 +30,19 @@
               (begin0
                 (case (string->symbol transport)
                   [(stdio) (serve-stdio runtime)]
-                  [(http) (define stop (serve-http runtime #:port port))
-                          (dynamic-wind void (lambda () (sync never-evt)) stop)]
+                  [(http) (define confirmation (make-async-channel))
+                          (define ready (make-channel))
+                          ;; Async-channel managers inherit their users'
+                          ;; custodians. Receive in a serving-owned worker so
+                          ;; the manager cannot outlive this serving lifetime.
+                          (thread (lambda () (channel-put ready (sync confirmation))))
+                          (define stop (serve-http runtime #:port port #:confirmation confirmation))
+                          (dynamic-wind void
+                            (lambda ()
+                              (define started (sync ready))
+                              (when (exn? started) (raise started))
+                              (sync never-evt))
+                            stop)]
                   [else (error 'serve "unknown transport ~a" transport)])
                 (set! completed? #t))))))
       (lambda ()

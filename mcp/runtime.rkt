@@ -319,6 +319,24 @@
   (define (input-required? result)
     (and (hash? result) (equal? (hash-ref result 'resultType #f) "input_required")
          (string? (hash-ref result 'requestState #f)) (hash? (hash-ref result 'inputRequests #f))))
+  (define (bind-call-arguments arguments input program)
+    (define store (runtime-store rt))
+    (define token (current-workflow-state))
+    (define saved
+      (and program store token (not (render-continuation? store token))
+           (let* ([round (resolve-continuation store token)]
+                  [instance (or (load-instance store (if round (car round) token))
+                                (mcp-error -32602 "Unknown continuation"))]
+                  [operation (if (equal? method "tools/call") (workflow-descriptor-name program)
+                                 (string-append method ":" (workflow-descriptor-name program)))])
+             ;; Check ownership before using persisted values as defaults.
+             ;; run-workflow still checks all effective arguments, expiry, and
+             ;; executable identity after binding explicit request arguments.
+             (unless (and (equal? (principal-key principal) (stored-instance-principal instance))
+                          (equal? operation (stored-instance-operation instance)))
+               (mcp-error -32602 "Continuation belongs to another principal or operation"))
+             (stored-instance-arguments instance))))
+    (bind-arguments arguments input #:defaults saved))
   (define (run-domain-workflow program arguments)
     (unless (runtime-store rt) (mcp-error -32603 "Workflow storage is not configured"))
     (when (and (ormap (lambda (s) (memq (workflow-stage-kind s) '(input input-group))) (workflow-descriptor-stages program))
@@ -406,7 +424,8 @@
        (define d (lookup (interface-descriptor-tools iface) tool-descriptor-name 'name))
        (define args (hash-ref params 'arguments (hasheq)))
        (unless (valid? (tool-descriptor-input-schema d) args) (mcp-error -32602 "Invalid tool arguments"))
-       (define bound (if (tool-descriptor-raw? d) args (bind-arguments (tool-descriptor-arguments d) args)))
+       (define bound (if (tool-descriptor-raw? d) args
+                         (bind-call-arguments (tool-descriptor-arguments d) args (tool-descriptor-workflow d))))
        (define task? (or (eq? (tool-descriptor-execution d) 'task)
                          (and (eq? (tool-descriptor-execution d) 'task-optional)
                               (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks))))
@@ -581,7 +600,7 @@
                                         (define args ((resource-descriptor-matcher d) uri)) (and args (cons d args)))))
        (unless (= (length matches) 1) (mcp-error -32602 "Unknown or ambiguous resource URI" (hasheq 'uri uri)))
        (define d (caar matches))
-       (define args (bind-arguments (resource-descriptor-arguments d) (cdar matches)))
+       (define args (bind-call-arguments (resource-descriptor-arguments d) (cdar matches) (resource-descriptor-workflow d)))
        (define renderer-version (renderer-fingerprint (resource-descriptor-renderer d)))
        (define program
          (and (resource-descriptor-workflow d)
@@ -647,7 +666,7 @@
        (define d (lookup (interface-descriptor-prompts iface) prompt-descriptor-name 'name))
        (define input (hash-ref params 'arguments (hasheq)))
        (unless (and (hash? input) (for/and ([value (in-hash-values input)]) (string? value))) (mcp-error -32602 "Prompt arguments must be strings"))
-       (define arguments (bind-arguments (prompt-descriptor-arguments d) input))
+       (define arguments (bind-call-arguments (prompt-descriptor-arguments d) input (prompt-descriptor-workflow d)))
        (define program
          (and (prompt-descriptor-workflow d)
               (workflow-add-fingerprint-suffix (prompt-descriptor-workflow d)
