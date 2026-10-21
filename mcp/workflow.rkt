@@ -125,7 +125,10 @@
   (define input-ids (append-map stage-inputs (workflow-descriptor-stages workflow)))
   (when (for/or ([id (in-list input-ids)]) (hash-has-key? arguments id))
     (error 'run-workflow "input identity collides with an argument"))
-  (set! responses (for/hasheq ([(id response) (in-hash responses)] #:when (memq id input-ids)) (values id response)))
+  ;; Compare accepted answers in the representation that storage will return.
+  ;; Filter unknown identities first: their values are deliberately ignored.
+  (set! responses (for/hasheq ([(id response) (in-hash responses)] #:when (memq id input-ids))
+                   (values id (persistent-json response))))
   (when (and (not handle) (positive? (hash-count responses))) (mcp-error -32602 "Input responses require a continuation"))
   (define round (and handle (resolve-continuation store handle)))
   (define round-stage (and round (findf (lambda (stage) (eq? (workflow-stage-id stage) (cdr round))) (workflow-descriptor-stages workflow))))
