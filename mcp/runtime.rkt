@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/persistent-json.rkt")
 (require "build.rkt" (submod "build.rkt" private) "private/handler-info.rkt" "private/task-observation.rkt" "private/tool-result.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
 (provide runtime-reconcile-changes!)
@@ -173,7 +174,7 @@
       (restrict-adapters (runtime-adapters rt) #f #:parent (current-workflow-adapters))))
 (define (change-keys! keys)
   (unless (and (list? keys) (json-value? keys)) (error 'freshness "dependency keys must be a JSON list"))
-  keys)
+  (persistent-json keys))
 (define (resource-notification-authorized? rt principal uri)
   (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (mcp-current-seconds)))
        ((runtime-authorize rt) principal "resources/read" (hasheq 'uri uri '_meta (request-meta)))))
@@ -196,7 +197,7 @@
                             (ormap (lambda (key) (member key keys)) dependencies))))))
       uri))
 (define/clock (runtime-report-change! rt principal keys)
-  (change-keys! keys)
+  (set! keys (change-keys! keys))
   (define owner (principal-key principal))
   ;; Invalidation precedes publication, including changes arriving externally.
   (define cached (invalidate-keys! (runtime-cache rt) keys #:principal owner))
@@ -208,7 +209,7 @@
                      #:authorized? (lambda (reader) (resource-notification-authorized? rt reader uri))))
   (remove-duplicates (append cached affected)))
 (define/clock (runtime-upstream-subscription-ended! rt principal keys ids failed? fallback?)
-  (change-keys! keys)
+  (set! keys (change-keys! keys))
   (define owner (principal-key principal))
   ;; A missing feed makes cached reads uncertain; it is not a committed mutation
   ;; and must not fabricate resources/updated or task-state notifications.
@@ -319,11 +320,18 @@
   (define (input-required? result)
     (and (hash? result) (equal? (hash-ref result 'resultType #f) "input_required")
          (string? (hash-ref result 'requestState #f)) (hash? (hash-ref result 'inputRequests #f))))
+  (define render-bindings (hasheq))
+  (define (render-request-arguments)
+    (persistent-json (hash-remove (hash-remove (hash-remove params '_meta) 'requestState) 'inputResponses)))
   (define (bind-call-arguments arguments input program)
     (define store (runtime-store rt))
-    (define token (current-workflow-state))
+    (define existing-render
+      (and store (not (current-workflow-state)) (current-workflow-invocation-key)
+           (find-instance-by-key store (principal-key principal) (string-append "render:" method) (current-workflow-invocation-key))))
+    (define token (or (current-workflow-state) (and existing-render (stored-instance-handle existing-render))))
+    (define rendering? (render-continuation? store token))
     (define saved
-      (and program store token (not (render-continuation? store token))
+      (and program store token (not rendering?)
            (let* ([round (resolve-continuation store token)]
                   [instance (or (load-instance store (if round (car round) token))
                                 (mcp-error -32602 "Unknown continuation"))]
@@ -336,7 +344,30 @@
                           (equal? operation (stored-instance-operation instance)))
                (mcp-error -32602 "Continuation belongs to another principal or operation"))
              (stored-instance-arguments instance))))
-    (bind-arguments arguments input #:defaults saved))
+    (define bound
+      (if rendering?
+          (let ([instance (load-instance store token)])
+            ;; A rendering replay uses its captured domain arguments. Validate
+            ;; the original request before returning them, without evaluating
+            ;; defaults or decoding explicit prompt arguments a second time.
+            (unless (and (equal? (principal-key principal) (stored-instance-principal instance))
+                         (equal? (string-append "render:" method) (stored-instance-operation instance))
+                         (equal? (render-request-arguments) (stored-instance-arguments instance)))
+              (mcp-error -32602 "Rendering continuation does not match this execution"))
+            (define bindings (hash-ref (stored-instance-state instance) 'bindings #f))
+            (if bindings
+                (for/hasheq ([a (in-list arguments)])
+                  (values (argument-name a) (hash-ref bindings (argument-name a) missing)))
+                (begin
+                  ;; Older layouts can still bind explicit arguments. An
+                  ;; omitted default was never saved and cannot be recovered.
+                  (when (ormap (lambda (a) (and (argument-default a)
+                                                (not (hash-has-key? input (argument-name a))))) arguments)
+                    (mcp-error -32602 "Rendering continuation predates saved argument bindings"))
+                  (bind-arguments arguments input #:defaults (hasheq)))))
+          (bind-arguments arguments input #:defaults saved)))
+    (set! render-bindings (for/hasheq ([(key value) (in-hash bound)] #:unless (missing? value)) (values key value)))
+    bound)
   (define (run-domain-workflow program arguments)
     (unless (runtime-store rt) (mcp-error -32603 "Workflow storage is not configured"))
     (when (and (ormap (lambda (s) (memq (workflow-stage-kind s) '(input input-group))) (workflow-descriptor-stages program))
@@ -364,10 +395,11 @@
     (define layout (if resumed? #f (parameterize ([current-render-capture (and store (box next))]) (compute))))
     (if (or resumed? (and store (layout-embeddings? layout)))
         (render-layout store layout #:operation method
-                       #:arguments (hash-remove (hash-remove (hash-remove params '_meta) 'requestState) 'inputResponses)
+                       #:arguments (render-request-arguments)
                        #:principal (principal-key principal) #:fingerprint (bind-build-identity fingerprint)
                        #:state (and resumed? token) #:responses (current-workflow-responses)
                        #:key render-key
+                       #:bindings render-bindings
                        #:authorize (lambda (uri)
                                      (unless ((runtime-authorize rt) principal "resources/read" (hasheq 'uri uri '_meta meta))
                                        (mcp-error -32001 "Embedded resource is not authorized")))
@@ -629,7 +661,7 @@
          (define expires
            (apply min (+ now (if bypass? 0 (resource-descriptor-ttl-ms d)))
                   (if (verified-principal? principal)
-                      (+ now (max 0 (* 1000 (- (verified-principal-expiry principal) (mcp-current-seconds))))) +inf.0)
+                      (+ now (max 0 (- (* 1000 (verified-principal-expiry principal)) (mcp-current-milliseconds)))) +inf.0)
                   (map resource-snapshot-expires (unbox children))))
          (define limited-ttl (max 0 (inexact->exact (floor (- expires now)))))
          (resource-snapshot

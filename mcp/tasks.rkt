@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/persistent-json.rkt")
 (require "clock.rkt" racket/list "private/failure.rkt" "private/tool-result.rkt" (submod "workflow.rkt" private) (submod "build.rkt" private))
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
@@ -105,9 +106,12 @@
   (set! arguments (for/hasheq ([(key value) (in-hash arguments)] #:unless (missing? value)) (values key value)))
   (define (handoff flow)
     (create-workflow-task workflow store arguments principal adapters custodian operation-name flow output-schema))
-  (if (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
-             (workflow-descriptor-stages workflow))
-      (parameterize ([current-workflow-task-handoff (cons workflow handoff)])
+  (define boundary? (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
+                           (workflow-descriptor-stages workflow)))
+  ;; A continuation already identifies its execution. Newly advertised Tasks
+  ;; support cannot discard its effects or responses and start another one.
+  (if (or handle boundary?)
+      (parameterize ([current-workflow-task-handoff (and boundary? (cons workflow handoff))])
         (run-workflow workflow store arguments #:principal principal #:state handle
                       #:responses responses #:adapters adapters #:cancelled? (current-cancelled?)))
       (handoff #f)))
@@ -116,6 +120,7 @@
   ;; User key computation runs outside the database transaction, once per call.
   (define invocation-key
     (and (not prepared-flow) (workflow-invocation-key workflow arguments)))
+  (set! arguments (persistent-json arguments))
   ;; Once the handoff commits, schedule its runtime-owned worker before a request
   ;; break can escape. A process crash is recovered by the runtime startup scan.
   (define worker-breaks? (break-enabled))

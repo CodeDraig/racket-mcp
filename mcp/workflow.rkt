@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/persistent-json.rkt")
 (require "build.rkt" (submod "build.rkt" private) "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
@@ -108,6 +109,8 @@
 (define (run-workflow/core workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
+  (define key-arguments arguments)
+  (set! arguments (persistent-json arguments))
   (define executable-fingerprint (workflow-executable-fingerprint workflow adapters))
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'run-workflow "workflow execution must own its storage transaction boundaries"))
@@ -133,7 +136,7 @@
         (create-instance! store principal (workflow-descriptor-name workflow) arguments
                           (workflow-descriptor-version workflow) executable-fingerprint (+ (clock) ttl)
                           (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))
-                          #:key (workflow-invocation-key workflow arguments))))
+                          #:key (workflow-invocation-key workflow key-arguments))))
   (unless (and (equal? principal (stored-instance-principal instance))
                (equal? arguments (stored-instance-arguments instance))
                (equal? (workflow-descriptor-name workflow) (stored-instance-operation instance)))

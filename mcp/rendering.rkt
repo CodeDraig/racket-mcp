@@ -29,7 +29,8 @@
   (walk value (lambda (marker) (set! next (max next (add1 (hash-ref marker '$mcp/embedding)))) marker)) next)
 (define (render-layout store layout #:operation operation #:arguments arguments #:principal principal
                        #:fingerprint fingerprint #:resolve resolve #:state [token #f]
-                       #:responses [responses (hasheq)] #:ttl [ttl 86400] #:authorize [authorize void] #:key [key #f])
+                       #:responses [responses (hasheq)] #:ttl [ttl 86400] #:authorize [authorize void] #:key [key #f]
+                       #:bindings [bindings (hasheq)])
   ;; resolve receives URI, child state, input responses, and a stable invocation
   ;; key. It must deduplicate uncertain initial child calls using that key.
   (define instance
@@ -44,7 +45,7 @@
           (when (> (hash-count nodes) 1024) (error 'render-layout "embedding count limit exceeded"))
           (create-instance! store principal (string-append "render:" operation) arguments "render/3" fingerprint
                             (+ (mcp-current-seconds) ttl)
-                            (hasheq 'kind "render" 'layout layout 'history (hasheq)
+                            (hasheq 'kind "render" 'layout layout 'history (hasheq) 'bindings bindings
                                     'children (for/list ([id (in-list (sort (hash-keys nodes) <))])
                                                 (hash-set* (hash-ref nodes id) 'status "pending" 'round 0))) #:key key))))
   (unless (and (equal? (stored-instance-principal instance) principal)

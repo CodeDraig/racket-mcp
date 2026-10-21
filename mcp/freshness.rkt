@@ -1,4 +1,5 @@
 #lang racket/base
+(require "private/persistent-json.rkt")
 (require "clock.rkt" racket/list racket/set "storage.rkt" "json.rkt")
 (provide cache-clock (struct-out cache-partition) make-resource-cache cache-ref! invalidate-keys! (struct-out committed-result)
          record-committed-change! drain-change-outbox!)
@@ -32,7 +33,7 @@
          (define value (compute))
          (define lifetime (if (procedure? ttl) (ttl value) ttl))
          (define expiration (if expires-at (expires-at value) (+ ((resource-cache-clock cache)) lifetime)))
-         (define keys (if (procedure? dependencies) (dependencies value) dependencies))
+         (define keys (persistent-json (if (procedure? dependencies) (dependencies value) dependencies)))
          (define cacheable (cacheable? value))
          (define current?
            (call-with-semaphore (resource-cache-lock cache)
@@ -46,12 +47,13 @@
                unchanged?)))
          (if current? value (on-invalidated value))]))
 (define (invalidate-keys! cache keys #:principal [principal #f])
+  (define changed (list->set (persistent-json keys)))
   (call-with-semaphore (resource-cache-lock cache)
     (lambda ()
       (set-resource-cache-generation! cache (add1 (resource-cache-generation cache)))
       (define affected (for/list ([(key entry) (in-hash (resource-cache-entries cache))]
                                   #:when (and (or (not principal) (equal? principal (if (cache-partition? (car key)) (cache-partition-owner (car key)) (car key))))
-                                              (not (set-empty? (set-intersect (list->set keys) (cache-entry-dependencies entry)))))) key))
+                                              (not (set-empty? (set-intersect changed (cache-entry-dependencies entry)))))) key))
       (for ([key (in-list affected)]) (hash-remove! (resource-cache-entries cache) key))
       (map cdr affected))))
 ;; Outbox uses the same SQLite transaction as participating application mutation.

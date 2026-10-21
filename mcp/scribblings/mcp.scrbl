@@ -254,7 +254,12 @@ multiple related resources with distinct identities.
 Durable rendering stores all completed child content. Its record version is now
 @tt{render/3}; older records fail with a version diagnostic because they may have
 already discarded content. Application workflow versions remain independently
-checked. SDK rendering markers carry a private Racket property; identical JSON
+checked. New rendering records also retain bound parent arguments, so resuming
+an embedded child or replaying a completed layout does not reevaluate defaults
+or prompt codecs. Older @tt{render/3} records with explicit arguments remain
+resumable; a record with an omitted default and no saved bindings fails with a
+diagnostic because its original default value cannot be recovered.
+SDK rendering markers carry a private Racket property; identical JSON
 objects remain ordinary data. SQLite stores marker provenance in separate columns
 for state, arguments, and journal events. Public JSON decoding cannot supply this
 provenance. No application JSON key by itself activates an embedded resource
@@ -503,7 +508,11 @@ a declared workflow key, another initial request creates another preparation.
 
 Without a boundary, task execution retains its immediate-start behavior. With
 @racket[#:execution task-optional] and no client Tasks capability, boundaries are
-passed synchronously and the entire workflow remains MRTR. Subsequent boundaries
+passed synchronously and the entire workflow remains MRTR. If a later MRTR
+continuation advertises Tasks support, it resumes that saved execution with its
+submitted responses. Without a boundary it continues synchronously; with a
+boundary it can hand off at that boundary. It never creates a fresh execution
+in place of the continuation. Subsequent boundaries
 inside an already-started task do not create nested tasks. A nested local workflow
 does not inherit the parent's handoff factory.
 }
