@@ -67,10 +67,14 @@
       (or (call-with-instance-worker store id thunk)
           (and wait? (begin (sync (alarm-evt (+ (current-inexact-milliseconds) 25))) (loop))))))
   (define parent-context (current-request-context))
+  (define executor (current-task-executor))
   (define (cancelled?) (equal? (hash-ref (get-task store id principal) 'status) "cancelled"))
   ;; A task keeps its authorization identity, but cannot inherit the polling
   ;; request's cancellation signal, progress token, or output stream.
   (parameterize ([current-custodian custodian]
+                 ;; The selected executor belongs to this worker only. Host
+                 ;; code may start an independent low-level task of its own.
+                 [current-task-executor #f]
                  [current-workflow-task-handoff #f]
                  [current-cancellation-event never-evt]
                  [current-output-port (current-error-port)]
@@ -91,8 +95,8 @@
          (unless (terminal? (hash-ref state 'task))
            (authorize)
            (define result
-             (if (current-task-executor)
-                 ((current-task-executor) (owned store id principal))
+             (if executor
+                 (executor (owned store id principal))
                  (run-workflow workflow store (stored-instance-arguments instance) #:principal principal
                                #:state (hash-ref state 'workflow) #:responses (hash-ref state 'responses (hasheq)) #:adapters adapters
                                #:cancelled? cancelled?)))

@@ -531,6 +531,8 @@ and policy fields. The boundary does not invoke that procedure or save a value.
 Task execution omits absent optional arguments before computing invocation keys
 or saving arguments, just as synchronous workflow execution does. Explicit false
 and JSON null values remain present; defaults are evaluated once during binding.
+Runtime workers resume the saved bound argument map. They validate its domain
+values without applying the external input schema again to defaulted fields.
 Local task completion checks the complete tool-result shape and the tool's declared
 output schema before publishing a completed status. Invalid output fails the task;
 an intentional @tt{isError} result is exempt from the structured-output schema.
@@ -543,6 +545,9 @@ use that saved schema unless explicitly overridden. Runtime entry points supply
 the current tool descriptor's schema, including for legacy records without a saved
 schema. Polling through the runtime also rejects invalid legacy completed results
 without rewriting their stored history.
+These APIs execute the supplied workflow and adapters even when called by an
+ordinary runtime handler or from another task worker. The runtime's installed-tool
+executor applies only to tasks launched through its own task entry points.
 
 @racket[#:restore-principal] maps the stored principal key to a current application
 principal. Its default returns the key itself, suitable for string identities.
@@ -1429,7 +1434,9 @@ upstream task outcome and creates a replacement handle. The separate
 mutation. Native-workflow recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
-translated completed results. This currently reports changes observed through
+translated completed results. Registration, publication, and queued delivery
+recheck the reader's credential identity and pinned task binding locally, without
+contacting the peer. This currently reports changes observed through
 local polling, control requests, and explicit observations. The scoped task runner
 can supply observations from a live upstream subscription. Broader concurrent and
 fault-injection coverage and independent task-bridge interoperability remain

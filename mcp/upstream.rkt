@@ -240,8 +240,14 @@
               #:validate-detail (lambda (detail) (translate-task-detail detail) (void))
               #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context)))))
         (translate-task-detail result))
+      (define (check-task-binding store id principal)
+        ;; Reuse polling's owner/credential/source/version/expiry checks without
+        ;; invoking the request adapter or observing a new upstream outcome.
+        (upstream-task-remote-id bridge store snapshot id (principal-key principal)
+          ((upstream-bridge-credential-id bridge) principal) source)
+        (void))
       (make-tool (hash-ref wire 'name) '()
-                 (if tasks? (task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch)
+                 (if tasks? (bound-task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch check-task-binding)
                      (durable-handler handler))
                  #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))

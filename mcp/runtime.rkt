@@ -111,7 +111,10 @@
     (unless ((runtime-authorize rt) principal "tools/call"
              (hasheq 'name (tool-descriptor-name tool)
                      'arguments (hash-ref (hash-ref (stored-instance-arguments instance) 'params) 'arguments (hasheq))))
-      (mcp-error -32001 "Upstream task operation is not authorized"))))
+      (mcp-error -32001 "Upstream task operation is not authorized"))
+    (define handler (tool-descriptor-handler tool))
+    (when (bound-task-handler? handler)
+      ((bound-task-handler-check-binding handler) (runtime-store rt) id principal))))
 (define (task-executor rt)
   (lambda (instance)
     (define state (stored-instance-state instance))
@@ -451,7 +454,6 @@
     (or (findf (lambda (d) (equal? (get d) (hash-ref params key #f))) xs)
         (mcp-error -32602 (format "Unknown ~a" key))))
   (parameterize ([current-request-context (request-context principal caps id (current-cancelled?) notify)]
-                 [current-task-executor (task-executor rt)]
                  [current-progress-token (hash-ref meta 'progressToken #f)]
                  [current-interface iface]
                  [current-resource-resolver
@@ -490,7 +492,9 @@
        (define d (lookup (interface-descriptor-tools iface) tool-descriptor-name 'name))
        (define worker? (eq? d (current-task-resumption)))
        (define args (hash-ref params 'arguments (hasheq)))
-       (unless (valid? (tool-descriptor-input-schema d) args) (mcp-error -32602 "Invalid tool arguments"))
+       ;; A worker resumes the saved domain argument map after defaults. The
+       ;; public wire schema applies to external requests, before binding.
+       (unless (or worker? (valid? (tool-descriptor-input-schema d) args)) (mcp-error -32602 "Invalid tool arguments"))
        (define bound (if (tool-descriptor-raw? d) args
                          (bind-call-arguments (tool-descriptor-arguments d) args (tool-descriptor-workflow d))))
        (define task? (or (eq? (tool-descriptor-execution d) 'task)
@@ -532,10 +536,11 @@
                    #:cancelled? (current-cancelled?))]
                 [task?
                  (unless (runtime-store rt) (mcp-error -32603 "Task storage is not configured"))
-                 (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
-                   #:output-schema (tool-descriptor-output-schema d)
-                   #:state (current-workflow-state) #:responses (current-workflow-responses)
-                   #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]
+                 (parameterize ([current-task-executor (task-executor rt)])
+                   (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
+                     #:output-schema (tool-descriptor-output-schema d)
+                     #:state (current-workflow-state) #:responses (current-workflow-responses)
+                     #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))]
                 [else (invoke-handler)]))
             (if (tool-descriptor-workflow d)
                 (workflow-executable-fingerprint (tool-descriptor-workflow d) (current-workflow-adapters)) "render/1"))))
@@ -660,9 +665,10 @@
           (unless tool (mcp-error -32603 "Task executable is unavailable"))
           (unless ((runtime-authorize rt) principal "tools/call" (hasheq 'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance)))
             (mcp-error -32001 "Resumed operation is not authorized"))
-          (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq))
-                        #:output-schema (tool-descriptor-output-schema tool)
-                        #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]))]
+          (parameterize ([current-task-executor (task-executor rt)])
+            (update-task! (tool-descriptor-workflow tool) (runtime-store rt) task-id (principal-key principal) (hash-ref params 'inputResponses (hasheq))
+                          #:output-schema (tool-descriptor-output-schema tool)
+                          #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))]))]
       [(resources/list)
        (listing 'resources (for/list ([d (in-list (interface-descriptor-resources iface))] #:when (null? (resource-descriptor-arguments d)))
                               (hasheq 'name (resource-descriptor-name d) 'uri (resource-descriptor-uri d)
