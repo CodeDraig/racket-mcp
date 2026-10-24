@@ -1,0 +1,10 @@
+#lang racket/base
+(require "../schema.rkt")
+(provide check-codec-fields!)
+(define (check-codec-fields! who name version schema encoder decoder)
+  (unless (and (string? name) (positive? (string-length name))
+               (string? version) (positive? (string-length version))
+               (procedure? encoder) (procedure-arity-includes? encoder 1)
+               (procedure? decoder) (procedure-arity-includes? decoder 1))
+    (error who "expected identity, version, encoder and decoder"))
+  (check-schema! schema))

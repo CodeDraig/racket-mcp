@@ -54,15 +54,20 @@
 (check-false (render-value-kind (hash-ref (stored-instance-state data) 'payload)))
 (close-store! store) (delete-file file)
 
-;; Upgrade an actual pre-sidecar schema. Unambiguous JSON stays readable, while
-;; legacy marker-shaped records are diagnosed without guessing their provenance.
-(define legacy-file (make-temporary-file "mcp-legacy-provenance-~a.sqlite"))
-(define conn (sqlite3-connect #:database legacy-file #:mode 'create))
+;; Unsupported schemas are rejected without rewriting their data or layout.
+(define old-file (make-temporary-file "mcp-unsupported-provenance-~a.sqlite"))
+(define conn (sqlite3-connect #:database old-file #:mode 'create))
 (query-exec conn "CREATE TABLE instances (handle TEXT PRIMARY KEY,principal TEXT,operation TEXT,arguments TEXT,version TEXT,fingerprint TEXT,expires INTEGER,revision INTEGER,state TEXT,invocation_key TEXT)")
-(for ([id '("ordinary" "ambiguous")] [state (list (hasheq 'safe #t) fake)])
-  (query-exec conn "INSERT INTO instances VALUES (?,?,?,?,?,?,?,?,?,NULL)" id "local" "data" "{}" "1" "1" (+ (current-seconds) 60) 0 (json->string state)))
+(query-exec conn "INSERT INTO instances VALUES (?,?,?,?,?,?,?,?,?,NULL)" "ordinary" "local" "data" "{}" "1" "1" (+ (current-seconds) 60) 0 "{\"safe\":true}")
 (disconnect conn)
-(define legacy (open-sqlite-store legacy-file))
-(check-equal? (stored-instance-state (load-instance legacy "ordinary")) (hasheq 'safe #t))
-(check-exn #rx"provenance is unavailable" (lambda () (load-instance legacy "ambiguous")))
-(close-store! legacy) (delete-file legacy-file)
+(define before-schema (file->bytes old-file))
+(check-exn #rx"Unsupported storage schema" (lambda () (open-sqlite-store old-file)))
+(check-equal? (file->bytes old-file) before-schema)
+(delete-file old-file)
+
+;; A current-layout row must carry explicit provenance even for ordinary JSON.
+(define current-store (open-memory-store))
+(query-exec (state-store-connection current-store)
+  "INSERT INTO instances(handle,principal,operation,arguments,version,fingerprint,expires,state,state_marks,argument_marks) VALUES ('missing-marks','local','data','{}','1','1',0,'{}',NULL,'[]')")
+(check-exn #rx"requires rendering provenance" (lambda () (load-instance current-store "missing-marks")))
+(close-store! current-store)

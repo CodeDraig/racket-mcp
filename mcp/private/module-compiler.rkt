@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list racket/pretty "declaration-ir.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
+(require racket/list racket/pretty "declaration-ir.rkt" "declaration-manifest.rkt" "resource-binding.rkt" "prompt-binding.rkt" "interface-manifest.rkt" (for-template racket/base))
 (provide make-module-compilers)
 ;; Preserve the defining module, not an import alias or generated binding name.
 ;; Resolving an already expanded binding does not instantiate its provider.

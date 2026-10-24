@@ -1,89 +1,29 @@
 #lang racket/base
-(require "build.rkt" (submod "build.rkt" private) "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
-(require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
+(require "clock.rkt"
+         racket/list
+         racket/match
+         "storage.rkt"
+         "json.rkt"
+         "schema.rkt"
+         "error.rkt"
+         "codec.rkt"
+         "freshness.rkt"
+         "effect.rkt"
+         "private/input-response.rkt"
+         "private/elicitation-schema.rkt"
+         "private/workflow-types.rkt"
+         "private/workflow-contract.rkt"
+         "private/workflow-context.rkt"
+         "private/workflow-definition.rkt"
+         "private/workflow-changes.rkt"
+         "private/workflow-recovery.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
          make-workflow run-workflow recover-workflow!
          current-workflow-change-publisher current-workflow-store current-workflow-adapters current-workflow-state current-workflow-responses current-workflow-invocation-key
          (struct-out exn:fail:recovery))
-;; Stage procedures receive persistent JSON environments. Their result is saved
-;; before the next stage runs. Only named adapters may cross effect boundaries.
-(struct identified-workflow workflow-descriptor (identity) #:transparent)
-(struct captured-workflow identified-workflow (build) #:transparent)
-(define (workflow-add-fingerprint-suffix workflow suffix)
-  (define updated
-    (struct-copy workflow-descriptor workflow
-      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
-  (define fields
-    (list (workflow-descriptor-name updated) (workflow-descriptor-version updated)
-          (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
-          (workflow-descriptor-key updated) (workflow-descriptor-changes updated)))
-  (cond [(captured-workflow? workflow)
-         (apply captured-workflow (append fields (list (identified-workflow-identity workflow)
-                                                       (captured-workflow-build workflow))))]
-        [(identified-workflow? workflow)
-         (apply identified-workflow (append fields (list (identified-workflow-identity workflow))))]
-        [else updated]))
-(struct exn:fail:recovery exn:fail (handle stage) #:transparent)
-(define current-workflow-change-publisher (make-parameter void))
-(define current-workflow-store (make-parameter #f))
-(define current-workflow-adapters (make-parameter (hasheq)))
-(define current-workflow-state (make-parameter #f))
-(define current-workflow-responses (make-parameter (hasheq)))
-(define current-workflow-invocation-key (make-parameter #f))
-(define (workflow-invocation-key workflow arguments)
-  (define (compute)
-    (or (current-workflow-invocation-key)
-        (and (workflow-descriptor-key workflow) ((workflow-descriptor-key workflow) arguments))))
-  (if (captured-workflow? workflow)
-      (call-with-executable-build (captured-workflow-build workflow) compute)
-      (compute)))
-;; Installed only by the Tasks entry point; background task workers clear it.
-(define current-workflow-task-handoff (make-parameter #f))
-(define (recovery instance stage message)
-  (raise (exn:fail:recovery message (current-continuation-marks) (stored-instance-handle instance) stage)))
-(define (make-workflow name version fingerprint stages #:key [key #f] #:changes [changes (lambda (_arguments _result) '())]
-                       #:build-id [build-id (current-build-identity)])
-  (set! build-id (normalize-build-identity build-id))
-  (define codecs (check-workflow-program! name version fingerprint stages key changes))
-  (define executable-fingerprint
-    (if (null? codecs) fingerprint
-        (string-append fingerprint ":codecs:" (json->string (for/list ([codec (in-list codecs)])
-                                                             (hasheq 'name (value-codec-name codec) 'version (value-codec-version codec) 'schema (value-codec-schema codec)))))))
-  (cond [(current-executable-build)
-         (captured-workflow name version executable-fingerprint stages key changes build-id (current-executable-build))]
-        [build-id (identified-workflow name version executable-fingerprint stages key changes build-id)]
-        [else (workflow-descriptor name version executable-fingerprint stages key changes)]))
-(define (record-workflow-changes! store principal keys #:handle handle #:stage stage)
-  (unless (and (list? keys) (json-value? keys)) (error 'workflow "change keys must be a JSON list"))
-  (unless (null? keys)
-    (define outbox (record-committed-change! store principal keys))
-    (record-event! store handle (hasheq 'kind "changes-recorded" 'stage (symbol->string stage) 'outbox (stored-instance-handle outbox)))))
-(define (publish-workflow-changes!)
-  ;; Publication is a retryable outbox delivery, not part of the effect outcome.
-  (with-handlers ([non-break-failure? (lambda (e) (fprintf (current-error-port) "MCP change publication deferred: ~a\n" (failure-message e)))])
-    ((current-workflow-change-publisher))))
-(define (workflow-executable-fingerprint workflow adapters)
-  (define own-identity (and (identified-workflow? workflow) (identified-workflow-identity workflow)))
-  (define runtime-identity (current-build-identity))
-  (when (and own-identity runtime-identity (not (equal? own-identity runtime-identity)))
-    (error 'workflow "workflow and runtime declare conflicting build identities"))
-  (define fingerprint
-    (if (captured-workflow? workflow)
-        (string-append (workflow-descriptor-fingerprint workflow) ":build:"
-                       (executable-build-fingerprint (captured-workflow-build workflow)))
-        (workflow-descriptor-fingerprint workflow)))
-  (define names (sort (remove-duplicates
-    (for/list ([stage (in-list (workflow-descriptor-stages workflow))] #:when (eq? (workflow-stage-kind stage) 'effect))
-      (workflow-stage-adapter stage))) symbol<?))
-  (define versions
-    (for/list ([name (in-list names)]
-               #:do [(define adapter (hash-ref adapters name #f))]
-               #:when (versioned-effect-adapter? adapter))
-      (list (symbol->string name) (symbol->string (effect-adapter-policy adapter)) (versioned-effect-adapter-version adapter))))
-  (bind-build-identity
-    (if (null? versions) fingerprint
-        (string-append fingerprint ":adapters:" (json->string versions)))
-    (or own-identity runtime-identity)))
+
+;; Stage arbitration and the worker claim stay together: host computation runs
+;; outside SQLite, while each durable transition commits before its successor.
 (define (run-workflow workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
@@ -98,9 +38,7 @@
       (run-workflow/core workflow store arguments #:principal principal #:state handle
                          #:responses responses #:adapters adapters #:clock clock
                          #:ttl ttl #:cancelled? cancelled?)))
-  (if (captured-workflow? workflow)
-      (call-with-executable-build (captured-workflow-build workflow) run)
-      (run)))
+  (call-with-workflow-build workflow run))
 (define (run-workflow/core workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
@@ -376,44 +314,4 @@
       (sync (alarm-evt (+ (current-inexact-milliseconds) 25)))
       (claim-loop)))
   result)
-(define (recover-workflow! store handle stage action #:outcome [outcome missing] #:principal principal #:codecs [codecs (hash)])
-  (when (eq? (current-store-connection) (state-store-connection store))
-    (error 'recover-workflow! "recovery must own its storage transaction boundaries"))
-  (define result #f)
-  (define keys '())
-  (when (committed-result? outcome)
-    (unless (eq? action 'outcome) (error 'recover-workflow! "commit acknowledgement requires an outcome repair"))
-    (set! keys (committed-result-keys outcome))
-    (set! outcome (committed-result-result outcome)))
-  (unless (call-with-instance-worker store handle
-    (lambda ()
-      (define instance (or (load-instance store handle) (error 'recover-workflow! "unknown handle")))
-      (unless (equal? principal (stored-instance-principal instance)) (error 'recover-workflow! "foreign handle"))
-      (define state (stored-instance-state instance))
-      (unless (equal? (hash-ref state 'status) "working") (error 'recover-workflow! "execution is not recoverable"))
-      (define effects (hash-ref state 'effects))
-      (define intent (hash-ref effects stage (lambda () (error 'recover-workflow! "no effect intent"))))
-      (unless (= (hash-ref state 'position) (hash-ref intent 'position)) (error 'recover-workflow! "effect is not the current stage"))
-      ;; Keep the instance claim while application encoding runs, but allow
-      ;; unrelated requests to use SQLite. The final CAS detects stale snapshots.
-      (when (and (eq? action 'outcome) (hash-ref intent 'codec #f))
-        (define identity (hash-ref intent 'codec))
-        (set! outcome (encode-value (lookup-codec codecs (hash-ref identity 'name) (hash-ref identity 'version)) outcome)))
-      (define next
-        (case action
-          [(outcome) (when (or (missing? outcome) (not (valid? (hash-ref intent 'schema) outcome))) (error 'recover-workflow! "valid outcome required"))
-                     (hash-set* state 'position (add1 (hash-ref state 'position)) 'values (hash-set (hash-ref state 'values) stage outcome))]
-          [(retry) (hash-set state 'effects (hash-set effects stage (hash-set intent 'status "retry-authorized")))]
-          [(abandon) (hash-set* state 'status "abandoned" 'result (error-result "Execution abandoned during recovery"))]
-          [else (error 'recover-workflow! "unknown recovery action")]))
-      (set! result
-        (store-transaction store
-          (lambda ()
-            (when (eq? action 'outcome)
-              (record-workflow-changes! store principal keys #:handle handle #:stage stage))
-            (record-event! store handle (hasheq 'kind "recovery" 'stage (symbol->string stage) 'action (symbol->string action)))
-            (update-instance! store instance next))))))
-    (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
-  result)
-
 (module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))

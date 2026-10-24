@@ -1,5 +1,13 @@
 #lang racket/base
-(require "clock.rkt" "private/transaction.rkt" db racket/random racket/list racket/file "json.rkt" "private/worker-lock.rkt" "private/render-provenance.rkt")
+(require "private/storage-schema.rkt"
+         "clock.rkt"
+         "private/transaction.rkt"
+         db
+         racket/random
+         racket/file
+         "json.rkt"
+         "private/worker-lock.rkt"
+         "private/render-provenance.rkt")
 (provide open-sqlite-store open-memory-store close-store! store-transaction
          (struct-out state-store) (struct-out stored-instance)
          create-instance! load-instance list-instances update-instance! record-event! instance-events
@@ -17,20 +25,7 @@
   (define transferred? #f)
   (dynamic-wind void
     (lambda ()
-      (unless ephemeral? (query-exec conn "PRAGMA journal_mode=WAL"))
-      (query-exec conn "PRAGMA foreign_keys=ON")
-      (query-exec conn "CREATE TABLE IF NOT EXISTS instances (handle TEXT PRIMARY KEY, principal TEXT NOT NULL, operation TEXT NOT NULL, arguments TEXT NOT NULL, version TEXT NOT NULL, fingerprint TEXT NOT NULL, expires INTEGER NOT NULL, revision INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL, invocation_key TEXT, UNIQUE(principal,operation,invocation_key))")
-      (query-exec conn "CREATE TABLE IF NOT EXISTS journal (sequence INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL REFERENCES instances(handle), event TEXT NOT NULL, recorded INTEGER NOT NULL)")
-      (query-exec conn "CREATE TABLE IF NOT EXISTS continuations (token TEXT PRIMARY KEY, handle TEXT NOT NULL REFERENCES instances(handle), stage TEXT NOT NULL, UNIQUE(handle,stage))")
-      ;; Nullable sidecars distinguish pre-provenance rows from new ordinary JSON.
-      ;; Serialize migrations so concurrent openers do not race ALTER TABLE.
-      (call-with-transaction conn
-        (lambda ()
-          (for ([entry (in-list '(("instances" "state_marks") ("instances" "argument_marks") ("journal" "event_marks")))])
-            (define table (car entry)) (define column (cadr entry))
-            (unless (for/or ([row (in-list (query-rows conn (string-append "PRAGMA table_info(" table ")")))])
-                      (equal? (vector-ref row 1) column))
-              (query-exec conn (string-append "ALTER TABLE " table " ADD COLUMN " column " TEXT"))))) #:option 'immediate)
+      (initialize-store-schema! conn ephemeral?)
       (define worker-directory
         (and (not ephemeral?)
              (string->path (string-append (path->string (simplify-path (path->complete-path database))) ".workers"))))
@@ -63,19 +58,9 @@
        (if (supervised-state-store? store) (supervised-state-store-custodian store) (current-custodian))
        (lambda () (parameterize ([current-store-connection (state-store-connection store)] [current-store-owner (current-thread)]) (proc))))))
 (define (decode-stored-json text marks)
-  (define value (string->json text))
-  (cond [(sql-null? marks)
-         ;; Old marker-shaped JSON is ambiguous: preserve ordinary legacy data,
-         ;; but never guess whether these objects originally authorized I/O.
-         (define (ambiguous? value)
-           (cond [(hash? value)
-                  (or (and (hash-has-key? value '$mcp/embedding) (hash-has-key? value 'uri))
-                      (hash-has-key? value '$mcp/embedded)
-                      (ormap ambiguous? (hash-values value)))]
-                 [(list? value) (ormap ambiguous? value)] [else #f]))
-         (when (ambiguous? value) (error 'load-instance "Legacy rendering marker provenance is unavailable; explicit recovery is required"))
-         value]
-        [else (restore-render-provenance value (string->json marks))]))
+  (when (sql-null? marks)
+    (error 'load-instance "Stored JSON requires rendering provenance; explicit recovery is required"))
+  (restore-render-provenance (string->json text) (string->json marks)))
 (define (row->instance row)
   (stored-instance (vector-ref row 0) (vector-ref row 1) (vector-ref row 2) (decode-stored-json (vector-ref row 3) (vector-ref row 10))
                    (vector-ref row 4) (vector-ref row 5) (vector-ref row 6) (vector-ref row 7) (decode-stored-json (vector-ref row 8) (vector-ref row 9))))

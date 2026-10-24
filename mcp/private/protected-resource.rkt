@@ -1,0 +1,27 @@
+#lang racket/base
+(require racket/string net/url "oauth-uri-policy.rkt" "principal.rkt")
+(provide protected-resource-metadata-url protected-resource-metadata bearer-challenge)
+(define (protected-resource-metadata-url resource)
+  (https-uri! resource 'protected-resource-metadata-url)
+  (define u (string->url resource))
+  (define path (url-path u))
+  (url->string
+   (struct-copy url u [query '()] [fragment #f]
+     [path (append (list (path/param ".well-known" '()) (path/param "oauth-protected-resource" '()))
+                   (if (equal? path (list (path/param "" '()))) '() path))])))
+(define (protected-resource-metadata resource issuers #:scopes [scopes '()])
+  (https-uri! resource 'protected-resource-metadata)
+  (unless (and (list? issuers) (pair? issuers))
+    (raise-argument-error 'protected-resource-metadata "nonempty list of issuer URLs" issuers))
+  (check-scopes! scopes)
+  (hasheq 'resource resource 'authorization_servers (map (lambda (u) (https-uri! u 'protected-resource-metadata)) issuers)
+          'scopes_supported scopes 'bearer_methods_supported '("header")))
+(define (bearer-challenge metadata-url #:scopes [scopes '()] #:error [kind #f])
+  (check-scopes! scopes)
+  (unless (member kind '(#f "invalid_request" "invalid_token" "insufficient_scope"))
+    (raise-argument-error 'bearer-challenge "Bearer error allocation or #f" kind))
+  (https-uri! metadata-url 'bearer-challenge)
+  (when (regexp-match? #px"[\"\\\\\r\n]" metadata-url) (error 'bearer-challenge "invalid challenge URI"))
+  (string-append "Bearer resource_metadata=\"" metadata-url "\""
+                 (if kind (string-append ", error=\"" kind "\"") "")
+                 (if (null? scopes) "" (string-append ", scope=\"" (string-join scopes " ") "\""))))

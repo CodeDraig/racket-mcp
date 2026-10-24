@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "descriptor.rkt" (submod "descriptor.rkt" prompt-identity) "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
+(require racket/list "descriptor.rkt" (only-in "private/descriptor-types.rkt" rename-prompt-descriptor) "private/content.rkt" "effect.rkt" "completion.rkt" "uri-template.rkt" "private/registration.rkt" "private/adapter-policy.rkt" (only-in "authorization.rkt" check-scopes!) (for-syntax racket/base syntax/parse))
 (provide mount mount-interfaces view role message image-content audio-content)
 (define-syntax (mount stx) (syntax-parse stx [(_ interface:expr ...)
                                            #`(let ([result (mount-interfaces interface ...)])
@@ -77,7 +77,3 @@
                             #:when (hash-has-key? targets (completion-descriptor-target d)))
                     (struct-copy completion-descriptor d [target (hash-ref targets (completion-descriptor-target d))]))
     #:prompts prompts))
-(define (message role content) (hasheq 'role role 'content content))
-(define (role who . contents) (map (lambda (content) (message who content)) contents))
-(define (image-content data mime) (hasheq 'type "image" 'data data 'mimeType mime))
-(define (audio-content data mime) (hasheq 'type "audio" 'data data 'mimeType mime))

@@ -260,9 +260,10 @@ for state, arguments, and journal events. Public JSON decoding cannot supply thi
 provenance. No application JSON key by itself activates an embedded resource
 read or content-group expansion. SDK storage
 preserves it across process restarts; an ordinary JSON round trip intentionally
-does not. Existing tables gain nullable sidecar columns. Legacy rows without
-marker-shaped data remain readable; ambiguous legacy rows fail with an explicit
-recovery diagnostic rather than being interpreted as resource reads.
+does not. Storage requires sidecar columns in the existing table layout and
+explicit provenance for every stored JSON value. Unsupported older layouts are
+rejected without an automatic schema upgrade; rows lacking provenance require
+explicit recovery.
 
 Rendering after a completed workflow uses a stable key bound to that workflow
 instance, so retrying its continuation retains completed child results.
@@ -1230,7 +1231,7 @@ snapshots, not arbitrary timestamp ordering. Input updates consumed by older SDK
 versions without these fingerprints cannot be retroactively classified.
 
 @subsubsection{Durable upstream MRTR}
-@defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task)]
+@defmodule[mcp/upstream #:use-sources (mcp/upstream-bridge mcp/private/upstream-task-recovery)]
 @defproc[(upstream-bridge? [value any/c]) boolean?]{
 Returns whether the value is an upstream bridge configuration.
 }
@@ -1422,7 +1423,7 @@ protocol sequence number for resolving stale, out-of-order observations.
 
 @subsubsection{Recovering uncertain upstream tasks}
 
-@declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task mcp/upstream)]
+@declare-exporting[mcp/upstream #:use-sources (mcp/private/upstream-task-recovery mcp/upstream)]
 @defproc[(recover-upstream-task! [bridge upstream-bridge?] [store any/c]
                                 [snapshot hash?] [task-id string?]
                                 [#:principal principal string?] [#:credential-id credential string?]

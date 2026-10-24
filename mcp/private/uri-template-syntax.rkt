@@ -1,0 +1,51 @@
+#lang racket/base
+(require racket/list racket/string)
+(provide (struct-out variable) (struct-out expression) triplet? unreserved? reserved?
+         parse-template check-uri-template! uri-template-variables)
+(struct variable (name explode? prefix) #:transparent)
+(struct expression (operator variables) #:transparent)
+(define varspec-pattern #px"^((?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*)(?:(\\*)|:([1-9][0-9]{0,3}))?$")
+(define (triplet? text i)
+  (and (<= (+ i 3) (string-length text)) (char=? (string-ref text i) #\%)
+       (for/and ([j (in-range (add1 i) (+ i 3))])
+         (define c (string-ref text j))
+         (or (char<=? #\0 c #\9) (char<=? #\a c #\f) (char<=? #\A c #\F)))))
+(define (unreserved? c)
+  (or (char<=? #\A c #\Z) (char<=? #\a c #\z) (char<=? #\0 c #\9)
+      (memv c '(#\- #\. #\_ #\~))))
+(define (reserved? c) (string-contains? ":/?#[]@!$&'()*+,;=" (string c)))
+(define (unicode-literal? n)
+  (or (<= #xA0 n #xD7FF) (<= #xE000 n #xFDCF) (<= #xFDF0 n #xFFEF)
+      (and (<= #x10000 n #x10FFFD) (<= (bitwise-and n #xFFFF) #xFFFD)
+           (not (<= #xE0000 n #xE0FFF)))))
+(define (literal? c)
+  (define n (char->integer c))
+  ;; RFC 6570 verified erratum 6937 admits apostrophes in literals.
+  (or (= n #x21) (<= #x23 n #x24) (<= #x26 n #x3B)
+      (= n #x3D) (<= #x3F n #x5B) (= n #x5D) (= n #x5F)
+      (<= #x61 n #x7A) (= n #x7E) (unicode-literal? n)))
+(define (parse-template template)
+  (unless (string? template) (raise-argument-error 'uri-template "string?" template))
+  (define size (string-length template))
+  (let loop ([i 0] [start 0] [out '()])
+    (cond [(= i size) (reverse (if (< start i) (cons (substring template start i) out) out))]
+          [(char=? (string-ref template i) #\{)
+           (define end (for/first ([j (in-range (add1 i) size)] #:when (char=? (string-ref template j) #\})) j))
+           (unless end (error 'uri-template "unclosed expression at ~a" i))
+           (define body (substring template (add1 i) end))
+           (when (string=? body "") (error 'uri-template "empty expression at ~a" i))
+           (define operator (and (memv (string-ref body 0) '(#\+ #\# #\. #\/ #\; #\? #\&)) (string-ref body 0)))
+           (define variables
+             (for/list ([part (in-list (string-split (if operator (substring body 1) body) "," #:trim? #f))])
+               (define m (regexp-match varspec-pattern part))
+               (unless m (error 'uri-template "invalid or unsupported variable expression: ~a" part))
+               (variable (string->symbol (cadr m)) (and (caddr m) #t) (and (cadddr m) (string->number (cadddr m))))))
+           (loop (add1 end) (add1 end)
+                 (cons (expression operator variables) (if (< start i) (cons (substring template start i) out) out)))]
+          [(triplet? template i) (loop (+ i 3) start out)]
+          [(literal? (string-ref template i)) (loop (add1 i) start out)]
+          [else (error 'uri-template "invalid literal character at ~a" i)])))
+(define (check-uri-template! template) (parse-template template) template)
+(define (uri-template-variables template)
+  (remove-duplicates
+   (append-map (lambda (part) (if (expression? part) (map variable-name (expression-variables part)) '())) (parse-template template))))

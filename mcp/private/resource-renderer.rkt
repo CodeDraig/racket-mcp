@@ -1,0 +1,38 @@
+#lang racket/base
+(require "../json.rkt" "presentation-content.rkt")
+(provide (struct-out resource-renderer) make-resource-renderer make-text-renderer make-json-renderer make-binary-renderer
+         apply-resource-renderer renderer-fingerprint)
+
+(struct resource-renderer (name version mime-type procedure) #:transparent)
+(define (make-resource-renderer name version mime-type procedure)
+  (unless (and (string? name) (positive? (string-length name))
+               (string? version) (positive? (string-length version))
+               (string? mime-type) (positive? (string-length mime-type))
+               (procedure-arity-includes? procedure 1))
+    (error 'make-resource-renderer "expected renderer identity, version, MIME type, and unary procedure"))
+  (resource-renderer name version mime-type procedure))
+(define (check-render-procedure render)
+  (unless (and (procedure? render) (procedure-arity-includes? render 1))
+    (raise-argument-error 'renderer "unary procedure" render)))
+(define (make-text-renderer name version render #:mime-type [mime "text/plain"])
+  (check-render-procedure render)
+  (make-resource-renderer name version mime
+    (lambda (value)
+      (define parts (render value))
+      (cond [(string? parts) (text-presentation #:mime-type mime parts)]
+            [(list? parts) (apply text-presentation #:mime-type mime parts)]
+            [else (error 'make-text-renderer "renderer must return text or a list of presentation parts")]))))
+(define (make-json-renderer name version render)
+  (check-render-procedure render)
+  (make-resource-renderer name version "application/json" (lambda (value) (json-presentation (render value)))))
+(define (make-binary-renderer name version render #:mime-type [mime "application/octet-stream"])
+  (check-render-procedure render)
+  (make-resource-renderer name version mime (lambda (value) (binary-presentation (render value) #:mime-type mime))))
+(define (apply-resource-renderer renderer value)
+  (define result ((resource-renderer-procedure renderer) value))
+  (unless (and (hash? result) (hash-has-key? result '$mcp/presentation)
+               (equal? (hash-ref result 'mimeType #f) (resource-renderer-mime-type renderer)))
+    (error 'apply-resource-renderer "renderer must return a presentation with its declared MIME type"))
+  result)
+(define (renderer-fingerprint renderer)
+  (if renderer (json->string (list (resource-renderer-name renderer) (resource-renderer-version renderer) (resource-renderer-mime-type renderer))) "none"))

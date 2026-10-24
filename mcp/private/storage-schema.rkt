@@ -1,0 +1,15 @@
+#lang racket/base
+(require db)
+(provide initialize-store-schema!)
+(define (initialize-store-schema! conn ephemeral?)
+  ;; Refuse an unsupported existing layout before making any database changes.
+  (for ([entry (in-list '(("instances" "state_marks" "argument_marks") ("journal" "event_marks")))])
+    (define columns (map (lambda (row) (vector-ref row 1))
+                        (query-rows conn (string-append "PRAGMA table_info(" (car entry) ")"))))
+    (unless (or (null? columns) (andmap (lambda (column) (member column columns)) (cdr entry)))
+      (error 'open-sqlite-store "Unsupported storage schema; rendering provenance columns are required")))
+  (unless ephemeral? (query-exec conn "PRAGMA journal_mode=WAL"))
+  (query-exec conn "PRAGMA foreign_keys=ON")
+  (query-exec conn "CREATE TABLE IF NOT EXISTS instances (handle TEXT PRIMARY KEY, principal TEXT NOT NULL, operation TEXT NOT NULL, arguments TEXT NOT NULL, version TEXT NOT NULL, fingerprint TEXT NOT NULL, expires INTEGER NOT NULL, revision INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL, invocation_key TEXT, state_marks TEXT, argument_marks TEXT, UNIQUE(principal,operation,invocation_key))")
+  (query-exec conn "CREATE TABLE IF NOT EXISTS journal (sequence INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL REFERENCES instances(handle), event TEXT NOT NULL, recorded INTEGER NOT NULL, event_marks TEXT)")
+  (query-exec conn "CREATE TABLE IF NOT EXISTS continuations (token TEXT PRIMARY KEY, handle TEXT NOT NULL REFERENCES instances(handle), stage TEXT NOT NULL, UNIQUE(handle,stage))"))

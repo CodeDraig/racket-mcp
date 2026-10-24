@@ -38,9 +38,9 @@ APPLICATION
         (with-output-to-string main)))
     (check-true (string-contains? command-output "Authored interaction examples"))
     (check-true (string-contains? command-output "must not launch"))
-    (define legacy (build-path directory "legacy.rkt"))
-    (display-to-file "#lang racket/base\n(error 'parent \"must not instantiate\")\n(module manifest racket/base (provide manifest) (define manifest '()))\n" legacy)
-    (check-equal? (read-manifest-examples legacy) '())
+    (define incomplete (build-path directory "incomplete.rkt"))
+    (display-to-file "#lang racket/base\n(error 'parent \"must not instantiate\")\n(module manifest racket/base (provide manifest) (define manifest '()))\n" incomplete)
+    (check-exn #rx"manifest-examples" (lambda () (read-manifest-examples incomplete)))
     (define escaped (manifest->markdown '() #:examples
                       (list (hasheq 'name "example`name" 'code "(display \"```\")\n<script>"))))
     (check-true (string-contains? escaped "````racket\n"))

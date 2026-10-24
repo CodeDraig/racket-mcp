@@ -1,6 +1,13 @@
 #lang racket/base
-(require "clock.rkt" "private/oauth-uri-policy.rkt" racket/list racket/string "authorization.rkt" "oauth-http.rkt" "oauth-registration.rkt" "oauth-registration-store.rkt"
-         (submod "oauth-registration.rkt" private) "storage.rkt")
+(require "clock.rkt"
+         "private/oauth-uri-policy.rkt"
+         racket/string
+         "authorization.rkt"
+         "oauth-http.rkt"
+         "oauth-registration.rkt"
+         "oauth-registration-store.rkt"
+         (submod "oauth-registration.rkt" private)
+         "storage.rkt")
 (provide make-oauth-authorizer oauth-authorizer? oauth-authorizer-resource authorize-resource!)
 (struct oauth-authorizer (lock run resource))
 (define (make-oauth-authorizer #:resource resource #:redirect-uri redirect #:browse browse
@@ -59,7 +66,7 @@
       (error 'authorize-resource! "stored credential does not match issuer/resource or is malformed"))
     (check-scopes! (oauth-credential-scopes credential))
     credential)
-  (define (run challenges requested-scopes rejected-token reauthorize?)
+  (define (discover-request challenges requested-scopes)
     (unless (and (list? challenges) (andmap authentication-challenge? challenges))
       (raise-argument-error 'authorize-resource! "list of authentication challenges" challenges))
     (define bearers (filter (lambda (c) (equal? (authentication-challenge-scheme c) "bearer")) challenges))
@@ -76,6 +83,8 @@
        (cond [(hash-has-key? parameters "scope") (string-split (hash-ref parameters "scope") " ")]
              [requested-scopes requested-scopes]
              [else (hash-ref protected 'scopes_supported '())])))
+    (values metadata scopes parameters))
+  (define (select-client metadata scopes)
     (define dynamic-result #f)
     (define fallback
       (and (or registration-store request-registration)
@@ -125,6 +134,12 @@
         (when (and (positive? expiry) (<= expiry (clock)))
           (error 'authorize-resource! "registered client secret expired before token exchange")))
       (authenticated-exchange endpoint fields))
+    (values registration selected-exchange))
+  (define (run challenges requested-scopes rejected-token reauthorize?)
+    (define-values (metadata scopes parameters) (discover-request challenges requested-scopes))
+    (define-values (registration selected-exchange) (select-client metadata scopes))
+    (define issuer (oauth-registration-issuer registration))
+    (define client-id (oauth-registration-client-id registration))
     (define key (list issuer client-id resource))
     (when (hash-has-key? unsaved key)
       (save issuer client-id resource (hash-ref unsaved key))
