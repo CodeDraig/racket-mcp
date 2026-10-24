@@ -5,6 +5,11 @@
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
 (define current-task-notify (make-parameter (lambda (principal task) (void))))
+;; Runtime workers resume through dispatch so completion gets the same rendering,
+;; authorization, and content expansion as an ordinary tool continuation.
+;; Standalone task APIs retain their low-level workflow execution contract.
+(define current-task-executor (make-parameter #f))
+(module* runtime #f (provide current-task-executor))
 (define (notify-task store instance)
   (when (stored-instance? instance)
     (with-handlers ([non-break-failure? (lambda (e) (eprintf "Task notification delivery failed: ~a\n" (failure-message e)))])
@@ -85,15 +90,19 @@
          (define state (stored-instance-state (owned store id principal)))
          (unless (terminal? (hash-ref state 'task))
            (authorize)
-           (define result (run-workflow workflow store (stored-instance-arguments instance) #:principal principal
-                                        #:state (hash-ref state 'workflow) #:responses (hash-ref state 'responses (hasheq)) #:adapters adapters
-                                        #:cancelled? cancelled?))
+           (define result
+             (if (current-task-executor)
+                 ((current-task-executor) (owned store id principal))
+                 (run-workflow workflow store (stored-instance-arguments instance) #:principal principal
+                               #:state (hash-ref state 'workflow) #:responses (hash-ref state 'responses (hasheq)) #:adapters adapters
+                               #:cancelled? cancelled?)))
            (unless (and (hash? result) (equal? (hash-ref result 'resultType #f) "input_required"))
              (validate-complete-tool-result result
                (if (missing? output-schema) (hash-ref state 'outputSchema #f) output-schema)))
            (change! store id principal
              (lambda (state task)
-               (hash-set state 'task
+               (hash-set (if (equal? (hash-ref result 'resultType) "input_required")
+                             (hash-set state 'continuation (hash-ref result 'requestState)) state) 'task
                          (if (equal? (hash-ref result 'resultType) "input_required")
                              (hash-set* task 'status "input_required" 'lastUpdatedAt (timestamp) 'inputRequests (hash-ref result 'inputRequests))
                              (hash-set* (hash-remove task 'inputRequests) 'status "completed" 'lastUpdatedAt (timestamp) 'result result))))))))))))))

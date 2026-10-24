@@ -229,6 +229,10 @@ executions share checkpoint and input persistence with tools, and are bound to
 the request method. When a store is configured, embedded content in tool/prompt results is captured as
 a persistent layout. Children resolve in source order, with separate input
 namespaces, retained completed results, and authorization checked on retry.
+Native task workers use this same rendering path before publishing completion.
+An embedded child awaiting input keeps the task in @tt{input_required};
+@tt{tasks/update} resumes the retained rendering layout, including after a
+restart, without recomputing the completed parent or completed children.
 The parent handler is not reconstructed after an input boundary. Resource bodies can return @racket[text-presentation] with strings and embedded
 text resources, @racket[json-presentation] with a JSON value, or
 @racket[binary-presentation] with bytes and an explicit MIME type. These constructors
@@ -554,8 +558,12 @@ retain the workflow's recorded effect policy and key. This is not a distributed
 lease protocol. Native lock/restart verification currently covers Linux only.
 Clients opt into task status notifications with a @tt{taskIds} string array in
 @tt{subscriptions/listen}. The runtime verifies each task's ownership and read
-policy before acknowledging the accepted IDs. Committed transitions emit
-@tt{notifications/tasks} with the complete detailed task, tagged with the
+policy before acknowledging the accepted IDs.
+For bridged upstream tasks, registration and notification delivery also check
+the originating @tt{tools/call} permission with its saved name and arguments,
+as polling does. These checks do not contact the upstream server. Native task
+read subscriptions retain their task-read policy.
+Committed transitions emit @tt{notifications/tasks} with the complete detailed task, tagged with the
 subscription request ID. Notifications are bounded hints: after reconnecting or
 overflow, poll @tt{tasks/get}; there is no notification replay. Terminal no-op
 cancellation does not emit a new transition. The exhaustive failure-boundary

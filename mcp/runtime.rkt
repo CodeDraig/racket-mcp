@@ -2,6 +2,7 @@
 (require "private/persistent-json.rkt")
 (require "build.rkt" (submod "build.rkt" private) "private/handler-info.rkt" "private/task-observation.rkt" "private/tool-result.rkt")
 (require "private/adapter-policy.rkt" "external-changes.rkt" (submod "workflow.rkt" private))
+(require (submod "tasks.rkt" runtime))
 (provide runtime-reconcile-changes!)
 (require "clock.rkt" "private/failure.rkt" "private/embedded-content.rkt" "private/request-message.rkt" "private/progress.rkt" racket/list racket/match net/base64 "descriptor.rkt" "schema.rkt" "json.rkt" "workflow.rkt" "tasks.rkt" "storage.rkt" "subscription.rkt" "error.rkt" "completion.rkt" "authorization.rkt" "rendering.rkt" "presentation.rkt" "freshness.rkt" "private/pagination.rkt")
 (provide runtime-build-identity runtime-clock runtime-report-change! runtime-drain-changes! runtime-observe-upstream-task! protocol-version recover-runtime-tasks! retry-runtime-task! make-runtime (struct-out runtime) dispatch dispatch-message
@@ -12,6 +13,9 @@
 (define (snapshot-with-ttl snapshot ttl)
   (struct-copy resource-snapshot snapshot [result (hash-set (resource-snapshot-result snapshot) 'ttlMs ttl)]))
 (define current-embedding-stack (make-parameter '()))
+;; Descriptor identity, supplied only by the runtime's worker continuation.
+;; Clear it before entering host code or resolving any embedded children.
+(define current-task-resumption (make-parameter #f))
 (struct runtime (interface authorize store adapters custodian subscriptions cache cache-context cache-namespace pagination required-scopes) #:transparent)
 (struct clocked-runtime runtime (clock build-id))
 (define (runtime-build-identity rt)
@@ -97,6 +101,32 @@
   (when (> (length matches) 1)
     (mcp-error -32001 "Task operation is ambiguous; explicit recovery is required"))
   (and (pair? matches) (car matches)))
+;; Check the extra originating-operation policy used by upstream task polling.
+;; This is local validation only: it never polls or mutates an upstream task.
+(define (authorize-upstream-task! rt principal id)
+  (get-task (runtime-store rt) id (principal-key principal))
+  (define instance (load-instance (runtime-store rt) id))
+  (define tool (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
+  (when (and tool (task-handler? (tool-descriptor-handler tool)))
+    (unless ((runtime-authorize rt) principal "tools/call"
+             (hasheq 'name (tool-descriptor-name tool)
+                     'arguments (hash-ref (hash-ref (stored-instance-arguments instance) 'params) 'arguments (hasheq))))
+      (mcp-error -32001 "Upstream task operation is not authorized"))))
+(define (task-executor rt)
+  (lambda (instance)
+    (define state (stored-instance-state instance))
+    (define context (current-request-context))
+    (define tool (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
+    (unless tool (mcp-error -32603 "Task executable is unavailable"))
+    ;; The explicit continuation resumes this execution rather than queuing a
+    ;; new task. A rendering continuation may outlive the parent workflow.
+    (parameterize ([current-render-capture #f] [current-task-resumption tool])
+      (dispatch rt "tools/call"
+        (hasheq '_meta (request-meta #:capabilities (request-context-capabilities context))
+                'name (tool-descriptor-name tool) 'arguments (stored-instance-arguments instance)
+                'requestState (hash-ref state 'continuation (hash-ref state 'workflow))
+                'inputResponses (hash-ref state 'responses (hasheq)))
+        #:principal (request-context-principal context)))))
 ;; Shared by scope preflight and runtime registration; no readers or workers run.
 (define (checked-subscription-filter params)
   (define requested (hash-ref params 'notifications #f))
@@ -251,7 +281,8 @@
           (resolve-task-operation (interface-descriptor-tools (runtime-interface rt)) instance))
         (unless tool (error 'recover-runtime-tasks! "no executable for persisted task ~a" (stored-instance-operation instance)))
         (define identity (stored-instance-principal instance))
-        (parameterize ([current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
+        (parameterize ([current-task-executor (task-executor rt)]
+                       [current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
                        [current-task-notify (task-notifier rt)])
         (resume-task! (tool-descriptor-workflow tool) store (stored-instance-handle instance) identity
                       #:output-schema (tool-descriptor-output-schema tool)
@@ -274,7 +305,9 @@
                      #:principal principal #:principal-key principal-key
                      #:authorized? (lambda (reader)
                        (and (or (not (verified-principal? reader)) (> (verified-principal-expiry reader) (mcp-current-seconds)))
-                            ((runtime-authorize rt) reader "tasks/get" (hasheq 'taskId (hash-ref task 'taskId))))))))
+                            ((runtime-authorize rt) reader "tasks/get" (hasheq 'taskId (hash-ref task 'taskId)))
+                            (with-handlers ([exn:fail:mcp? (lambda (_) #f)])
+                              (authorize-upstream-task! rt reader (hash-ref task 'taskId)) #t))))))
 (define (request-meta #:capabilities [caps (hasheq)] #:extra [extra (hasheq)])
   (hash-set* extra 'io.modelcontextprotocol/protocolVersion protocol-version
              'io.modelcontextprotocol/clientCapabilities caps
@@ -418,6 +451,7 @@
     (or (findf (lambda (d) (equal? (get d) (hash-ref params key #f))) xs)
         (mcp-error -32602 (format "Unknown ~a" key))))
   (parameterize ([current-request-context (request-context principal caps id (current-cancelled?) notify)]
+                 [current-task-executor (task-executor rt)]
                  [current-progress-token (hash-ref meta 'progressToken #f)]
                  [current-interface iface]
                  [current-resource-resolver
@@ -454,6 +488,7 @@
       [(tools/list) (listing 'tools (map tool-wire (interface-descriptor-tools iface)))]
       [(tools/call)
        (define d (lookup (interface-descriptor-tools iface) tool-descriptor-name 'name))
+       (define worker? (eq? d (current-task-resumption)))
        (define args (hash-ref params 'arguments (hasheq)))
        (unless (valid? (tool-descriptor-input-schema d) args) (mcp-error -32602 "Invalid tool arguments"))
        (define bound (if (tool-descriptor-raw? d) args
@@ -461,9 +496,11 @@
        (define task? (or (eq? (tool-descriptor-execution d) 'task)
                          (and (eq? (tool-descriptor-execution d) 'task-optional)
                               (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks))))
-       (when (and task? (not (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks)))
+       ;; Existing runtime workers do not negotiate a new client interaction;
+       ;; low-level tasks can be recovered without saved client capabilities.
+       (when (and task? (not worker?) (not (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks)))
          (mcp-error -32021 "Client Tasks capability is required" (hasheq 'requiredCapabilities (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))))
-       (when (and (tool-descriptor-workflow d)
+       (when (and (not worker?) (tool-descriptor-workflow d)
                   (ormap (lambda (s) (memq (workflow-stage-kind s) '(input input-group))) (workflow-descriptor-stages (tool-descriptor-workflow d)))
                   (not (hash-has-key? caps 'elicitation))) (mcp-error -32021 "Client elicitation capability is required" (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
        (define (invoke-handler)
@@ -482,14 +519,26 @@
                       (runtime-report-change! rt principal keys)))
                 value]
                [else outcome]))
-       (define result (render-call (lambda () (if task?
-                          (begin (unless (runtime-store rt) (mcp-error -32603 "Task storage is not configured"))
-                                 (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
-                                                      #:output-schema (tool-descriptor-output-schema d)
-                                                      #:state (current-workflow-state) #:responses (current-workflow-responses)
-                                                      #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt)))
-                          (invoke-handler)))
-                                   (if (tool-descriptor-workflow d) (workflow-executable-fingerprint (tool-descriptor-workflow d) (current-workflow-adapters)) "render/1")))
+       (define result
+         (parameterize ([current-task-resumption #f])
+           (render-call
+            (lambda ()
+              (cond
+                [worker?
+                 (run-workflow (tool-descriptor-workflow d) (runtime-store rt)
+                   (for/hasheq ([(key value) (in-hash bound)] #:unless (missing? value)) (values key value))
+                   #:principal (principal-key principal) #:state (current-workflow-state)
+                   #:responses (current-workflow-responses) #:adapters (current-workflow-adapters)
+                   #:cancelled? (current-cancelled?))]
+                [task?
+                 (unless (runtime-store rt) (mcp-error -32603 "Task storage is not configured"))
+                 (start-workflow-task (tool-descriptor-workflow d) (runtime-store rt) bound (principal-key principal)
+                   #:output-schema (tool-descriptor-output-schema d)
+                   #:state (current-workflow-state) #:responses (current-workflow-responses)
+                   #:operation-name (tool-descriptor-name d) #:adapters (current-workflow-adapters) #:custodian (runtime-custodian rt))]
+                [else (invoke-handler)]))
+            (if (tool-descriptor-workflow d)
+                (workflow-executable-fingerprint (tool-descriptor-workflow d) (current-workflow-adapters)) "render/1"))))
        (unless (and (hash? result)
                     (or (and (or task? (task-handler? (tool-descriptor-handler d)))
                              (hash-has-key? (hash-ref caps 'extensions (hasheq)) 'io.modelcontextprotocol/tasks)
@@ -550,7 +599,7 @@
          (for ([task-id (in-list ids)])
            (unless ((runtime-authorize rt) principal "tasks/get" (hasheq 'taskId task-id))
              (mcp-error -32001 "Task subscription is not authorized"))
-           (get-task (runtime-store rt) task-id (principal-key principal)))
+           (authorize-upstream-task! rt principal task-id))
          (set! accepted (hash-set accepted 'taskIds (remove-duplicates ids))))
        (define (notification-authorized? notice)
          (and (or (not (verified-principal? principal))
@@ -572,7 +621,7 @@
                              [else (hasheq '_meta meta)]))
                      (or (not (equal? target "tasks/get"))
                          (and (runtime-store rt)
-                              (get-task (runtime-store rt) (hash-ref values 'taskId #f) (principal-key principal))))))))
+                              (begin (authorize-upstream-task! rt principal (hash-ref values 'taskId #f)) #t)))))))
        (listen-subscription (runtime-subscriptions rt) id principal accepted
          (lambda (notice)
            (when (or (equal? (hash-ref notice 'method #f) "notifications/subscriptions/acknowledged")
@@ -593,11 +642,7 @@
        (if (and task-tool (task-handler? (tool-descriptor-handler task-tool)))
            (begin
              ;; Validate ownership before authorization callbacks or upstream I/O.
-             (get-task (runtime-store rt) task-id (principal-key principal))
-             (unless ((runtime-authorize rt) principal "tools/call"
-                      (hasheq 'name (tool-descriptor-name task-tool)
-                              'arguments (hash-ref (hash-ref (stored-instance-arguments task-instance) 'params) 'arguments (hasheq))))
-               (mcp-error -32001 "Upstream task operation is not authorized"))
+             (authorize-upstream-task! rt principal task-id)
              ((task-handler-dispatch (tool-descriptor-handler task-tool)) method task-id params))
        (case (string->symbol method)
          [(tasks/get)
@@ -755,6 +800,7 @@
       (mcp-error -32001 "Repaired task execution is not authorized"))
     (current-request-context (request-context principal caps #f (current-cancelled?) void)))
   (parameterize ([current-request-context #f]
+                 [current-task-executor (task-executor rt)]
                  [current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
                  [current-task-notify (task-notifier rt)])
     (retry-recovered-task! (tool-descriptor-workflow tool) store id identity
