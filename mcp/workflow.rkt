@@ -35,6 +35,9 @@
 (define current-workflow-state (make-parameter #f))
 (define current-workflow-responses (make-parameter (hasheq)))
 (define current-workflow-invocation-key (make-parameter #f))
+;; Task recovery observes an escaping failure while the failing workflow still
+;; owns its claim. The original raised value and standalone API stay unchanged.
+(define current-workflow-failure-observer (make-parameter (lambda (_workflow _store _instance _failure) (void))))
 (define (workflow-invocation-key workflow arguments)
   (define (compute)
     (or (current-workflow-invocation-key)
@@ -373,6 +376,14 @@
   ;; The database transaction protects each transition; this separate claim
   ;; spans external adapter execution without holding a database transaction.
   (define result missing)
+  (define (execute/observe)
+    (with-handlers ([non-break-failure?
+                    (lambda (failure)
+                      (with-handlers ([non-break-failure? void])
+                        ((current-workflow-failure-observer) workflow store
+                          (load-instance store (stored-instance-handle instance)) failure))
+                      (raise failure))])
+      (execute)))
   (let claim-loop ()
     (when (cancelled?) (error 'run-workflow "execution cancelled"))
     (when (<= (stored-instance-expires instance) (clock)) (error 'run-workflow "continuation expired"))
@@ -380,9 +391,9 @@
     ;; workflow claim. Still execute the transactional response/conflict checks.
     (unless (if (and (current-workflow-task-handoff)
                      (hash-has-key? (stored-instance-state (load-instance store (stored-instance-handle instance))) 'task-handoff))
-                (begin (set! result (execute)) #t)
+                (begin (set! result (execute/observe)) #t)
                 (call-with-instance-worker store (stored-instance-handle instance)
-                  (lambda () (set! result (execute)))))
+                  (lambda () (set! result (execute/observe)))))
       (sync (alarm-evt (+ (current-inexact-milliseconds) 25)))
       (claim-loop)))
   result)
@@ -426,4 +437,4 @@
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
 
-(module+ private (provide workflow-add-fingerprint-suffix workflow-rename current-workflow-task-handoff workflow-invocation-key))
+(module+ private (provide workflow-add-fingerprint-suffix workflow-rename current-workflow-task-handoff workflow-invocation-key current-workflow-failure-observer))

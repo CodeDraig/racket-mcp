@@ -793,8 +793,9 @@
   (unless tool (mcp-error -32001 "Task operation is absent from this interface"))
   (unless (tool-descriptor-workflow tool)
     (mcp-error -32602 "Upstream task recovery requires a separately observed upstream outcome"))
-  (when (and (ormap (lambda (stage) (memq (workflow-stage-kind stage) '(input input-group)))
-                    (workflow-descriptor-stages (tool-descriptor-workflow tool)))
+  (when (and (or (ormap (lambda (stage) (memq (workflow-stage-kind stage) '(input input-group)))
+                        (workflow-descriptor-stages (tool-descriptor-workflow tool)))
+                 (hash-ref (hash-ref (stored-instance-state instance) 'recovery (hasheq)) 'requiresElicitation #f))
              (not (hash-has-key? caps 'elicitation)))
     (mcp-error -32021 "Client elicitation capability is required"
       (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))

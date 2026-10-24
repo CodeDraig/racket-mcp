@@ -324,6 +324,10 @@ multibyte characters, and rejects malformed UTF-8 without substituting replaceme
 characters. It reads one value and preserves following input. @racket[string->json]
 requires the remaining input to contain only JSON's four whitespace characters.
 
+Numeric @tt{multipleOf} checks use exact operand values, including for native
+inexact Racket numbers. This matches their JSON serialization and prevents a
+rounded floating-point quotient from admitting a nonmultiple.
+
 @racket[validate] and @racket[valid?] accept @racket[#:max-steps] (default
 1,000,000) in addition to @racket[#:max-depth]. Registry indexing, construction
 metaschema evaluation, applicator visits, and property/item traversal share the
@@ -534,8 +538,10 @@ and JSON null values remain present; defaults are evaluated once during binding.
 Runtime workers resume the saved bound argument map. They validate its domain
 values without applying the external input schema again to defaulted fields.
 Local task completion checks the complete tool-result shape and the tool's declared
-output schema before publishing a completed status. Invalid output fails the task;
-an intentional @tt{isError} result is exempt from the structured-output schema.
+output schema before publishing a completed status. Invalid output fails the task.
+An @tt{isError} field must be Boolean; only @racket[#t] exempts the result from
+the structured-output schema. Malformed flags are rejected during completion and
+when polling legacy completed records.
 Validation does not replay completed workflow effects.
 
 The lower-level task APIs accept @racket[#:output-schema].
@@ -1854,6 +1860,15 @@ that failed with a recorded uncertain manual effect, inspect its workflow and us
 @tt{#:capabilities}. This explicit local API creates a new task for the repaired
 workflow. It adds no protocol method and performs no automatic retry of an
 uncertain mutation. An abandoned workflow cannot be resumed this way.
+
+If the uncertain effect belongs to an embedded resource workflow, the failed
+task's @tt{recovery} metadata identifies that workflow in its @tt{workflow} field
+and the effect in @tt{stage}. Inspect and repair that child with
+@tt{recover-workflow!}, then request replacement using the original task ID.
+The replacement retains the parent execution and rendering continuation;
+completed parents and embedded siblings are not recomputed. Ownership, expiry,
+the recorded executable identity, and a matching recovery journal entry are
+checked before allocation. The original task remains terminal.
 
 The runtime resolves the original mounted operation and adapters, checks task and
 operation authorization before allocation and again in the worker, and requires

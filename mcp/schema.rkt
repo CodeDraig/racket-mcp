@@ -191,7 +191,11 @@
            (when (rational? v)
              (for ([k '(minimum maximum exclusiveMinimum exclusiveMaximum)] [p (list >= <= > <)] #:when (hash-has-key? s k))
                (unless (p v (hash-ref s k)) (bad k "numeric bound failed")))
-             (when (and (hash-has-key? s 'multipleOf) (not (integer? (/ v (hash-ref s 'multipleOf))))) (bad 'multipleOf "not an exact multiple")))
+             ;; A flonum quotient can round a nonmultiple to an integer. Use
+             ;; the exact values that JSON serialization preserves instead.
+             (when (and (hash-has-key? s 'multipleOf)
+                        (not (integer? (/ (inexact->exact v) (inexact->exact (hash-ref s 'multipleOf))))))
+               (bad 'multipleOf "not an exact multiple")))
            (when (string? v)
              (when (< (string-length v) (hash-ref s 'minLength 0)) (bad 'minLength "string too short"))
              (when (> (string-length v) (hash-ref s 'maxLength +inf.0)) (bad 'maxLength "string too long"))
