@@ -777,6 +777,72 @@
     (if (missing? id) #f
         (hasheq 'jsonrpc "2.0" 'id id 'result (dispatch rt (hash-ref message 'method) (hash-ref message 'params (hasheq)) #:principal principal #:id id #:notify notify)))))
 
+;; Locate the repaired resource using the saved SDK rendering path, including
+;; mounts that share a workflow name. Read existing records only; no handler,
+;; renderer, default, or effect runs during replacement preflight.
+(define (task-recovery-render-path store instance repaired)
+  (define state (stored-instance-state instance))
+  (define principal (stored-instance-principal instance))
+  (define token (hash-ref state 'continuation #f))
+  (define root
+    (if (render-continuation? store token) (load-instance store token)
+        (find-instance-by-key store principal "render:tools/call"
+          (string-append "workflow-render:" (hash-ref state 'workflow)))))
+  (define (visit render depth)
+    (and render (< depth 32)
+      (for/or ([child (in-list (hash-ref (stored-instance-state render) 'children))]
+               #:unless (equal? (hash-ref child 'status) "complete"))
+        (define key (format "~a/~a" (stored-instance-handle render) (hash-ref child '$mcp/embedding)))
+        (define flow (find-instance-by-key store principal (stored-instance-operation repaired) key))
+        (cond [(and flow (equal? (stored-instance-handle flow) (stored-instance-handle repaired)))
+               (list (cons (hash-ref child 'uri) #f))]
+              [else
+               (define child-state (hash-ref child 'state #f))
+               (define nested
+                 (if (render-continuation? store child-state) (load-instance store child-state)
+                     (find-instance-by-key store principal "render:resources/read" key)))
+               (define rest (visit nested (add1 depth)))
+               (and rest (cons (cons (hash-ref child 'uri) nested) rest))]))))
+  (or (visit root 0) (mcp-error -32602 "Recovery workflow has no matching embedded resource binding")))
+(define (check-task-recovery-binding! rt instance tool principal caps)
+  (define store (runtime-store rt))
+  (define state (stored-instance-state instance))
+  (define flow-id (hash-ref state 'workflow))
+  (define recovery-id (hash-ref (hash-ref state 'recovery (hasheq)) 'workflow flow-id))
+  (unless (equal? recovery-id flow-id)
+    (define repaired (or (load-instance store recovery-id) (mcp-error -32602 "Recovery workflow is absent")))
+    (for/fold ([adapters (operation-adapters rt tool)])
+              ([entry (in-list (task-recovery-render-path store instance repaired))])
+      (define uri (car entry))
+      (define render (cdr entry))
+      (define params (hasheq 'uri uri '_meta (request-meta #:capabilities caps)))
+      (define matches (operation-targets (runtime-interface rt) store "resources/read" params))
+      (unless (= (length matches) 1) (mcp-error -32602 "Recovery resource binding is absent or ambiguous"))
+      (define resource (car matches))
+      (define effective (parameterize ([current-workflow-adapters adapters]) (operation-adapters rt resource)))
+      (define program
+        (and (resource-descriptor-workflow resource)
+          (workflow-add-fingerprint-suffix (resource-descriptor-workflow resource)
+            (string-append ":renderer:" (renderer-fingerprint (resource-descriptor-renderer resource))))))
+      (define fingerprint
+        (if program (workflow-executable-fingerprint program effective)
+            (string-append "render/1:renderer:" (renderer-fingerprint (resource-descriptor-renderer resource)))))
+      (unless (if render
+                  (and (equal? (stored-instance-version render) "render/3")
+                       (equal? (stored-instance-fingerprint render) (bind-build-identity fingerprint)))
+                  (and program
+                       (equal? (stored-instance-operation repaired) (string-append "resources/read:" (workflow-descriptor-name program)))
+                       (equal? (stored-instance-version repaired) (workflow-descriptor-version program))
+                       (equal? (stored-instance-fingerprint repaired) fingerprint)))
+        (mcp-error -32602 "Recovery resource executable is incompatible"))
+      (unless ((runtime-authorize rt) principal "resources/read" params)
+        (mcp-error -32001 "Recovery resource is not authorized"))
+      (when (and program (not (hash-has-key? caps 'elicitation))
+                 (ormap (lambda (stage) (memq (workflow-stage-kind stage) '(input input-group)))
+                        (workflow-descriptor-stages program)))
+        (mcp-error -32021 "Client elicitation capability is required"
+          (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
+      effective)))
 ;; An explicit local action after recovery, never an automatic wire retry.
 (define/clock (retry-runtime-task! rt id #:principal principal #:capabilities supplied-caps)
   (define caps (string->json (json->string supplied-caps)))
@@ -808,6 +874,8 @@
     (current-request-context (request-context principal caps #f (current-cancelled?) void)))
   (parameterize ([current-request-context #f]
                  [current-task-executor (task-executor rt)]
+                 [current-task-recovery-check
+                  (lambda (original) (check-task-recovery-binding! rt original tool principal caps))]
                  [current-workflow-change-publisher (lambda () (runtime-drain-changes! rt))]
                  [current-task-notify (task-notifier rt)])
     (retry-recovered-task! (tool-descriptor-workflow tool) store id identity

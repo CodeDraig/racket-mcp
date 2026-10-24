@@ -9,7 +9,8 @@
 ;; authorization, and content expansion as an ordinary tool continuation.
 ;; Standalone task APIs retain their low-level workflow execution contract.
 (define current-task-executor (make-parameter #f))
-(module* runtime #f (provide current-task-executor))
+(define current-task-recovery-check (make-parameter (lambda (_instance) (void))))
+(module* runtime #f (provide current-task-executor current-task-recovery-check))
 (define (notify-task store instance)
   (when (stored-instance? instance)
     (with-handlers ([non-break-failure? (lambda (e) (eprintf "Task notification delivery failed: ~a\n" (failure-message e)))])
@@ -79,6 +80,7 @@
                  ;; The selected executor belongs to this worker only. Host
                  ;; code may start an independent low-level task of its own.
                  [current-task-executor #f]
+                 [current-task-recovery-check (lambda (_instance) (void))]
                  [current-workflow-failure-observer
                   (lambda (program failed-store flow failure)
                     (when (and (eq? store failed-store) (equal? principal (stored-instance-principal flow)))
@@ -266,6 +268,9 @@
   (unless
       (or replacement (call-with-instance-worker store recovery-id
         (lambda ()
+          ;; The runtime can inspect current resource bindings outside SQLite,
+          ;; under the repaired workflow's claim. Existing receipts need no replay.
+          (unless (existing-replacement) ((current-task-recovery-check) original))
           (set! replacement
             (store-transaction store
               (lambda ()

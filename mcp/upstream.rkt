@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/list racket/string "descriptor.rkt" "schema.rkt" "json.rkt" "error.rkt" "presentation.rkt" "uri-template.rkt" "completion.rkt"
          "upstream-bridge.rkt" (submod "upstream-bridge.rkt" private) "private/upstream-task.rkt"
-         "workflow.rkt" (only-in "storage.rkt" opaque-handle) (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt" "private/task-observation.rkt")
+         "workflow.rkt" (only-in "storage.rkt" opaque-handle) (only-in "tasks.rkt" current-task-notify) "authorization.rkt" "private/handler-info.rkt" "private/task-observation.rkt" "private/tool-result.rkt")
 (provide capture-snapshot make-upstream-interface upstream-resource-change-keys check-upstream-compatibility! recover-upstream-task! retry-upstream-task! (struct-out upstream-template-adapter))
 (provide (all-from-out "upstream-bridge.rkt"))
 (define methods '("server/discover" "tools/list" "resources/list" "resources/templates/list" "prompts/list"))
@@ -208,12 +208,7 @@
       (define (translate-task-detail result)
         (if (equal? (hash-ref result 'status #f) "completed")
             (let ([value (hash-ref result 'result)])
-              (unless (and (equal? (hash-ref value 'resultType #f) "complete")
-                           (list? (hash-ref value 'content #f))
-                           (or (hash-ref value 'isError #f) (not (hash-has-key? wire 'outputSchema))
-                               (and (hash-has-key? value 'structuredContent)
-                                    (valid? (hash-ref wire 'outputSchema) (hash-ref value 'structuredContent)))))
-                (mcp-error -32603 "Upstream task result failed its tool contract"))
+              (validate-complete-tool-result value (hash-ref wire 'outputSchema #f))
               (hash-set result 'result (hash-set value 'content (map remap-content (hash-ref value 'content))))) result))
       (define (task-dispatch method id params)
         (define context (current-request-context))

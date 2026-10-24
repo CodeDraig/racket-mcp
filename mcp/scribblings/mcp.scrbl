@@ -542,6 +542,8 @@ output schema before publishing a completed status. Invalid output fails the tas
 An @tt{isError} field must be Boolean; only @racket[#t] exempts the result from
 the structured-output schema. Malformed flags are rejected during completion and
 when polling legacy completed records.
+Upstream task completions apply the same Boolean flag and output-schema checks
+before persistence, URI remapping, or completion notification.
 Validation does not replay completed workflow effects.
 
 The lower-level task APIs accept @racket[#:output-schema].
@@ -1869,6 +1871,11 @@ The replacement retains the parent execution and rendering continuation;
 completed parents and embedded siblings are not recomputed. Ownership, expiry,
 the recorded executable identity, and a matching recovery journal entry are
 checked before allocation. The original task remains terminal.
+For embedded recovery, the saved rendering path identifies the current resource
+binding. Its workflow version, renderer, effective adapters, and enclosing render
+identities must match before a replacement is allocated. This check reads saved
+records without invoking handlers, renderers, defaults, or effects. Rejecting a
+changed binding leaves the repaired workflow and replacement slot available.
 
 The runtime resolves the original mounted operation and adapters, checks task and
 operation authorization before allocation and again in the worker, and requires
