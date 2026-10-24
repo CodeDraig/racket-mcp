@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt" racket/list racket/string "storage.rkt" "json.rkt" "error.rkt" "private/embedded-content.rkt" "private/render-provenance.rkt" "private/persistent-json.rkt")
+(require "clock.rkt" racket/list racket/string "storage.rkt" "json.rkt" "error.rkt" "private/embedded-content.rkt" "private/render-provenance.rkt")
 (provide current-render-capture deferred-embedding render-layout render-continuation? layout-embeddings? next-embedding-index)
 
 (define current-render-capture (make-parameter #f))
@@ -14,12 +14,7 @@
        (string? (hash-ref value 'uri #f))))
 (define (walk value transform)
   (cond [(marker? value) (transform value)]
-        [(hash? value)
-         (define rebuilt (for/hasheq ([(k v) (in-hash value)]) (values k (walk v transform))))
-         ;; Rebuilding a resolved group must retain its SDK-owned provenance.
-         ;; Ordinary JSON with marker-shaped keys remains unmarked.
-         (define kind (render-value-kind value))
-         (if kind (mark-render-value rebuilt kind) rebuilt)]
+        [(hash? value) (for/hasheq ([(k v) (in-hash value)]) (values k (walk v transform)))]
         [(list? value) (map (lambda (v) (walk v transform)) value)]
         [else value]))
 (define (render-continuation? store token)
@@ -34,8 +29,7 @@
   (walk value (lambda (marker) (set! next (max next (add1 (hash-ref marker '$mcp/embedding)))) marker)) next)
 (define (render-layout store layout #:operation operation #:arguments arguments #:principal principal
                        #:fingerprint fingerprint #:resolve resolve #:state [token #f]
-                       #:responses [responses (hasheq)] #:ttl [ttl 86400] #:authorize [authorize void] #:key [key #f]
-                       #:bindings [bindings (hasheq)])
+                       #:responses [responses (hasheq)] #:ttl [ttl 86400] #:authorize [authorize void] #:key [key #f])
   ;; resolve receives URI, child state, input responses, and a stable invocation
   ;; key. It must deduplicate uncertain initial child calls using that key.
   (define instance
@@ -50,7 +44,7 @@
           (when (> (hash-count nodes) 1024) (error 'render-layout "embedding count limit exceeded"))
           (create-instance! store principal (string-append "render:" operation) arguments "render/3" fingerprint
                             (+ (mcp-current-seconds) ttl)
-                            (hasheq 'kind "render" 'layout layout 'history (hasheq) 'bindings bindings
+                            (hasheq 'kind "render" 'layout layout 'history (hasheq)
                                     'children (for/list ([id (in-list (sort (hash-keys nodes) <))])
                                                 (hash-set* (hash-ref nodes id) 'status "pending" 'round 0))) #:key key))))
   (unless (and (equal? (stored-instance-principal instance) principal)
@@ -70,7 +64,7 @@
     (define state (stored-instance-state instance))
     (for ([(key answer) (in-hash responses)])
       (define prior (hash-ref (hash-ref state 'history) key missing))
-      (unless (or (missing? prior) (equal? prior (persistent-json answer))) (mcp-error -32602 "Conflicting embedded input response")))
+      (unless (or (missing? prior) (equal? prior answer)) (mcp-error -32602 "Conflicting embedded input response")))
     (define children (hash-ref state 'children))
     (for ([child (in-list children)]) (authorize (hash-ref child 'uri)))
     (define child (findf (lambda (c) (not (equal? (hash-ref c 'status) "complete"))) children))
@@ -85,7 +79,7 @@
                      #:when (and (string-prefix? (symbol->string key) namespace)
                                  (hash-has-key? (hash-ref child 'requests (hasheq))
                                                 (string->symbol (substring (symbol->string key) (string-length namespace))))))
-           (values (string->symbol (substring (symbol->string key) (string-length namespace))) (persistent-json answer))))
+           (values (string->symbol (substring (symbol->string key) (string-length namespace))) answer)))
        (define outcome (resolve (hash-ref child 'uri) (hash-ref child 'state #f) supplied
                                 (format "~a/~a" handle (hash-ref child '$mcp/embedding))))
        (define pending? (equal? (hash-ref outcome 'resultType #f) "input_required"))

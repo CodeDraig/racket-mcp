@@ -1,16 +1,9 @@
 #lang racket/base
-(require "private/persistent-json.rkt")
-(require "clock.rkt" racket/list "private/failure.rkt" "private/tool-result.rkt" (submod "workflow.rkt" private) (submod "build.rkt" private))
+(require "clock.rkt" racket/list "private/failure.rkt" (submod "workflow.rkt" private) (submod "build.rkt" private))
 (require racket/date racket/format "storage.rkt" "workflow.rkt" "json.rkt" "descriptor.rkt" "subscription.rkt" "error.rkt" "private/input-response.rkt")
 (provide start-workflow-task get-task update-task! cancel-task! resume-task! retry-recovered-task! current-task-notify)
 ;; Called only after a committed task transition, with its owner key and detail.
 (define current-task-notify (make-parameter (lambda (principal task) (void))))
-;; Runtime workers resume through dispatch so completion gets the same rendering,
-;; authorization, and content expansion as an ordinary tool continuation.
-;; Standalone task APIs retain their low-level workflow execution contract.
-(define current-task-executor (make-parameter #f))
-(define current-task-recovery-check (make-parameter (lambda (_instance) (void))))
-(module* runtime #f (provide current-task-executor current-task-recovery-check))
 (define (notify-task store instance)
   (when (stored-instance? instance)
     (with-handlers ([non-break-failure? (lambda (e) (eprintf "Task notification delivery failed: ~a\n" (failure-message e)))])
@@ -34,26 +27,23 @@
 (define (get-task store id principal)
   (hash-set (hash-ref (stored-instance-state (owned store id principal)) 'task) 'resultType "complete"))
 (define (terminal? task) (member (hash-ref task 'status) '("completed" "failed" "cancelled")))
-(define (workflow-recovery-metadata workflow store flow)
+(define (task-failure-state workflow store state task failure)
+  (define flow (load-instance store (hash-ref state 'workflow)))
   (define position (hash-ref (stored-instance-state flow) 'position))
   (define stages (workflow-descriptor-stages workflow))
   (define stage (and (< position (length stages)) (list-ref stages position)))
   (define intent (and stage (hash-ref (hash-ref (stored-instance-state flow) 'effects) (workflow-stage-id stage) #f)))
-  (and stage (eq? (workflow-stage-kind stage) 'effect) (eq? (workflow-stage-policy stage) 'manual)
-       intent (= (hash-ref intent 'position) position) (equal? (hash-ref intent 'status) "intent")
-       (hasheq 'workflow (stored-instance-handle flow)
-               'version (stored-instance-version flow) 'fingerprint (stored-instance-fingerprint flow)
-               'requiresElicitation (ormap (lambda (stage) (and (memq (workflow-stage-kind stage) '(input input-group)) #t))
-                                           (workflow-descriptor-stages workflow))
-               'stage (symbol->string (workflow-stage-id stage)) 'revision (stored-instance-revision flow)
-               'eventCount (length (instance-events store (stored-instance-handle flow))))))
-(define (task-failure-state workflow store state task failure observed)
-  (define recovery
-    (or (workflow-recovery-metadata workflow store (load-instance store (hash-ref state 'workflow))) observed))
+  (define uncertain?
+    (and stage (eq? (workflow-stage-kind stage) 'effect) (eq? (workflow-stage-policy stage) 'manual)
+         intent (= (hash-ref intent 'position) position) (equal? (hash-ref intent 'status) "intent")))
   (define failed
     (hash-set state 'task (hash-set* task 'status "failed" 'lastUpdatedAt (timestamp)
-      'error (hasheq 'code -32603 'message (if (or recovery (exn:fail:recovery? failure)) "Workflow requires manual recovery" "Task execution failed")))))
-  (if recovery (hash-set failed 'recovery recovery) failed))
+      'error (hasheq 'code -32603 'message (if (or uncertain? (exn:fail:recovery? failure)) "Workflow requires manual recovery" "Task execution failed")))))
+  (if uncertain?
+      (hash-set failed 'recovery
+        (hasheq 'stage (symbol->string (workflow-stage-id stage)) 'revision (stored-instance-revision flow)
+                'eventCount (length (instance-events store (stored-instance-handle flow)))))
+      failed))
 (define (change! store id principal transform)
   (define updated
     (store-transaction store (lambda () (define instance (owned store id principal))
@@ -61,31 +51,19 @@
                               (define task (hash-ref state 'task))
                               (unless (terminal? task) (update-instance! store instance (transform state task))))))
   (notify-task store updated))
-(define (resume-task! workflow store id principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)] #:authorize [authorize void] #:wait? [wait? #t]
-                      #:output-schema [output-schema missing])
-  (resume-task/core workflow store id principal adapters custodian authorize wait? (break-enabled) output-schema))
-(define (resume-task/core workflow store id principal adapters custodian authorize wait? breaks? output-schema)
+(define (resume-task! workflow store id principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)] #:authorize [authorize void] #:wait? [wait? #t])
+  (resume-task/core workflow store id principal adapters custodian authorize wait? (break-enabled)))
+(define (resume-task/core workflow store id principal adapters custodian authorize wait? breaks?)
   (define instance (owned store id principal))
   (define (claim thunk)
     (let loop ()
       (or (call-with-instance-worker store id thunk)
           (and wait? (begin (sync (alarm-evt (+ (current-inexact-milliseconds) 25))) (loop))))))
   (define parent-context (current-request-context))
-  (define executor (current-task-executor))
-  (define failure-recoveries (make-hasheq))
   (define (cancelled?) (equal? (hash-ref (get-task store id principal) 'status) "cancelled"))
   ;; A task keeps its authorization identity, but cannot inherit the polling
   ;; request's cancellation signal, progress token, or output stream.
   (parameterize ([current-custodian custodian]
-                 ;; The selected executor belongs to this worker only. Host
-                 ;; code may start an independent low-level task of its own.
-                 [current-task-executor #f]
-                 [current-task-recovery-check (lambda (_instance) (void))]
-                 [current-workflow-failure-observer
-                  (lambda (program failed-store flow failure)
-                    (when (and (eq? store failed-store) (equal? principal (stored-instance-principal flow)))
-                      (define recovery (workflow-recovery-metadata program store flow))
-                      (when recovery (hash-set! failure-recoveries failure recovery))))]
                  [current-workflow-task-handoff #f]
                  [current-cancellation-event never-evt]
                  [current-output-port (current-error-port)]
@@ -101,50 +79,37 @@
        (claim (lambda ()
        (with-handlers ([non-break-failure? (lambda (e)
                                    (change! store id principal
-                                     (lambda (state task) (task-failure-state workflow store state task e (hash-ref failure-recoveries e #f)))))])
+                                     (lambda (state task) (task-failure-state workflow store state task e))))])
          (define state (stored-instance-state (owned store id principal)))
          (unless (terminal? (hash-ref state 'task))
            (authorize)
-           (define result
-             (if executor
-                 (executor (owned store id principal))
-                 (run-workflow workflow store (stored-instance-arguments instance) #:principal principal
-                               #:state (hash-ref state 'workflow) #:responses (hash-ref state 'responses (hasheq)) #:adapters adapters
-                               #:cancelled? cancelled?)))
-           (unless (and (hash? result) (equal? (hash-ref result 'resultType #f) "input_required"))
-             (validate-complete-tool-result result
-               (if (missing? output-schema) (hash-ref state 'outputSchema #f) output-schema)))
+           (define result (run-workflow workflow store (stored-instance-arguments instance) #:principal principal
+                                        #:state (hash-ref state 'workflow) #:responses (hash-ref state 'responses (hasheq)) #:adapters adapters
+                                        #:cancelled? cancelled?))
            (change! store id principal
              (lambda (state task)
-               (hash-set (if (equal? (hash-ref result 'resultType) "input_required")
-                             (hash-set state 'continuation (hash-ref result 'requestState)) state) 'task
+               (hash-set state 'task
                          (if (equal? (hash-ref result 'resultType) "input_required")
                              (hash-set* task 'status "input_required" 'lastUpdatedAt (timestamp) 'inputRequests (hash-ref result 'inputRequests))
                              (hash-set* (hash-remove task 'inputRequests) 'status "completed" 'lastUpdatedAt (timestamp) 'result result))))))))))))))
 (define (start-workflow-task workflow store arguments principal #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)]
-                             #:output-schema [output-schema #f]
                              #:operation-name [operation-name #f]
                              #:state [handle #f] #:responses [responses (hasheq)])
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'start-workflow-task "task creation must own its storage transaction boundaries"))
-  (set! arguments (for/hasheq ([(key value) (in-hash arguments)] #:unless (missing? value)) (values key value)))
   (define (handoff flow)
-    (create-workflow-task workflow store arguments principal adapters custodian operation-name flow output-schema))
-  (define boundary? (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
-                           (workflow-descriptor-stages workflow)))
-  ;; A continuation already identifies its execution. Newly advertised Tasks
-  ;; support cannot discard its effects or responses and start another one.
-  (if (or handle boundary?)
-      (parameterize ([current-workflow-task-handoff (and boundary? (cons workflow handoff))])
+    (create-workflow-task workflow store arguments principal adapters custodian operation-name flow))
+  (if (ormap (lambda (stage) (eq? (workflow-stage-kind stage) 'task-boundary))
+             (workflow-descriptor-stages workflow))
+      (parameterize ([current-workflow-task-handoff (cons workflow handoff)])
         (run-workflow workflow store arguments #:principal principal #:state handle
                       #:responses responses #:adapters adapters #:cancelled? (current-cancelled?)))
       (handoff #f)))
-(define (create-workflow-task workflow store arguments principal adapters custodian operation-name prepared-flow output-schema)
+(define (create-workflow-task workflow store arguments principal adapters custodian operation-name prepared-flow)
   (define fingerprint (workflow-executable-fingerprint workflow adapters))
   ;; User key computation runs outside the database transaction, once per call.
   (define invocation-key
     (and (not prepared-flow) (workflow-invocation-key workflow arguments)))
-  (set! arguments (persistent-json arguments))
   ;; Once the handoff commits, schedule its runtime-owned worker before a request
   ;; break can escape. A process crash is recovered by the runtime startup scan.
   (define worker-breaks? (break-enabled))
@@ -190,7 +155,6 @@
              (define updated
                (update-instance! store candidate
                  (hasheq 'operationName operation-name
-                         'outputSchema output-schema
                          'capabilities (if (current-request-context) (request-context-capabilities (current-request-context)) (hasheq))
                          'workflow (stored-instance-handle flow) 'task task 'creation-result created)))
              ;; Prepared execution holds the workflow claim. Immediate keyed
@@ -203,12 +167,11 @@
              updated]))))
     (when (equal? (hash-ref (hash-ref (stored-instance-state instance) 'task) 'status) "working")
       (resume-task/core workflow store (stored-instance-handle instance) principal
-                        adapters custodian void #f worker-breaks? output-schema))
+                        adapters custodian void #f worker-breaks?))
     (if prepared-flow
         (hash-ref (stored-instance-state (load-instance store (stored-instance-handle prepared-flow))) 'task-handoff)
         (hash-ref (stored-instance-state instance) 'creation-result))))
-(define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)]
-                      #:output-schema [output-schema missing])
+(define (update-task! workflow store id principal responses #:adapters [adapters (hasheq)] #:custodian [custodian (current-custodian)])
   ;; A view restriction must reject resumption before accepting/persisting input.
   (define fingerprint (workflow-executable-fingerprint workflow adapters))
   (define updated (store-transaction store
@@ -230,7 +193,7 @@
            (update-instance! store instance (hash-set* state 'responses accepted 'task (hash-set* (hash-remove task 'inputRequests) 'status "working" 'lastUpdatedAt (timestamp))))))))
   (when updated
     (notify-task store updated)
-    (resume-task! workflow store id principal #:adapters adapters #:custodian custodian #:output-schema output-schema))
+    (resume-task! workflow store id principal #:adapters adapters #:custodian custodian))
   (hasheq 'resultType "complete"))
 (define (cancel-task! store id principal)
   (change! store id principal (lambda (state task) (hash-set state 'task (hash-set* (hash-remove task 'inputRequests) 'status "cancelled" 'lastUpdatedAt (timestamp)))))
@@ -240,15 +203,12 @@
 ;; The old task's journal records the replacement in the same transaction that
 ;; persists it; retrying this API cannot create multiple tasks for one repair.
 (define (retry-recovered-task! workflow store id principal
-                               #:output-schema [output-schema missing]
                                #:adapters [adapters (hasheq)]
                                #:custodian [custodian (current-custodian)]
                                #:authorize [authorize void])
   (authorize)
   (define original (owned store id principal))
   (define flow-id (hash-ref (stored-instance-state original) 'workflow))
-  ;; Legacy parent-effect records have no explicit recovery workflow identity.
-  (define recovery-id (hash-ref (hash-ref (stored-instance-state original) 'recovery (hasheq)) 'workflow flow-id))
   (define (check-executable! flow original)
     (unless (and flow (equal? (stored-instance-principal flow) principal)
                  (equal? (stored-instance-arguments flow) (stored-instance-arguments original))
@@ -266,11 +226,8 @@
         (and event (owned store (hash-ref event 'taskId) principal)))))
   (define replacement (existing-replacement))
   (unless
-      (or replacement (call-with-instance-worker store recovery-id
+      (or replacement (call-with-instance-worker store flow-id
         (lambda ()
-          ;; The runtime can inspect current resource bindings outside SQLite,
-          ;; under the repaired workflow's claim. Existing receipts need no replay.
-          (unless (existing-replacement) ((current-task-recovery-check) original))
           (set! replacement
             (store-transaction store
               (lambda ()
@@ -286,52 +243,38 @@
                 (cond [existing (owned store (hash-ref existing 'taskId) principal)]
                       [else
                        (define recovery (hash-ref old-state 'recovery))
-                       (define repaired-flow (load-instance store recovery-id))
-                       (unless (and repaired-flow
-                                    (equal? (hash-ref recovery 'workflow flow-id) recovery-id)
-                                    (equal? (stored-instance-principal repaired-flow) principal)
-                                    (> (stored-instance-expires repaired-flow) (mcp-current-seconds))
-                                    (equal? (stored-instance-version repaired-flow) (hash-ref recovery 'version (stored-instance-version flow)))
-                                    (equal? (stored-instance-fingerprint repaired-flow) (hash-ref recovery 'fingerprint (stored-instance-fingerprint flow))))
-                         (error 'retry-recovered-task! "incompatible, foreign, changed, or expired recovery workflow"))
-                       (define events (instance-events store recovery-id))
+                       (define events (instance-events store flow-id))
                        (define repaired?
-                         (and (> (stored-instance-revision repaired-flow) (hash-ref recovery 'revision))
-                              (equal? (hash-ref (stored-instance-state repaired-flow) 'status) "working")
+                         (and (> (stored-instance-revision flow) (hash-ref recovery 'revision))
+                              (equal? (hash-ref (stored-instance-state flow) 'status) "working")
                               (for/or ([event (in-list (drop events (hash-ref recovery 'eventCount)))])
                                 (and (equal? (hash-ref event 'kind #f) "recovery")
                                      (equal? (hash-ref event 'stage #f) (hash-ref recovery 'stage))
                                      (member (hash-ref event 'action #f) '("outcome" "retry"))))))
                        (unless repaired? (error 'retry-recovered-task! "record an outcome or authorize effect retry before creating a replacement task"))
-                       (define expiry (min (stored-instance-expires flow) (stored-instance-expires original) (stored-instance-expires repaired-flow)))
+                       (define expiry (min (stored-instance-expires flow) (stored-instance-expires original)))
                        (define next (create-instance! store principal (stored-instance-operation original)
                                       (stored-instance-arguments original) (stored-instance-version flow)
                                       (stored-instance-fingerprint flow) expiry (hasheq 'task (hasheq))))
                        (define time (timestamp))
                        (define updated
                          (update-instance! store next
-                           (let ([seed (hasheq 'workflow flow-id 'replacesTask id
+                           (hasheq 'workflow flow-id 'replacesTask id
                                    'operationName (hash-ref old-state 'operationName #f)
                                    'capabilities (if (current-request-context)
                                                      (request-context-capabilities (current-request-context))
                                                      (hash-ref old-state 'capabilities (hasheq)))
-                                   'outputSchema (if (missing? output-schema) (hash-ref old-state 'outputSchema #f) output-schema)
                                    'responses (hash-ref old-state 'responses (hasheq))
                                    'task (hasheq 'taskId (stored-instance-handle next) 'status "working"
                                                  'createdAt time 'lastUpdatedAt time
-                                                 'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))])
-                             (if (hash-has-key? old-state 'continuation)
-                                 (hash-set seed 'continuation (hash-ref old-state 'continuation)) seed))))
+                                                 'ttlMs (* 1000 (- expiry (mcp-current-seconds))) 'pollIntervalMs 100))))
                        (record-event! store id (hasheq 'kind "task-replacement" 'taskId (stored-instance-handle updated)
-                                                       'workflowRevision (stored-instance-revision flow)
-                                                       'recoveryWorkflow recovery-id
-                                                       'recoveryWorkflowRevision (stored-instance-revision repaired-flow)))
+                                                       'workflowRevision (stored-instance-revision flow)))
                        (record-event! store (stored-instance-handle updated) (hasheq 'kind "replaces-task" 'taskId id))
                        updated])))))))
     (set! replacement (existing-replacement)))
   (unless replacement
     (error 'retry-recovered-task! "workflow execution is active"))
   (resume-task! workflow store (stored-instance-handle replacement) principal
-                #:adapters adapters #:custodian custodian #:authorize authorize #:wait? #f
-                #:output-schema output-schema)
+                #:adapters adapters #:custodian custodian #:authorize authorize #:wait? #f)
   (hash-set (hash-ref (stored-instance-state replacement) 'task) 'resultType "task"))

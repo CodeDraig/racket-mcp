@@ -1,5 +1,4 @@
 #lang racket/base
-(require "private/persistent-json.rkt")
 (require "build.rkt" (submod "build.rkt" private) "private/workflow-contract.rkt" "private/workflow-types.rkt" "private/adapter-policy.rkt" "private/executable-build.rkt")
 (require "clock.rkt" "private/failure.rkt" "private/handler-info.rkt" racket/list racket/match "storage.rkt" "json.rkt" "schema.rkt" "descriptor.rkt" "error.rkt" "codec.rkt" "freshness.rkt" "effect.rkt" "private/input-response.rkt" "private/elicitation-schema.rkt")
 (provide (struct-out workflow-descriptor) (struct-out workflow-stage) (all-from-out "effect.rkt") workflow-executable-fingerprint
@@ -11,13 +10,9 @@
 (struct identified-workflow workflow-descriptor (identity) #:transparent)
 (struct captured-workflow identified-workflow (build) #:transparent)
 (define (workflow-add-fingerprint-suffix workflow suffix)
-  (copy-workflow workflow
+  (define updated
     (struct-copy workflow-descriptor workflow
-      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)])))
-(define (workflow-rename workflow name)
-  (copy-workflow workflow (struct-copy workflow-descriptor workflow [name name])))
-;; Descriptor transformations must retain captured code and declared identity.
-(define (copy-workflow workflow updated)
+      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
   (define fields
     (list (workflow-descriptor-name updated) (workflow-descriptor-version updated)
           (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
@@ -35,9 +30,6 @@
 (define current-workflow-state (make-parameter #f))
 (define current-workflow-responses (make-parameter (hasheq)))
 (define current-workflow-invocation-key (make-parameter #f))
-;; Task recovery observes an escaping failure while the failing workflow still
-;; owns its claim. The original raised value and standalone API stay unchanged.
-(define current-workflow-failure-observer (make-parameter (lambda (_workflow _store _instance _failure) (void))))
 (define (workflow-invocation-key workflow arguments)
   (define (compute)
     (or (current-workflow-invocation-key)
@@ -112,8 +104,6 @@
 (define (run-workflow/core workflow store arguments #:principal principal #:state [handle #f]
                       #:responses [responses (hasheq)] #:adapters [adapters (hasheq)]
                       #:clock [clock mcp-current-seconds] #:ttl [ttl 86400] #:cancelled? [cancelled? (lambda () #f)])
-  (define key-arguments arguments)
-  (set! arguments (persistent-json arguments))
   (define executable-fingerprint (workflow-executable-fingerprint workflow adapters))
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'run-workflow "workflow execution must own its storage transaction boundaries"))
@@ -128,10 +118,7 @@
   (define input-ids (append-map stage-inputs (workflow-descriptor-stages workflow)))
   (when (for/or ([id (in-list input-ids)]) (hash-has-key? arguments id))
     (error 'run-workflow "input identity collides with an argument"))
-  ;; Compare accepted answers in the representation that storage will return.
-  ;; Filter unknown identities first: their values are deliberately ignored.
-  (set! responses (for/hasheq ([(id response) (in-hash responses)] #:when (memq id input-ids))
-                   (values id (persistent-json response))))
+  (set! responses (for/hasheq ([(id response) (in-hash responses)] #:when (memq id input-ids)) (values id response)))
   (when (and (not handle) (positive? (hash-count responses))) (mcp-error -32602 "Input responses require a continuation"))
   (define round (and handle (resolve-continuation store handle)))
   (define round-stage (and round (findf (lambda (stage) (eq? (workflow-stage-id stage) (cdr round))) (workflow-descriptor-stages workflow))))
@@ -142,7 +129,7 @@
         (create-instance! store principal (workflow-descriptor-name workflow) arguments
                           (workflow-descriptor-version workflow) executable-fingerprint (+ (clock) ttl)
                           (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))
-                          #:key (workflow-invocation-key workflow key-arguments))))
+                          #:key (workflow-invocation-key workflow arguments))))
   (unless (and (equal? principal (stored-instance-principal instance))
                (equal? arguments (stored-instance-arguments instance))
                (equal? (workflow-descriptor-name workflow) (stored-instance-operation instance)))
@@ -376,14 +363,6 @@
   ;; The database transaction protects each transition; this separate claim
   ;; spans external adapter execution without holding a database transaction.
   (define result missing)
-  (define (execute/observe)
-    (with-handlers ([non-break-failure?
-                    (lambda (failure)
-                      (with-handlers ([non-break-failure? void])
-                        ((current-workflow-failure-observer) workflow store
-                          (load-instance store (stored-instance-handle instance)) failure))
-                      (raise failure))])
-      (execute)))
   (let claim-loop ()
     (when (cancelled?) (error 'run-workflow "execution cancelled"))
     (when (<= (stored-instance-expires instance) (clock)) (error 'run-workflow "continuation expired"))
@@ -391,9 +370,9 @@
     ;; workflow claim. Still execute the transactional response/conflict checks.
     (unless (if (and (current-workflow-task-handoff)
                      (hash-has-key? (stored-instance-state (load-instance store (stored-instance-handle instance))) 'task-handoff))
-                (begin (set! result (execute/observe)) #t)
+                (begin (set! result (execute)) #t)
                 (call-with-instance-worker store (stored-instance-handle instance)
-                  (lambda () (set! result (execute/observe)))))
+                  (lambda () (set! result (execute)))))
       (sync (alarm-evt (+ (current-inexact-milliseconds) 25)))
       (claim-loop)))
   result)
@@ -437,4 +416,4 @@
     (error 'recover-workflow! "execution is active; recovery cannot change an in-flight effect"))
   result)
 
-(module+ private (provide workflow-add-fingerprint-suffix workflow-rename current-workflow-task-handoff workflow-invocation-key current-workflow-failure-observer))
+(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))

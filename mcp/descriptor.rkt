@@ -373,16 +373,13 @@
           (car candidates)))
       (values source (remove-duplicates resolved eq?))))
   (scoped-interface server tools resources prompts checked-completions checked checked-adapters checked-references checked-restrictions))
-(define (bind-arguments arguments input #:defaults [defaults #f])
+(define (bind-arguments arguments input)
   (unless (hash? input) (error 'bind-arguments "arguments must be an object"))
   (for/fold ([bound (hasheq)]) ([a (in-list arguments)])
     (define supplied (hash-ref input (argument-name a) missing))
     (define v (cond [(not (missing? supplied)) (if (prompt-argument? a) (with-handlers ([exn:fail? (lambda (e) (mcp-error -32602 (format "Invalid string argument ~a" (argument-name a))))])
                       (decode-string-value (prompt-argument-codec a) supplied)) supplied)]
-                    ;; Continuations supply already-decoded domain values. Do
-                    ;; not rerun a default or pass it through a prompt codec.
-                    [(argument-default a) (if defaults (hash-ref defaults (argument-name a) missing)
-                                             ((argument-default a) bound))]
+                    [(argument-default a) ((argument-default a) bound)]
                     [(argument-optional? a) missing]
                     [else (error 'bind-arguments "missing argument ~a" (argument-name a))]))
     (unless (or (missing? v) (valid? (argument-schema a) v)) (error 'bind-arguments "invalid argument ~a" (argument-name a)))

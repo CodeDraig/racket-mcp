@@ -229,10 +229,6 @@ executions share checkpoint and input persistence with tools, and are bound to
 the request method. When a store is configured, embedded content in tool/prompt results is captured as
 a persistent layout. Children resolve in source order, with separate input
 namespaces, retained completed results, and authorization checked on retry.
-Native task workers use this same rendering path before publishing completion.
-An embedded child awaiting input keeps the task in @tt{input_required};
-@tt{tasks/update} resumes the retained rendering layout, including after a
-restart, without recomputing the completed parent or completed children.
 The parent handler is not reconstructed after an input boundary. Resource bodies can return @racket[text-presentation] with strings and embedded
 text resources, @racket[json-presentation] with a JSON value, or
 @racket[binary-presentation] with bytes and an explicit MIME type. These constructors
@@ -258,12 +254,7 @@ multiple related resources with distinct identities.
 Durable rendering stores all completed child content. Its record version is now
 @tt{render/3}; older records fail with a version diagnostic because they may have
 already discarded content. Application workflow versions remain independently
-checked. New rendering records also retain bound parent arguments, so resuming
-an embedded child or replaying a completed layout does not reevaluate defaults
-or prompt codecs. Older @tt{render/3} records with explicit arguments remain
-resumable; a record with an omitted default and no saved bindings fails with a
-diagnostic because its original default value cannot be recovered.
-SDK rendering markers carry a private Racket property; identical JSON
+checked. SDK rendering markers carry a private Racket property; identical JSON
 objects remain ordinary data. SQLite stores marker provenance in separate columns
 for state, arguments, and journal events. Public JSON decoding cannot supply this
 provenance. No application JSON key by itself activates an embedded resource
@@ -323,10 +314,6 @@ the separate checkpoint/effect @racket[value-codec] mechanism.
 multibyte characters, and rejects malformed UTF-8 without substituting replacement
 characters. It reads one value and preserves following input. @racket[string->json]
 requires the remaining input to contain only JSON's four whitespace characters.
-
-Numeric @tt{multipleOf} checks use exact operand values, including for native
-inexact Racket numbers. This matches their JSON serialization and prevents a
-rounded floating-point quotient from admitting a nonmultiple.
 
 @racket[validate] and @racket[valid?] accept @racket[#:max-steps] (default
 1,000,000) in addition to @racket[#:max-depth]. Registry indexing, construction
@@ -516,11 +503,7 @@ a declared workflow key, another initial request creates another preparation.
 
 Without a boundary, task execution retains its immediate-start behavior. With
 @racket[#:execution task-optional] and no client Tasks capability, boundaries are
-passed synchronously and the entire workflow remains MRTR. If a later MRTR
-continuation advertises Tasks support, it resumes that saved execution with its
-submitted responses. Without a boundary it continues synchronously; with a
-boundary it can hand off at that boundary. It never creates a fresh execution
-in place of the continuation. Subsequent boundaries
+passed synchronously and the entire workflow remains MRTR. Subsequent boundaries
 inside an already-started task do not create nested tasks. A nested local workflow
 does not inherit the parent's handoff factory.
 }
@@ -531,31 +514,6 @@ with @racket[Any], a procedure returning @racket[json-null], and @racket[#f] ada
 and policy fields. The boundary does not invoke that procedure or save a value.
 @tt{start-workflow-task} accepts @racket[#:state] and
 @racket[#:responses] for the preparation's MRTR retries.
-
-Task execution omits absent optional arguments before computing invocation keys
-or saving arguments, just as synchronous workflow execution does. Explicit false
-and JSON null values remain present; defaults are evaluated once during binding.
-Runtime workers resume the saved bound argument map. They validate its domain
-values without applying the external input schema again to defaulted fields.
-Local task completion checks the complete tool-result shape and the tool's declared
-output schema before publishing a completed status. Invalid output fails the task.
-An @tt{isError} field must be Boolean; only @racket[#t] exempts the result from
-the structured-output schema. Malformed flags are rejected during completion and
-when polling legacy completed records.
-Upstream task completions apply the same Boolean flag and output-schema checks
-before persistence, URI remapping, or completion notification.
-Validation does not replay completed workflow effects.
-
-The lower-level task APIs accept @racket[#:output-schema].
-@tt{start-workflow-task} defaults to no output schema and saves the supplied schema
-with the task. @tt{resume-task!}, @tt{update-task!}, and @tt{retry-recovered-task!}
-use that saved schema unless explicitly overridden. Runtime entry points supply
-the current tool descriptor's schema, including for legacy records without a saved
-schema. Polling through the runtime also rejects invalid legacy completed results
-without rewriting their stored history.
-These APIs execute the supplied workflow and adapters even when called by an
-ordinary runtime handler or from another task worker. The runtime's installed-tool
-executor applies only to tasks launched through its own task entry points.
 
 @racket[#:restore-principal] maps the stored principal key to a current application
 principal. Its default returns the key itself, suitable for string identities.
@@ -571,12 +529,8 @@ retain the workflow's recorded effect policy and key. This is not a distributed
 lease protocol. Native lock/restart verification currently covers Linux only.
 Clients opt into task status notifications with a @tt{taskIds} string array in
 @tt{subscriptions/listen}. The runtime verifies each task's ownership and read
-policy before acknowledging the accepted IDs.
-For bridged upstream tasks, registration and notification delivery also check
-the originating @tt{tools/call} permission with its saved name and arguments,
-as polling does. These checks do not contact the upstream server. Native task
-read subscriptions retain their task-read policy.
-Committed transitions emit @tt{notifications/tasks} with the complete detailed task, tagged with the
+policy before acknowledging the accepted IDs. Committed transitions emit
+@tt{notifications/tasks} with the complete detailed task, tagged with the
 subscription request ID. Notifications are bounded hints: after reconnecting or
 overflow, poll @tt{tasks/get}; there is no notification replay. Terminal no-op
 cancellation does not emit a new transition. The exhaustive failure-boundary
@@ -1027,9 +981,8 @@ when that metadata field is false or absent, the response may proceed through
 the remaining state, error, and authorization-code checks.
 Applications can use the native fetch/exchange callbacks or supply their own.
 Browser interaction and credential persistence remain application callbacks.
-Hosted authorization services are outside the package scope. Dynamic client
-registration and its durable registration store are provided by
-@tt{mcp/oauth-registration} and @tt{mcp/oauth-registration-store}.
+Hosted authorization services
+and dynamic client registration are outside the package scope.
 
 @subsection{Explicit interaction runner}
 @defmodule[mcp/interaction]
@@ -1112,23 +1065,13 @@ Versions of adapters referenced by effect stages contribute to persisted workflo
 compatibility. Changing a referenced adapter version or policy rejects an existing
 execution before its next stage; unchanged explicit versions permit reconstruction
 of procedures after restart. Versions are an application compatibility promise,
-not a hash or proof of procedure equivalence. Captured application builds include
-observed imported helper code; ordinary uncaptured workflows require an explicit
-build identity to cover changes outside their generated stages.
-Prompt and resource workflow renaming preserves both declared identities and
-captured executable context. Legacy prompt/resource continuations saved with
-discarded build identity are rejected as incompatible before accepting input or
-advancing stages; their missing provenance cannot be inferred safely. Before
-upgrading, finish those continuations under their originating application build,
-or retain the records for explicit application-level recovery. No automatic
-fingerprint migration or effect replay is performed.
-New tasks additionally retain the published tool name so sibling
+not a hash or proof of procedure equivalence. Imported helper fingerprint coverage
+remains incomplete. New tasks additionally retain the published tool name so sibling
 mounts resolve their own bindings during updates and startup recovery. Failed tasks
 remain terminal when their workflow requires recovery.
 
 These replacements are named effect bindings, not interception of arbitrary Racket
-I/O. Interface restrictions enforce the declared adapter surface; they do not
-sandbox arbitrary application code. Upstream MRTR/Tasks bridging is described below.
+I/O. Enforced effect restrictions and upstream MRTR/Tasks bridging remain incomplete.
 
 @subsection{Pinned upstream interfaces}
 @tt{mcp/upstream} exports @racket[capture-snapshot],
@@ -1442,9 +1385,7 @@ upstream task outcome and creates a replacement handle. The separate
 mutation. Native-workflow recovery APIs do not revive an upstream task.
 
 Subscribers to local task IDs receive committed observed changes, including
-translated completed results. Registration, publication, and queued delivery
-recheck the reader's credential identity and pinned task binding locally, without
-contacting the peer. This currently reports changes observed through
+translated completed results. This currently reports changes observed through
 local polling, control requests, and explicit observations. The scoped task runner
 can supply observations from a live upstream subscription. Broader concurrent and
 fault-injection coverage and independent task-bridge interoperability remain
@@ -1862,20 +1803,6 @@ that failed with a recorded uncertain manual effect, inspect its workflow and us
 @tt{#:capabilities}. This explicit local API creates a new task for the repaired
 workflow. It adds no protocol method and performs no automatic retry of an
 uncertain mutation. An abandoned workflow cannot be resumed this way.
-
-If the uncertain effect belongs to an embedded resource workflow, the failed
-task's @tt{recovery} metadata identifies that workflow in its @tt{workflow} field
-and the effect in @tt{stage}. Inspect and repair that child with
-@tt{recover-workflow!}, then request replacement using the original task ID.
-The replacement retains the parent execution and rendering continuation;
-completed parents and embedded siblings are not recomputed. Ownership, expiry,
-the recorded executable identity, and a matching recovery journal entry are
-checked before allocation. The original task remains terminal.
-For embedded recovery, the saved rendering path identifies the current resource
-binding. Its workflow version, renderer, effective adapters, and enclosing render
-identities must match before a replacement is allocated. This check reads saved
-records without invoking handlers, renderers, defaults, or effects. Rejecting a
-changed binding leaves the repaired workflow and replacement slot available.
 
 The runtime resolves the original mounted operation and adapters, checks task and
 operation authorization before allocation and again in the worker, and requires

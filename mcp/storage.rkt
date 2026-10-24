@@ -1,5 +1,4 @@
 #lang racket/base
-(require "private/persistent-json.rkt")
 (require "clock.rkt" "private/transaction.rkt" db racket/random racket/list racket/file "json.rkt" "private/worker-lock.rkt" "private/render-provenance.rkt")
 (provide open-sqlite-store open-memory-store close-store! store-transaction
          (struct-out state-store) (struct-out stored-instance)
@@ -111,9 +110,6 @@
                         (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances WHERE operation=?" operation)
                         (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances"))))))
 (define (create-instance! store principal operation arguments version fingerprint expires state #:key [key #f])
-  ;; Keyed retries compare the representation returned by storage, including
-  ;; exact JSON decimals and the separate trusted rendering provenance.
-  (set! arguments (persistent-json arguments))
   (store-transaction store
     (lambda ()
       (define conn (state-store-connection store))

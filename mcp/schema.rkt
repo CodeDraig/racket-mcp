@@ -68,16 +68,6 @@
   (when budget
     (when (zero? (unbox budget)) (error 'validate "schema evaluation work limit exceeded"))
     (set-box! budget (sub1 (unbox budget)))))
-;; Canonical keys make numeric equality recursive and independent of host hash
-;; implementations, while retaining hash-based duplicate detection for arrays.
-(define (json-instance-key value)
-  (spend-validation-step!)
-  (cond [(rational? value) (if (exact? value) value (inexact->exact value))]
-        [(hash? value) (for/hasheq ([(key child) (in-hash value)]) (values key (json-instance-key child)))]
-        [(list? value) (map json-instance-key value)]
-        [else value]))
-(define (json-instance=? left right)
-  (equal? (json-instance-key left) (json-instance-key right)))
 (define (validate schema value #:registry [registry (hash)] #:max-depth [max-depth 128]
                   #:max-steps [max-steps 1000000])
   (unless (exact-positive-integer? max-steps) (raise-argument-error 'validate "exact-positive-integer?" max-steps))
@@ -171,8 +161,8 @@
                          (and (hash? candidate) (equal? (hash-ref candidate '$dynamicAnchor #f) anchor) candidate)) target) target))
              (define-values (es ev) (sub dynamic-target v '$dynamicRef)) (merge! es ev))
            (when (hash-has-key? s 'type) (define ts (hash-ref s 'type)) (unless (ormap (lambda (t) (type? t v)) (if (list? ts) ts (list ts))) (bad 'type "type mismatch")))
-           (when (and (hash-has-key? s 'const) (not (json-instance=? v (hash-ref s 'const)))) (bad 'const "value differs from const"))
-           (when (and (hash-has-key? s 'enum) (not (member v (hash-ref s 'enum) json-instance=?))) (bad 'enum "value absent from enum"))
+           (when (and (hash-has-key? s 'const) (not (equal? v (hash-ref s 'const)))) (bad 'const "value differs from const"))
+           (when (and (hash-has-key? s 'enum) (not (member v (hash-ref s 'enum)))) (bad 'enum "value absent from enum"))
            (for ([k '(allOf anyOf oneOf)] #:when (hash-has-key? s k))
              (define results (for/list ([child (in-list (hash-ref s k))] [i (in-naturals)]) (call-with-values (lambda () (sub child v (list k i))) list)))
              (define successes (filter (lambda (r) (null? (car r))) results))
@@ -191,11 +181,7 @@
            (when (rational? v)
              (for ([k '(minimum maximum exclusiveMinimum exclusiveMaximum)] [p (list >= <= > <)] #:when (hash-has-key? s k))
                (unless (p v (hash-ref s k)) (bad k "numeric bound failed")))
-             ;; A flonum quotient can round a nonmultiple to an integer. Use
-             ;; the exact values that JSON serialization preserves instead.
-             (when (and (hash-has-key? s 'multipleOf)
-                        (not (integer? (/ (inexact->exact v) (inexact->exact (hash-ref s 'multipleOf))))))
-               (bad 'multipleOf "not an exact multiple")))
+             (when (and (hash-has-key? s 'multipleOf) (not (integer? (/ v (hash-ref s 'multipleOf))))) (bad 'multipleOf "not an exact multiple")))
            (when (string? v)
              (when (< (string-length v) (hash-ref s 'minLength 0)) (bad 'minLength "string too short"))
              (when (> (string-length v) (hash-ref s 'maxLength +inf.0)) (bad 'maxLength "string too long"))
@@ -225,7 +211,7 @@
            (when (list? v)
              (when (< (length v) (hash-ref s 'minItems 0)) (bad 'minItems "array too short"))
              (when (> (length v) (hash-ref s 'maxItems +inf.0)) (bad 'maxItems "array too long"))
-             (when (and (hash-ref s 'uniqueItems #f) (not (= (length v) (length (remove-duplicates (map json-instance-key v)))))) (bad 'uniqueItems "duplicate items"))
+             (when (and (hash-ref s 'uniqueItems #f) (not (= (length v) (length (remove-duplicates v))))) (bad 'uniqueItems "duplicate items"))
              (define prefixes (list->vector (hash-ref s 'prefixItems '())))
              (for ([x (in-list v)] [i (in-naturals)])
                (spend-validation-step!)
