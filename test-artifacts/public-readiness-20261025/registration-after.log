@@ -1,0 +1,125 @@
+(#hasheq((arguments . ())
+         (column . 0)
+         (dynamic-metadata . #f)
+         (kind . server)
+         (line . 3)
+         (manifest-version . 2)
+         (metadata
+          .
+          #hasheq((name . #hasheq((known? . #t) (value . "library")))
+                  (version . #hasheq((known? . #t) (value . "0.1.0")))))
+         (name . "library")
+         (position . 49)
+         (source
+          .
+          "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/library.rkt")
+         (span . 43))
+ #hasheq((arguments
+          .
+          (#hasheq((name . id)
+                   (required . #t)
+                   (schema
+                    .
+                    #hasheq((known? . #t)
+                            (value . #hasheq((type . "string"))))))))
+         (binding-origin
+          .
+          #hasheq((binding-name . "books5.2")
+                  (binding-provider
+                   .
+                   #hasheq((kind . "symbol")
+                           (module . "library")
+                           (phase . 0)
+                           (submodules . ())))
+                  (column . 12)
+                  (line . 4)
+                  (name . books)
+                  (position . 105)
+                  (source
+                   .
+                   "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/library.rkt")
+                  (span . 5)))
+         (column . 9)
+         (dynamic-metadata . #f)
+         (kind . resource)
+         (line . 10)
+         (local-id . "declaration-1")
+         (manifest-version . 2)
+         (metadata
+          .
+          #hasheq((uri . #hasheq((known? . #t) (value . "book:///{id}")))))
+         (name . books)
+         (position . 337)
+         (reference-analysis . lexical-handler-syntax)
+         (resource-references . ())
+         (source
+          .
+          "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/extensions/collection.rkt")
+         (span . 58))
+ #hasheq((arguments
+          .
+          (#hasheq((name . query)
+                   (required . #t)
+                   (schema
+                    .
+                    #hasheq((known? . #t)
+                            (value . #hasheq((type . "string"))))))))
+         (column . 9)
+         (dynamic-metadata . #f)
+         (input-schema
+          .
+          #hasheq((known? . #t)
+                  (value
+                   .
+                   #hasheq((additionalProperties . #f)
+                           (properties
+                            .
+                            #hasheq((query . #hasheq((type . "string")))))
+                           (required . ("query"))
+                           (type . "object")))))
+         (kind . tool)
+         (line . 11)
+         (manifest-version . 2)
+         (metadata . #hasheq())
+         (name . search-books)
+         (position . 405)
+         (reference-analysis . lexical-handler-syntax)
+         (resource-references . ())
+         (source
+          .
+          "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/extensions/collection.rkt")
+         (span . 155))
+ #hasheq((argument . id)
+         (arguments . ())
+         (column . 9)
+         (dynamic-metadata . #f)
+         (kind . completion)
+         (line . 13)
+         (manifest-version . 2)
+         (metadata . #hasheq())
+         (name . books)
+         (position . 570)
+         (reference-analysis . lexical-completion-target)
+         (resource-references
+          .
+          (#hasheq((binding-name . "books5.2")
+                   (binding-provider
+                    .
+                    #hasheq((kind . "symbol")
+                            (module . "library")
+                            (phase . 0)
+                            (submodules . ())))
+                   (column . 12)
+                   (line . 4)
+                   (local-target . "declaration-1")
+                   (name . books)
+                   (position . 105)
+                   (source
+                    .
+                    "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/library.rkt")
+                   (span . 5))))
+         (source
+          .
+          "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/examples/extensions/collection.rkt")
+         (span . 158)
+         (target . #hasheq((kind . resource) (known? . #t) (name . books)))))

@@ -1,0 +1,15 @@
+/srv/data/code/racket-mcp/.cache/racket-9.3/bin/raco: Unrecognized command: mcp
+
+Usage: raco <command> <option> ... <arg> ...
+
+Frequently used commands:
+  docs                 search and view documentation
+  make                 compile source to bytecode
+  setup                install and build libraries and documentation
+  pkg                  manage packages
+  exe                  create executable
+  test                 run tests associated with files/directories
+
+A command can be specified by an unambiguous prefix.
+See `raco help' for a complete list of commands.
+See `raco help <command>' for help on a command.

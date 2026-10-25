@@ -1,0 +1,12 @@
+{
+  "tasks-lifecycle": 1,
+  "tasks-capability-negotiation": 1,
+  "tasks-wire-fields": 1,
+  "tasks-request-state-removal": 1,
+  "tasks-mrtr-input": 1,
+  "tasks-request-headers": 1,
+  "tasks-dispatch-and-envelope": 1,
+  "tasks-status-notifications": 1,
+  "tasks-required-task-error": 1,
+  "tasks-mrtr-composition": 1
+}

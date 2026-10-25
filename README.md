@@ -21,23 +21,19 @@ from the release plan; those platforms remain unverified. See
 
 ## Run from this checkout
 
+Start with Racket installed, then prepare and install the pinned language
+dependency before compiling or running an example. The environment script isolates
+Racket packages and scratch files in this checkout.
+
 ```sh
 . scripts/racket-env.sh
-raco make examples/greeter.rkt
-racket examples/greeter.rkt
-racket examples/approval.rkt --state .cache/approval.sqlite
-```
-
-The environment script isolates Racket packages and scratch files in this
-checkout. Install the pinned language dependency in that environment:
-
-```sh
 python3 scripts/prepare-syntax-spec.py
 env -u PLTCOLLECTS raco pkg install --name syntax-spec-v3 --auto --batch --no-docs \
   --link "$PWD/.cache/patched-dependencies/syntax-spec-v3"
 python3 scripts/package.py
 env -u PLTCOLLECTS raco pkg install --name racket-mcp --no-setup \
   --link "$PWD/.cache/distribution/racket-mcp"
+env -u PLTCOLLECTS raco setup --no-zo --no-docs --pkgs racket-mcp
 ```
 
 The preparation command verifies the vendored upstream hashes and applies the
@@ -49,6 +45,17 @@ already has the original dependency installed, use `env -u PLTCOLLECTS raco pkg 
 "$PWD/.cache/patched-dependencies/syntax-spec-v3"` after preparation. Run these
 commands with `scripts/racket-env.sh` sourced as above. The unpatched upstream
 0.1 package does not satisfy the SDK dependency requirement.
+
+After installation, run the examples in the same shell:
+
+```sh
+raco make examples/greeter.rkt
+racket examples/greeter.rkt
+racket examples/approval.rkt --state .cache/approval.sqlite
+```
+
+The greeter serves MCP over standard input/output and waits for client requests;
+stop it before launching the approval example.
 
 Native CI uses `python scripts/ci.py` with an existing Racket installation. This
 portable runner prepares the pinned language dependency, keeps package writes in

@@ -1,0 +1,98 @@
+{
+  "base_commit": "b72e8c3b6e24422267e9e7f522a11cfd8807aead",
+  "requested_racket": "9.3",
+  "work": "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3",
+  "steps": [
+    {
+      "name": "racket-version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.072
+    },
+    {
+      "name": "prepare-language",
+      "command": [
+        "python3",
+        "scripts/prepare-syntax-spec.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.212
+    },
+    {
+      "name": "install-language",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--name",
+        "syntax-spec-v3",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "--link",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3/.cache/patched-dependencies/syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 27.189
+    },
+    {
+      "name": "package",
+      "command": [
+        "python3",
+        "scripts/package.py"
+      ],
+      "exit_code": 0,
+      "seconds": 5.535
+    },
+    {
+      "name": "install-sdk",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--name",
+        "racket-mcp",
+        "--no-setup",
+        "--link",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3/.cache/distribution/racket-mcp"
+      ],
+      "exit_code": 0,
+      "seconds": 3.439
+    },
+    {
+      "name": "readme-compile",
+      "command": [
+        "raco",
+        "make",
+        "examples/greeter.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 11.745
+    },
+    {
+      "name": "readme-greeter-eof",
+      "command": [
+        "racket",
+        "examples/greeter.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 2.451
+    },
+    {
+      "name": "native-ci",
+      "command": [
+        "python3",
+        "scripts/ci.py",
+        "--skip-bootstrap",
+        "--package-home",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3/.racket"
+      ],
+      "exit_code": 1,
+      "seconds": 1085.794
+    }
+  ],
+  "success": false
+}

@@ -1,0 +1,5 @@
+raco test: (file "tests/declared-build.rkt")
+raco test: (file "tests/declared-build-cli.rkt")
+raco test: (file "tests/cli-artifacts.rkt")
+raco test: (file "tests/view-adapters.rkt")
+38 tests passed

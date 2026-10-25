@@ -1,0 +1,26 @@
+{
+  "platform": "Linux-7.2.11-200.fc44.x86_64-x86_64-with-glibc2.43",
+  "architecture": "x86_64",
+  "python": "3.14.8",
+  "go": "go version go1.26.10-X:nodwarf5 linux/amd64",
+  "base_commit": "b72e8c3b6e24422267e9e7f522a11cfd8807aead",
+  "documentation_sha256": {
+    "README.md": "aae2add9e3c6369d48f4a0142e5529e0c757ccccd367b5c894ad1be7c784c40a",
+    "reports/MCP SDK persistence comparison.md": "afd6166d34acc0b270888146de25c24ce2462b05a8fddaaecdd8bf6ae58b3b6d",
+    "reports/Why SDKs removed Tasks.md": "28767fd9c19f16e3dc299d7cdf705d6f66c1a309a1dbe60a44dfe79f71ee8258"
+  },
+  "checks": {
+    "bootstrap_before_compile": true,
+    "report_source_links_valid": 13
+  },
+  "setup_notes": [
+    "Racket 9.2 installer was downloaded from the official release page, checked against its published SHA-256, and installed only below .cache/public-readiness-20261025/tools.",
+    "The web tool could not open the installer directory; a Python urllib release-page request received HTTP 403. curl fetched the official release page and installer successfully.",
+    "A bounded curl preview encountered a closed output pipe; the full-page retrieval used for checksum extraction succeeded."
+  ],
+  "node": "v26.8.1",
+  "conformance_dependency_locks": {
+    ".cache/conformance-pinned": "fc118b35d02d0612f47f1703e1c66582b9d923c1e334b8a09f064ad74b23ecc9"
+  },
+  "ci_script_sha256": "39de1991f136351012a63d8caa771d38eb0430d2ce72830ac0660f556e17f37c"
+}

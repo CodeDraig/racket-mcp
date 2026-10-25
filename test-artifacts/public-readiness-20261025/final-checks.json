@@ -1,0 +1,25 @@
+{
+  "checked_at_utc": "2026-10-25T21:41:47.139623+00:00",
+  "base_commit": "b72e8c3b6e24422267e9e7f522a11cfd8807aead",
+  "source_files_matched": 3626,
+  "source_differences": [],
+  "matrix": {
+    "racket-9.2": {
+      "native": 6852,
+      "schema": 1301,
+      "regex": 86,
+      "interop": 14,
+      "installed": 38,
+      "success": true
+    },
+    "racket-9.3-corrected": {
+      "native": 6852,
+      "schema": 1301,
+      "regex": 86,
+      "interop": 14,
+      "installed": 38,
+      "success": true
+    }
+  },
+  "conformance": "qualified; see conformance-retry/summary.json and README.md"
+}

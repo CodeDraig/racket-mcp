@@ -1,0 +1,7 @@
+{
+  "reason": "First fresh run exposed missing raco metadata registration. Stopped only waiting shell queues before they started; rescheduling corrected 9.3, 9.2 and conformance serially.",
+  "stopped_waiting_pids": [
+    356499,
+    341034
+  ]
+}

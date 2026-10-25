@@ -1,0 +1,52 @@
+(node:1467176) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: auth/metadata-var2
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt http://localhost:41507/mcp
+(node:1467176) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+
+Client exited with code 1
+
+Stderr:
+discover-authorization: protected resource identifier mismatch
+  context...:
+   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/mcp/private/oauth-discovery.rkt:38:0: discover-from-resource
+   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/mcp/oauth.rkt:138:2: run
+   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/mcp/oauth-http-client.rkt:4:0: authorize-http-client!
+   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt:60:21: with-handlers-handler30
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/racket/private/more-scheme.rkt:160:2: select-handler/no-breaks
+   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt:57:0: call
+   body of "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt"
+
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/oauth/results/auth/metadata-var2-2026-10-25T21-39-57-246Z
+Checks:
+[90m2026-10-25T21:39:58.223Z[0m [incoming-request                   ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-10-25T21:39:58.224Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 401 response for POST /mcp (method: server/discover)
+
+[90m2026-10-25T21:39:58.227Z[0m [incoming-request                   ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource/mcp
+[90m2026-10-25T21:39:58.227Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 404 response for GET /.well-known/oauth-protected-resource/mcp
+
+[90m2026-10-25T21:39:58.229Z[0m [incoming-request                   ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource
+[90m2026-10-25T21:39:58.229Z[0m [prm-pathbased-requested            ] [32mSUCCESS[0m Client requested PRM metadata at path-based location
+[90m2026-10-25T21:39:58.229Z[0m [outgoing-response                  ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-protected-resource
+
+[90m2026-10-25T21:39:58.245Z[0m [authorization-server-metadata      ] [31mFAILURE[0m Expected Check Missing: authorization-server-metadata
+[90m2026-10-25T21:39:58.245Z[0m [client-registration                ] [31mFAILURE[0m Expected Check Missing: client-registration
+[90m2026-10-25T21:39:58.245Z[0m [authorization-request              ] [31mFAILURE[0m Expected Check Missing: authorization-request
+[90m2026-10-25T21:39:58.245Z[0m [token-request                      ] [31mFAILURE[0m Expected Check Missing: token-request
+[90m2026-10-25T21:39:58.245Z[0m [resource-parameter-in-authorization] [31mFAILURE[0m Client MUST include resource parameter in authorization request per RFC 8707
+[90m2026-10-25T21:39:58.245Z[0m [resource-parameter-in-token        ] [31mFAILURE[0m Client MUST include resource parameter in token request per RFC 8707
+
+Test Results:
+Passed: 1/7, 6 failed, 0 warnings
+
+⚠️  CLIENT EXITED WITH ERROR (code 1) - Test may be incomplete
+
+Failed Checks:
+  - Expected Check Missing: authorization-server-metadata: Expected Check Missing: authorization-server-metadata
+  - Expected Check Missing: client-registration: Expected Check Missing: client-registration
+  - Expected Check Missing: authorization-request: Expected Check Missing: authorization-request
+  - Expected Check Missing: token-request: Expected Check Missing: token-request
+  - Resource parameter in authorization request: Client MUST include resource parameter in authorization request per RFC 8707
+  - Resource parameter in token request: Client MUST include resource parameter in token request per RFC 8707
+
+❌ OVERALL: FAILED

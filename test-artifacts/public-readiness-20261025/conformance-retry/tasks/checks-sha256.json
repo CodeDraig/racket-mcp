@@ -1,0 +1,12 @@
+{
+  "results/server-tasks-capability-negotiation-2026-10-25T21-39-20-853Z/checks.json": "d14223da0fe2635b24d9ac374d3ddb36c4a134d00be23c2434172034d57ae728",
+  "results/server-tasks-dispatch-and-envelope-2026-10-25T21-39-29-158Z/checks.json": "da7f6adcb7c42a109e1cab7cc9d40df829930dea0a5423a922dc22c91014d3bd",
+  "results/server-tasks-lifecycle-2026-10-25T21-39-16-763Z/checks.json": "407552b53a40931fa62803acc9ab499f43d764039dd4854fbe093a8f30f69e64",
+  "results/server-tasks-mrtr-composition-2026-10-25T21-39-32-121Z/checks.json": "87588eb8c9430d4258657845db59d511679c06facb5e6579cca09e718877a347",
+  "results/server-tasks-mrtr-input-2026-10-25T21-39-26-200Z/checks.json": "2c0addc79e6711673d5036c55c8acea3abee11c13a9fd4eb22dd56fd58e71e08",
+  "results/server-tasks-request-headers-2026-10-25T21-39-28-331Z/checks.json": "ff306d10a8bcb008bafd2d7a39ed3250516d07fecfb85b856ccce81a67133032",
+  "results/server-tasks-request-state-removal-2026-10-25T21-39-25-277Z/checks.json": "60a181737e0fcbe127b1e96345eeea5ee92d794ef64eaa4d3d976aeac0d10989",
+  "results/server-tasks-required-task-error-2026-10-25T21-39-31-359Z/checks.json": "916e34f5745bef089650e48df9b2babdf024cf3aef252775d821616783334f8b",
+  "results/server-tasks-status-notifications-2026-10-25T21-39-30-659Z/checks.json": "189ae6f625754b202f0251d296e1cb27411a0db9613f43402aa289e9f9f0d694",
+  "results/server-tasks-wire-fields-2026-10-25T21-39-21-699Z/checks.json": "e73e26d75100a225f2c1113cd9218778d694690e2b2e3ab78aa086892d77bd73"
+}

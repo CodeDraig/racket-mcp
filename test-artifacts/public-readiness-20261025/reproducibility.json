@@ -1,0 +1,19 @@
+{
+  "identical": true,
+  "independent_builds": [
+    {
+      "run": "racket-9.3-corrected",
+      "sha256": "9821f8c277a89f721de33e105c71a2302996ee63fea98a48fe738fa5d55fd349",
+      "bytes": 4544622,
+      "files": 1641,
+      "integrity": "passed"
+    },
+    {
+      "run": "racket-9.2",
+      "sha256": "9821f8c277a89f721de33e105c71a2302996ee63fea98a48fe738fa5d55fd349",
+      "bytes": 4544622,
+      "files": 1641,
+      "integrity": "passed"
+    }
+  ]
+}

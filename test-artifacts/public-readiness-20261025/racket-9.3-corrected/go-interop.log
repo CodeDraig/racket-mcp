@@ -1,0 +1,22 @@
+go: downloading github.com/google/jsonschema-go v0.4.3
+go: downloading github.com/yosida95/uritemplate/v3 v3.0.2
+go: downloading golang.org/x/sync v0.20.0
+go: downloading golang.org/x/time v0.15.0
+go: downloading golang.org/x/oauth2 v0.35.0
+go: downloading github.com/segmentio/encoding v0.5.4
+go: downloading github.com/segmentio/asm v1.1.3
+go: downloading golang.org/x/sys v0.41.0
+Official Go SDK: discovery, tool listing, and tool call passed (2026-07-28).
+Official Go SDK: three pages, five ordered tools passed (2026-07-28).
+Official Go SDK: ordered progress, context cancellation, server worker cleanup, and same-connection tool listing passed (2026-07-28).
+Racket client / official Go server: progress, cancellation, handler cleanup, and continued connection passed.
+Official Go SDK: multi-content resource read, tool embedding, and prompt message lowering passed (2026-07-28).
+Official Go SDK: separate collection extension, independent helper bindings, generated search tools, encoded resource reads, and template completion passed.
+Official Go SDK: HTTP JSON-to-SSE selection, single execution, cancellation, worker cleanup, and continued requests passed.
+Official Go SDK: discovery, tool listing, and tool call passed (2026-07-28).
+Official Go SDK: subscription acknowledgement, accepted filter, tagged changes, graceful closure and fresh connection passed (HTTP=false).
+Official Go SDK: subscription acknowledgement, accepted filter, tagged changes, graceful closure and fresh connection passed (HTTP=true).
+Official Go SDK: resource subscription acceptance, upstream forwarding, URI mapping, updated reads and re-subscription passed (HTTP=false).
+Official Go SDK: resource subscription acceptance, upstream forwarding, URI mapping, updated reads and re-subscription passed (HTTP=true).
+Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation, fresh subscriptions and process-loss propagation passed (HTTP=#f).
+Racket forwarder / official Go server: accepted resource filters, mapped updates, reads, cancellation, fresh subscriptions and process-loss propagation passed (HTTP=#t).

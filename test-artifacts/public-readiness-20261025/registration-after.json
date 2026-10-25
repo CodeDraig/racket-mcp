@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/raco",
+    "mcp",
+    "inspect",
+    "examples/library.rkt"
+  ],
+  "package_home": "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.racket",
+  "exit_code": 0
+}

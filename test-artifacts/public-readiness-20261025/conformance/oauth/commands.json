@@ -1,0 +1,17 @@
+[
+  [
+    "/srv/data/code/racket-mcp/.cache/patched-dependencies/conformance/node_modules/.bin/tsx",
+    "/srv/data/code/racket-mcp/.cache/patched-dependencies/conformance/src/index.ts",
+    "client",
+    "--command",
+    "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt",
+    "--scenario",
+    "auth/metadata-default",
+    "--spec-version",
+    "2026-07-28",
+    "--timeout",
+    "60000",
+    "--output-dir",
+    "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance/oauth/results"
+  ]
+]

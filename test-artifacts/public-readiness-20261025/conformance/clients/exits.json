@@ -1,0 +1,14 @@
+{
+  "tools_call": 1,
+  "request-metadata": 1,
+  "sep-2322-client-request-state": 1,
+  "http-standard-headers": 1,
+  "http-custom-headers": 1,
+  "http-invalid-tool-headers": 1,
+  "json-schema-ref-no-deref": 1,
+  "json-schema-2020-12-preservation": 1,
+  "auth/basic-cimd": 1,
+  "auth/pre-registration": 1,
+  "auth/resource-mismatch": 1,
+  "auth/metadata-issuer-mismatch": 1
+}

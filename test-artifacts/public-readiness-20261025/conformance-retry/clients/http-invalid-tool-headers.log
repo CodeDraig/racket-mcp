@@ -1,0 +1,24 @@
+(node:1462246) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: http-invalid-tool-headers
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-client.rkt http://localhost:34977
+(node:1462246) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/clients/results/http-invalid-tool-headers-2026-10-25T21-39-41-792Z
+Checks:
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-client-reject-invalid-tool ] [32mSUCCESS[0m Client MUST keep valid tools while excluding invalid ones
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-not-empty     ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_empty_header' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-primitive-only] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_object_header' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-primitive-only] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_array_header' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-primitive-only] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_null_header' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-primitive-only] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_number_header' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-unique        ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_duplicate_same_case' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-unique        ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_duplicate_diff_case' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-charset       ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_space_in_name' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-charset       ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_colon_in_name' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-charset       ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_non_ascii_name' with invalid x-mcp-header
+[90m2026-10-25T21:39:42.611Z[0m [sep-2243-x-mcp-header-charset       ] [32mSUCCESS[0m Client MUST NOT call tool 'invalid_control_char_name' with invalid x-mcp-header
+
+Test Results:
+Passed: 12/12, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

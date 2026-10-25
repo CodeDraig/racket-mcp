@@ -1,0 +1,25 @@
+raco setup: version: 9.2
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.2
+raco setup: variants: cs
+raco setup: main collects: /srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/collects/
+raco setup: collects paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.2/.racket/.local/share/racket/9.2/collects
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/collects/
+raco setup: main pkgs: /srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/share/pkgs
+raco setup: pkgs paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/share/pkgs
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.2/.racket/.local/share/racket/9.2/pkgs
+raco setup: links files: 
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/share/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.2/.racket/.local/share/racket/9.2/links.rktd
+raco setup: --- updating info-domain tables ---                    [17:16:59]
+raco setup: updating: /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.2/.racket/.local/share/racket/9.2/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [17:16:59]
+raco setup: --- installing foreign libraries ---                   [17:16:59]
+raco setup: --- installing shared files ---                        [17:16:59]
+raco setup: --- creating launchers ---                             [17:16:59]
+raco setup: --- installing man pages ---                           [17:16:59]
+raco setup: --- installing collections ---                         [17:16:59]
+raco setup: --- post-installing collections ---                    [17:16:59]

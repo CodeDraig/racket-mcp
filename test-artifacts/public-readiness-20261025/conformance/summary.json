@@ -1,0 +1,27 @@
+{
+  "racket": "9.3",
+  "source_manifest": "../racket-9.3-corrected/source-sha256.json",
+  "harness_commit": "7022d786071e6d868dcd5cf19a8c30db7d811537",
+  "legs": {
+    "core": {
+      "driver_exit": 0,
+      "counts": {},
+      "exceptions": []
+    },
+    "tasks": {
+      "driver_exit": 0,
+      "counts": {},
+      "exceptions": []
+    },
+    "clients": {
+      "driver_exit": 0,
+      "counts": {},
+      "exceptions": []
+    },
+    "oauth": {
+      "driver_exit": 1,
+      "counts": {},
+      "exceptions": []
+    }
+  }
+}

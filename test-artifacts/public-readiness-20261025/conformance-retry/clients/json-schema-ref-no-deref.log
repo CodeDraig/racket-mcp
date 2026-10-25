@@ -1,0 +1,13 @@
+(node:1462678) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: json-schema-ref-no-deref
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-client.rkt http://localhost:44287/mcp
+(node:1462678) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/clients/results/json-schema-ref-no-deref-2026-10-25T21-39-43-290Z
+Checks:
+[90m2026-10-25T21:39:44.167Z[0m [sep-2106-no-network-ref-deref] [32mSUCCESS[0m Client did not dereference the network-URI $ref in the tool inputSchema
+
+Test Results:
+Passed: 1/1, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

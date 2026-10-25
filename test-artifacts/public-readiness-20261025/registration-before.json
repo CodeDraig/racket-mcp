@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/raco",
+    "help",
+    "mcp"
+  ],
+  "package_home": "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3/.racket",
+  "exit_code": 1,
+  "unrecognized_command": true
+}

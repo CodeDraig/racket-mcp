@@ -1,0 +1,31 @@
+(node:1461685) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: http-custom-headers
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-client.rkt http://localhost:43977
+With context: {"toolCalls":[{"name":"test_custom_headers","arguments":{"region":"us-west1","priority":42,"verbose":false,"debug":true,"empty_val":"","method_val":"test-method","float_val":3.14159,"non_ascii_val":"Hello, 世界","whitespace_val":" padded ","leading_space_val":" us-west1","trailing_space_val":"us-west1 ","internal_space_val":"us west 1","control_char_val":"line1\nline2","crlf_val":"line1\r\nline2","tab_val":"\tindented","query":"SELECT * FROM users"}},{"name":"test_custom_headers_null","arguments":{"region":"us-east1","priority":1,"verbose":null,"query":"SELECT 1"}}]}
+(node:1461685) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/clients/results/http-custom-headers-2026-10-25T21-39-40-123Z
+Checks:
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-supports-custom-headers  ] [32mSUCCESS[0m Client supports custom headers: calls the x-mcp-header annotated tool and mirrors at least one parameter
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client sends correct Mcp-Param-Region header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-encode-values            ] [32mSUCCESS[0m Client sends correct Mcp-Param-Priority header (integer value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-encode-values            ] [32mSUCCESS[0m Client sends correct Mcp-Param-Verbose header (boolean value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-encode-values            ] [32mSUCCESS[0m Client sends correct Mcp-Param-Debug header (boolean value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client sends correct Mcp-Param-EmptyVal header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client sends correct Mcp-Param-Method header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client MUST NOT add Mcp-Param headers for parameters without x-mcp-header (number-typed float_val is served unannotated per SEP-2243)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-NonAscii header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-Whitespace header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-LeadingSpace header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-TrailingSpace header (string value)
+[90m2026-10-25T21:39:41.000Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client sends correct Mcp-Param-InternalSpace header (string value)
+[90m2026-10-25T21:39:41.001Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-ControlChar header (string value)
+[90m2026-10-25T21:39:41.001Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-CrLf header (string value)
+[90m2026-10-25T21:39:41.001Z[0m [sep-2243-client-base64-unsafe            ] [32mSUCCESS[0m Client sends correct Mcp-Param-Tab header (string value)
+[90m2026-10-25T21:39:41.001Z[0m [sep-2243-client-mirrors-designated-params] [32mSUCCESS[0m Client MUST NOT add Mcp-Param headers for parameters without x-mcp-header
+[90m2026-10-25T21:39:41.001Z[0m [sep-2243-client-omit-null                ] [32mSUCCESS[0m Client MUST omit Mcp-Param header when parameter value is null or not provided
+
+Test Results:
+Passed: 18/18, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

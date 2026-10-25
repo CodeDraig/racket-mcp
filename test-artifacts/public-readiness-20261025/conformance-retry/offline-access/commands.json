@@ -1,0 +1,19 @@
+{
+  "harness": [
+    "/srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/.bin/tsx",
+    "/srv/data/code/racket-mcp/.cache/conformance-pinned/src/index.ts",
+    "client",
+    "--command",
+    "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt",
+    "--scenario",
+    "auth/offline-access-scope",
+    "--spec-version",
+    "2026-07-28",
+    "--timeout",
+    "60000",
+    "--output-dir",
+    "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/offline-access/results"
+  ],
+  "metadataUrl": "https://127.0.0.1:43343/client-metadata.json",
+  "trust": "temporary self-signed local certificate via NODE_EXTRA_CA_CERTS; no TLS verification disabled"
+}

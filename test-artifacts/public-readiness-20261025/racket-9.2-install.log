@@ -1,0 +1,10 @@
+This program will extract and install Racket v9.2.
+
+Note: the required diskspace for this installation is 737M.
+
+
+Checking the integrity of the binary archive... ok.
+Unpacking into "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2" (Ctrl+C to abort)...
+Done.
+
+Installation complete.

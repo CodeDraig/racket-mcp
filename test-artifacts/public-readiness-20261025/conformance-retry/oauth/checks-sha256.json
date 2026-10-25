@@ -1,0 +1,22 @@
+{
+  "results/auth/authorization-server-migration-2026-10-25T21-40-16-961Z/checks.json": "b39c8ae55445ea843d40ffe4421975b5faf0e54cdef5d055f0d556c7263a39b5",
+  "results/auth/iss-normalized-2026-10-25T21-40-28-202Z/checks.json": "0d682dfaaeb2539d6b58d899872d6abe762078cf82ce6efae406cf499d94009c",
+  "results/auth/iss-not-advertised-2026-10-25T21-40-20-555Z/checks.json": "1a135601452437e56fe430f9800aa9a6262da1a9da5babb66bc5c810b10876d9",
+  "results/auth/iss-supported-2026-10-25T21-40-18-792Z/checks.json": "2b66c7a83dd39e47fe66d59711de8920fd860474d5de61cf8209eeb568c2b64e",
+  "results/auth/iss-supported-missing-2026-10-25T21-40-22-669Z/checks.json": "e5f0bce3513ddad6f56cffc695cfaa5d413c9b0b4aecee6108372a94e69d9fff",
+  "results/auth/iss-unexpected-2026-10-25T21-40-26-157Z/checks.json": "d9b99a0dd84c2427bd120a17fcdd949106b4f9e9d37e0a507720fd3fb313ca40",
+  "results/auth/iss-wrong-issuer-2026-10-25T21-40-24-395Z/checks.json": "e0bb58efb8a70c3ff317360bc94dff5ed0bfdc8da3ee97e1f548743ba306a55f",
+  "results/auth/metadata-default-2026-10-25T21-39-53-826Z/checks.json": "d36804faa93661edbcb6b88dcf109aadec4d1f128ef32db9c0de52a7c0e1cf19",
+  "results/auth/metadata-var1-2026-10-25T21-39-55-565Z/checks.json": "6b1c3ac63ff6ff02c858f46c66964ac75058369f44080890f8eadf9b677c4b6d",
+  "results/auth/metadata-var2-2026-10-25T21-39-57-246Z/checks.json": "64c43ca9b6a4895c6650fd95d5cd61ed1e22f00c1a413041eea063e27dfd8774",
+  "results/auth/metadata-var3-2026-10-25T21-39-59-073Z/checks.json": "c1ce0619fc81df105ec3b17975d3dd38cf533bf8c0f08843f0ce6e15f50ffb06",
+  "results/auth/offline-access-not-supported-2026-10-25T21-40-15-084Z/checks.json": "861d2d8f347306ce269075db91216f37212619b41c967699b072a368d13c5ce7",
+  "results/auth/scope-from-scopes-supported-2026-10-25T21-40-02-634Z/checks.json": "409a5f1db3a26c09a5a7769a2ad5a9ae27668e6adcdb514149f288f07df67a2c",
+  "results/auth/scope-from-www-authenticate-2026-10-25T21-40-00-787Z/checks.json": "9c9495a3c13e378801a96f290c3098b1f5fdef520c455e6e958b140887c518d5",
+  "results/auth/scope-omitted-when-undefined-2026-10-25T21-40-04-425Z/checks.json": "ad0a1a9d3dd82865699e09a1fced0ca6ad44452df1b8abbe91d63b0f62f1de8a",
+  "results/auth/scope-retry-limit-2026-10-25T21-40-08-005Z/checks.json": "0a0d1e5a70cc7fc6619ba8e697a5026d8ade4824752af9b336156f4a2caef9d1",
+  "results/auth/scope-step-up-2026-10-25T21-40-06-139Z/checks.json": "8b4362be626827c456fa4754f81e5bae6659d0d81211368b767e3fb672abbb60",
+  "results/auth/token-endpoint-auth-basic-2026-10-25T21-40-09-754Z/checks.json": "b40c1f94ea019795f6eb8eeee541a7be02c2d0b3c84b45106b865c2df39b5fe5",
+  "results/auth/token-endpoint-auth-none-2026-10-25T21-40-13-282Z/checks.json": "1bc9f71842b13e2458e1d9e9d8eb0b0be9ddc44ed43cef78c85f9d293037f0db",
+  "results/auth/token-endpoint-auth-post-2026-10-25T21-40-11-441Z/checks.json": "77f11811959d6f8893741bbfc745edc2aeb413948fe06455ca79cbe4881a0ae6"
+}

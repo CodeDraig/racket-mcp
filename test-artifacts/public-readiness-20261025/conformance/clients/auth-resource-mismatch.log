@@ -1,0 +1,20 @@
+node:net:2306
+      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                    ^
+
+Error: listen EINVAL: invalid argument /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.cache/tmp/tsx-1000/1438805.pipe
+    at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+    at listenInCluster (node:net:2437:12)
+    at Server.listen (node:net:2579:5)
+    at file:///srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/tsx/dist/cli.mjs:53:31537
+    at new Promise (<anonymous>)
+    at createIpcServer (file:///srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/tsx/dist/cli.mjs:53:31515)
+    at async file:///srv/data/code/racket-mcp/.cache/conformance-pinned/node_modules/tsx/dist/cli.mjs:55:459 {
+  code: 'EINVAL',
+  errno: -22,
+  syscall: 'listen',
+  address: '/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.cache/tmp/tsx-1000/1438805.pipe',
+  port: -1
+}
+
+Node.js v26.8.1

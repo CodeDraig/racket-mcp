@@ -1,0 +1,138 @@
+{
+  "base_commit": "b72e8c3b6e24422267e9e7f522a11cfd8807aead",
+  "requested_racket": "9.3",
+  "work": "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected",
+  "steps": [
+    {
+      "name": "racket-version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.075
+    },
+    {
+      "name": "prepare-language",
+      "command": [
+        "python3",
+        "scripts/prepare-syntax-spec.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.819
+    },
+    {
+      "name": "install-language",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--name",
+        "syntax-spec-v3",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "--link",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.cache/patched-dependencies/syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 24.871
+    },
+    {
+      "name": "package",
+      "command": [
+        "python3",
+        "scripts/package.py"
+      ],
+      "exit_code": 0,
+      "seconds": 7.597
+    },
+    {
+      "name": "install-sdk",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--name",
+        "racket-mcp",
+        "--no-setup",
+        "--link",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.cache/distribution/racket-mcp"
+      ],
+      "exit_code": 0,
+      "seconds": 3.535
+    },
+    {
+      "name": "register-sdk",
+      "command": [
+        "raco",
+        "setup",
+        "--no-zo",
+        "--no-docs",
+        "--pkgs",
+        "racket-mcp"
+      ],
+      "exit_code": 0,
+      "seconds": 1.527
+    },
+    {
+      "name": "readme-compile",
+      "command": [
+        "raco",
+        "make",
+        "examples/greeter.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 13.137
+    },
+    {
+      "name": "readme-greeter-eof",
+      "command": [
+        "racket",
+        "examples/greeter.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 2.622
+    },
+    {
+      "name": "native-ci",
+      "command": [
+        "python3",
+        "scripts/ci.py",
+        "--package-home",
+        "/srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/.cache/ci-package-home"
+      ],
+      "exit_code": 0,
+      "seconds": 1211.109
+    },
+    {
+      "name": "go-interop",
+      "command": [
+        "sh",
+        "scripts/check-interop.sh"
+      ],
+      "exit_code": 0,
+      "seconds": 30.848
+    },
+    {
+      "name": "installed-tests",
+      "command": [
+        "raco",
+        "test",
+        "tests/declared-build.rkt",
+        "tests/declared-build-cli.rkt",
+        "tests/cli-artifacts.rkt",
+        "tests/view-adapters.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 26.952
+    }
+  ],
+  "success": true,
+  "archive": {
+    "sha256": "9821f8c277a89f721de33e105c71a2302996ee63fea98a48fe738fa5d55fd349",
+    "bytes": 4544622,
+    "files": 1641,
+    "integrity": "passed"
+  }
+}

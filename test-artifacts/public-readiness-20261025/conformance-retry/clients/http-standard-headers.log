@@ -1,0 +1,23 @@
+(node:1461252) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: http-standard-headers
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-client.rkt http://localhost:37859
+(node:1461252) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/clients/results/http-standard-headers-2026-10-25T21-39-38-372Z
+Checks:
+[90m2026-10-25T21:39:39.283Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on tools/list request
+[90m2026-10-25T21:39:39.284Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on tools/call request
+[90m2026-10-25T21:39:39.284Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Name header on tools/call request
+[90m2026-10-25T21:39:39.286Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on resources/list request
+[90m2026-10-25T21:39:39.287Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on resources/read request
+[90m2026-10-25T21:39:39.287Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Name header on resources/read request
+[90m2026-10-25T21:39:39.291Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on prompts/list request
+[90m2026-10-25T21:39:39.291Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Method header on prompts/get request
+[90m2026-10-25T21:39:39.292Z[0m [sep-2243-client-includes-standard-headers] [32mSUCCESS[0m Client sends correct Mcp-Name header on prompts/get request
+[90m2026-10-25T21:39:39.310Z[0m [sep-2243-client-includes-standard-headers] [0mSKIPPED[0m Client sends correct Mcp-Method header on initialize request
+[90m2026-10-25T21:39:39.310Z[0m [sep-2243-client-includes-standard-headers] [0mSKIPPED[0m Client sends correct Mcp-Method header on notifications/initialized request
+
+Test Results:
+Passed: 9/9, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

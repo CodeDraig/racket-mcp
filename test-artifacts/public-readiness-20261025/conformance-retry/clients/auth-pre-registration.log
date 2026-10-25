@@ -1,0 +1,49 @@
+(node:1464488) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Starting scenario: auth/pre-registration
+Executing client: /srv/data/code/racket-mcp/.cache/racket-9.3/bin/racket /srv/data/code/racket-mcp/.cache/public-readiness-20261025/racket-9.3-corrected/dev/conformance-auth-client.rkt http://localhost:43667/mcp
+With context: {"client_id":"pre-registered-client","client_secret":"pre-registered-secret","issuer":"http://localhost:45739"}
+(node:1464488) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+Results saved to /srv/data/code/racket-mcp/.cache/public-readiness-20261025/conformance-retry/clients/results/auth/pre-registration-2026-10-25T21-39-48-595Z
+Checks:
+[90m2026-10-25T21:39:49.574Z[0m [incoming-request               ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-10-25T21:39:49.575Z[0m [outgoing-response              ] [36mINFO   [0m Sent 401 response for POST /mcp (method: server/discover)
+
+[90m2026-10-25T21:39:49.577Z[0m [incoming-request               ] [36mINFO   [0m Received GET request for /.well-known/oauth-protected-resource/mcp
+[90m2026-10-25T21:39:49.577Z[0m [prm-pathbased-requested        ] [32mSUCCESS[0m Client requested PRM metadata at path-based location
+[90m2026-10-25T21:39:49.577Z[0m [outgoing-response              ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-protected-resource/mcp
+
+[90m2026-10-25T21:39:49.578Z[0m [incoming-auth-request          ] [36mINFO   [0m Received GET request for /.well-known/oauth-authorization-server
+[90m2026-10-25T21:39:49.579Z[0m [authorization-server-metadata  ] [32mSUCCESS[0m Client requested authorization server metadata
+[90m2026-10-25T21:39:49.579Z[0m [outgoing-auth-response         ] [36mINFO   [0m Sent 200 response for GET /.well-known/oauth-authorization-server
+
+[90m2026-10-25T21:39:49.580Z[0m [incoming-auth-request          ] [36mINFO   [0m Received GET request for /authorize
+[90m2026-10-25T21:39:49.580Z[0m [authorization-request          ] [32mSUCCESS[0m Client made authorization request
+[90m2026-10-25T21:39:49.580Z[0m [pkce-code-challenge-sent       ] [32mSUCCESS[0m Client sent code_challenge in authorization request
+[90m2026-10-25T21:39:49.580Z[0m [pkce-s256-method-used          ] [32mSUCCESS[0m Client used S256 code challenge method
+[90m2026-10-25T21:39:49.581Z[0m [outgoing-auth-response         ] [36mINFO   [0m Sent 302 response for GET /authorize
+
+[90m2026-10-25T21:39:49.582Z[0m [incoming-auth-request          ] [36mINFO   [0m Received POST request for /token
+[90m2026-10-25T21:39:49.583Z[0m [token-request                  ] [32mSUCCESS[0m Client requested access token
+[90m2026-10-25T21:39:49.583Z[0m [pkce-code-verifier-sent        ] [32mSUCCESS[0m Client sent code_verifier in token request
+[90m2026-10-25T21:39:49.583Z[0m [pkce-verifier-matches-challenge] [32mSUCCESS[0m code_verifier correctly matches code_challenge (S256)
+[90m2026-10-25T21:39:49.583Z[0m [pre-registration-auth          ] [32mSUCCESS[0m Client correctly used pre-registered credentials when server does not support DCR
+[90m2026-10-25T21:39:49.583Z[0m [outgoing-auth-response         ] [36mINFO   [0m Sent 200 response for POST /token
+
+[90m2026-10-25T21:39:49.584Z[0m [incoming-request               ] [36mINFO   [0m Received POST request for /mcp (method: server/discover)
+[90m2026-10-25T21:39:49.584Z[0m [valid-bearer-token             ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-10-25T21:39:49.584Z[0m [outgoing-response              ] [36mINFO   [0m Sent 200 response for POST /mcp (method: server/discover)
+
+[90m2026-10-25T21:39:49.585Z[0m [incoming-request               ] [36mINFO   [0m Received POST request for /mcp (method: tools/list)
+[90m2026-10-25T21:39:49.585Z[0m [valid-bearer-token             ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-10-25T21:39:49.585Z[0m [outgoing-response              ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/list)
+
+[90m2026-10-25T21:39:49.586Z[0m [incoming-request               ] [36mINFO   [0m Received POST request for /mcp (method: tools/call)
+[90m2026-10-25T21:39:49.586Z[0m [valid-bearer-token             ] [32mSUCCESS[0m Client provided valid bearer token
+[90m2026-10-25T21:39:49.586Z[0m [outgoing-response              ] [36mINFO   [0m Sent 200 response for POST /mcp (method: tools/call)
+
+
+Test Results:
+Passed: 12/12, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED
