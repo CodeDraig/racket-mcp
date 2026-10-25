@@ -1,29 +1,27 @@
-# Native Racket MCP and `#lang mcp`
+# racket-mcp
 
-Original racket-mcp code and documentation are licensed under the [MIT License](LICENSE).
-Bundled third-party material and derived extracts retain their respective licenses;
-see [third-party notices](THIRD-PARTY-NOTICES.md) for scope, attribution, and license texts.
+An experimental Racket SDK and `#lang mcp` for building **Model Context Protocol
+(MCP) clients and servers**. Define tools, resources, and prompts in Racket, or
+build SQLite-backed workflows that pause for input and resume after a restart.
 
-Native SDK and language for MCP **2026-07-28**, targeting Racket **9.2**.
-The approved implementation scope is complete, with qualified conformance results
-and Linux verification on Racket 9.2/9.3. Native macOS/Windows testing was removed
-from the release plan; those platforms remain unverified. See
-[REMAINING.md](REMAINING.md) for mutable remaining work and
-[IMPLEMENTATION.md](IMPLEMENTATION.md) for recorded implementation evidence.
+The language supports ordinary Racket definitions, imports, and macros. You can
+also construct the same server descriptions through the SDK without using
+`#lang mcp`.
 
-```racket
-#lang mcp
-(server #:name "greeter" #:version "0.1.0")
-(tool (greet [name String])
-  #:description "Greet someone by name."
-  (text-result (string-append "Hello, " name)))
-```
+This version implements the pinned **MCP 2026-07-28** protocol. It uses per-request
+metadata rather than an initialization handshake or session identifier; clients
+must support that protocol. **Linux x86_64 with Racket 9.2 and 9.3 is verified.**
+macOS and Windows are unverified. See [status and limitations](#status-and-limitations)
+before choosing it for an application.
 
-## Run from this checkout
+## Try your first tool
 
-Start with Racket installed, then prepare and install the pinned language
-dependency before compiling or running an example. The environment script isolates
-Racket packages and scratch files in this checkout.
+You will install the SDK in a checkout, run the included greeting server, and
+call its `greet` tool. You need Racket 9.2 or 9.3 with `raco`, Python 3, and a
+POSIX shell. Run the shell commands from the repository root in the same terminal.
+These instructions assume a fresh checkout.
+
+### 1. Install the local packages
 
 ```sh
 . scripts/racket-env.sh
@@ -36,175 +34,158 @@ env -u PLTCOLLECTS raco pkg install --name racket-mcp --no-setup \
 env -u PLTCOLLECTS raco setup --no-zo --no-docs --pkgs racket-mcp
 ```
 
-The preparation command verifies the vendored upstream hashes and applies the
-SDK's module-binding phase and reference-registration fixes to a separate local
-copy (version 0.1.0.2). It
-does not fetch sources or modify a globally installed package. If this checkout
-already has the original dependency installed, use `env -u PLTCOLLECTS raco pkg update --batch
---no-setup --name syntax-spec-v3 --link
-"$PWD/.cache/patched-dependencies/syntax-spec-v3"` after preparation. Run these
-commands with `scripts/racket-env.sh` sourced as above. The unpatched upstream
-0.1 package does not satisfy the SDK dependency requirement.
+The environment script keeps package state in `.racket` and scratch files in
+`.cache`. Preparation verifies the bundled language dependency and patches a
+separate local copy; it does not alter the vendored source or global packages.
+The final setup command registers `raco mcp`.
 
-After installation, run the examples in the same shell:
+### 2. Read and start the server
+
+[examples/greeter.rkt](examples/greeter.rkt) is the complete server:
+
+```racket
+#lang mcp
+(server #:name "greeter" #:version "0.1.0")
+(tool (greet [name String])
+  #:description "Greet someone by name."
+  (text-result (string-append "Hello, " name)))
+```
+
+Compile it, then start it:
 
 ```sh
 raco make examples/greeter.rkt
 racket examples/greeter.rkt
-racket examples/approval.rkt --state .cache/approval.sqlite
 ```
 
-The greeter serves MCP over standard input/output and waits for client requests;
-stop it before launching the approval example.
+The server waits for JSON requests on standard input. It does not display a prompt.
 
-Native CI uses `python scripts/ci.py` with an existing Racket installation. This
-portable runner prepares the pinned language dependency, keeps package writes in
-`.cache/ci/package-home`, and runs compilation, the native and pinned schema
-suites, documentation, and package dependency checks. It saves command logs and
-`report.json` in `.cache/ci/results`. For an already bootstrapped local checkout,
-use `python3 scripts/ci.py --skip-bootstrap --package-home .racket`.
+### 3. Call the tool
 
-The shell check scripts use `.racket` by default. Set `MCP_RACKET_USER_HOME` to
-an explicit project-local package home when checking another Racket installation;
-for example, use the same home passed to `scripts/ci.py --package-home` when
-running `scripts/check-interop.sh` with that Racket's `bin` directory on `PATH`.
+Paste this **single line** into the running server and press Enter. It asks the
+`greet` tool to greet Ada and supplies the protocol metadata required by this version.
 
-The retained GitHub Actions matrix targets x64 Linux, macOS, and Windows with Racket 9.2
-and 9.3 (the current stable release when configured). Action revisions and Racket
-versions are pinned in `.github/workflows/native.yml`. Hosted Actions are disabled;
-native macOS/Windows verification is no longer a release requirement. CI runs are evidence for
-their reported platform/version and revision only; workflow presence is not a
-passing release claim. Go interoperability and the full MCP conformance harness
-remain separate checks.
-
-The latest full validation, on 2026-10-25, passed on Linux x86_64 with both Racket
-9.2 and 9.3: 6,852 native tests, 1,301 schema cases, 86 regex cases, all 14 official
-Go interoperability probes, and 38 selected installed-package checks per version.
-Fresh README and CI bootstraps, compilation, Scribble, and package dependency
-validation also passed. The two source archives built during that validation
-were byte-identical. Commands, source hashes, and retained failed first attempts
-are in [the October validation record](test-artifacts/public-readiness-20261025/README.md).
-These results cover the runtime in `4ab93a8`; subsequent release-summary edits
-do not change runtime code or establish a new archive hash.
-
-The Linux/Racket 9.3 conformance rerun remains qualified: 144 core successes,
-four excluded roots/sampling fixture failures and one MRTR warning; 42 dedicated
-Tasks successes, two failures and one notification skip; and all twelve client
-scenario processes exiting zero (91 successful checks and four skips).
-With the documented OAuth registration-fixture correction, 18 of 20 scenario
-processes exited zero; six checks still fail in `metadata-var2`, and
-`scope-step-up` retains its warning. `iss-not-advertised` now passes. The real
-HTTPS offline-access run passed 12/12 terminal checks. Corrected-fixture results
-are not unmodified conformance credit. Hosted Actions and native macOS/Windows
-were not run; those platforms remain unverified and are not release gates.
-
-One Tasks failure is new relative to September 8: without the Tasks capability,
-requests for an unknown task return `-32602` before the capability check can
-return the required `-32021`. Both reject the request; no lost work, unauthorized
-access, or real-client breakage from this ordering was demonstrated. On
-2026-10-25 the user accepted this known limitation for now, retaining the
-ownership checks that protect saved arguments and the fixes that let valid
-workflows resume after retries or restart. This is acceptance of a bounded
-diagnostic regression, not a claim that the error is conformant or that the
-protections require it. A later correction must preserve those protections.
-See [current release status](REMAINING.md) and [the evidence ledger](IMPLEMENTATION.md).
-
-The CLI is also available without package registration:
-
-```sh
-racket -l mcp/cli -- inspect examples/library.rkt
-racket -l mcp/cli -- --transport http --port 8000 serve examples/greeter.rkt
-racket -l mcp/cli -- --state .cache/approval.sqlite serve examples/approval.rkt
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"greet","arguments":{"name":"Ada"},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}
 ```
 
-Options currently precede the command. Stdio defaults to newline-delimited UTF-8
-JSON. HTTP binds to 127.0.0.1 by default. No initialization handshake or MCP
-session identifier is used. Application definitions retain normal Racket module
-instantiation semantics; importing a descriptor does not start a transport.
+The server returns a JSON response with request ID `1` and a text content item
+containing **`Hello, Ada`**. Change the name to `Grace` and the request ID to `2`,
+then send the line again to receive `Hello, Grace`.
 
-For captured workflow loading, supply an immutable identity for your SDK and
-Racket runtime distribution:
+Press **Ctrl+D** on an empty line to close standard input and return to your shell.
+You have defined a tool and called it over the SDK's newline-delimited JSON transport.
 
-```sh
-raco mcp --runtime-build-id MY-IMMUTABLE-RUNTIME-BUILD --state state.sqlite serve application.rkt
-```
+## Build something of your own
 
-The library equivalent is `(load-interface path #:runtime-build-id id)`, available
-from `mcp` and `mcp/loader`. It returns native SDK descriptors and rejects changed
-captured helpers on resume. The ID is supplied by the application owner.
-The manual's “Loading interfaces with executable identity” section explains the
-contract, cache limitations, and prepared dynamic imports.
+The SDK includes schemas and typed declarations, asynchronous clients, HTTP
+JSON/SSE transports, progress and subscriptions, interface composition, and
+OAuth helpers. Durable workflows add checkpoints, task polling, input updates,
+and explicit recovery for uncertain effects. An in-memory store uses ephemeral
+SQLite; a file-backed store preserves state across restarts.
 
-For ordinary source or compiled loading, declare the identity of your complete
-application/runtime build:
+Choose an example or document for your next task:
 
-```sh
-racket application.rkt --build-id my-application/42 --state state.sqlite
-```
+| I want to… | Start here |
+| --- | --- |
+| Pause a workflow for approval | [Approval example](examples/approval.rkt); run `racket examples/approval.rkt --state .cache/approval.sqlite` |
+| Compose an interface | [Library example](examples/library.rkt); inspect it with `raco mcp inspect examples/library.rkt` |
+| Serve over HTTP | Run `raco mcp --transport http --port 8000 serve examples/greeter.rkt`; it binds to `127.0.0.1` by default |
+| Extend the language | [Collection extension](examples/extensions/collection.rkt) |
+| Configure OAuth client registration | [Registration API and supported metadata](OAUTH-REGISTRATION.md) |
+| Understand the persistence design | [SQLite persistence comparison](reports/MCP%20SDK%20persistence%20comparison.md) |
+| Look up declarations, APIs, and recovery rules | [Scribble manual source](mcp/scribblings/mcp.scrbl) |
 
-Use `(make-runtime interface #:store store #:build-id "my-application/42")` in
-library code, or `call-with-build-identity` around workflow construction and
-low-level execution. The application must update this identity when executable
-dependencies change. It is a declaration, not automatic provenance. Changed IDs
-reject incompatible workflow, parent-rendering and upstream resumes; ordinary
-loading retains normal module-instantiation semantics.
+Run each server example separately and stop it before starting another. CLI options
+precede the command. Without package registration, use `racket -l mcp/cli --`
+in place of `raco mcp` in the same checkout environment.
 
-## Implemented paths
-
-- Tool, resource, prompt, shape, schema, completion, and staged workflow
-  declarations, including resumable conditionals, matches, and lexical blocks; ordinary Racket
-  constructors expose the same runtime values.
-- Required, optional, and default arguments. Defaults run left-to-right once for
-  absent arguments and can refer to preceding arguments. `missing`, `'null`, and
-  `#f` are distinct.
-- Exact JSON decimals and a native schema evaluator passing the pinned 1,301-case
-  core JSON Schema 2020-12 suite, including local/registered references, dynamic
-  anchors, and unevaluated annotations. This does not establish complete
-  ECMAScript regex or optional format-assertion compatibility.
-- Local dispatch, concurrent stdio client/server, HTTP JSON/SSE client/server,
-  parameter headers, capability/version checks, progress, and subscriptions.
-- SQLite checkpoints, effect intents, explicit manual recovery, task polling and
-  input updates; MRTR interaction callbacks. Memory storage is ephemeral SQLite.
-- Resource references, URI expansion, links/embeddings, interface mounting/views,
-  private-cache/outbox primitives, and authorization adapters/PKCE functions.
-- Independently loadable manifests; CLI inspection, diagrams, basic docs,
-  expansion checks, test-submodule scenarios, snapshots, and conservative diffs.
-- A separately implemented `collection` extension in `examples/extensions`.
-
-## Validation
+To build a browsable copy of the manual:
 
 ```sh
-. scripts/racket-env.sh
-raco make mcp/*.rkt examples/*.rkt tests/*.rkt
-raco test tests
-racket tests/schema-suite.rkt
 raco scribble +m --htmls --dest .cache/manual mcp/scribblings/mcp.scrbl
 ```
 
-Run `sh scripts/check-interop.sh` for fourteen pinned official Go SDK probes: basic
-discovery/tool calls, pagination, multi-content resource/prompt/tool rendering,
-the separate collection extension’s generated search/resource/completion interface,
-and progress/cancellation in both client/server directions. Cancellation probes verify that the remote handler actually stops
-and the same connection accepts another request. Go is a development dependency;
-binaries and build caches stay under `.cache`.
+Open `.cache/manual/mcp/index.html`. For workflows that must survive application
+updates, read “Loading interfaces with executable identity” and “Declared identities
+for ordinary loading” in the manual before deploying changes. The application supplies and
+maintains its build identity; ordinary loading does not infer it automatically.
+Importing a server description does not start its transport, but ordinary Racket
+module definitions still execute when the module is instantiated.
 
-HTTP tests require permission to bind ephemeral loopback ports. The official Go
-SDK probe is in `dev/interop`; its dependencies and the conformance harness are
-development inputs only. The SDK runtime is Racket. `vendor/LOCK.json` records
-upstream commits and file hashes. Refreshing inputs is an explicit networked
-maintenance operation: `python3 scripts/fetch-inputs.py [source ...]`.
+## Work on the SDK
 
-Passing native tests are not an unqualified conformance claim. See REMAINING.md
-for current limitations and accepted scope; dated implementation-ledger entries
-retain historical findings and are superseded by later evidence where stated.
+After the setup above, run the native verification suite:
 
-Explicit dynamic registration requests and response validation are available in
-`mcp/oauth-registration`; see [the API and supported metadata profile](OAUTH-REGISTRATION.md).
-Issuer-scoped SQLite persistence, secret expiry, and authorization-server changes
-are handled by `mcp/oauth-registration-store`. Opt-in authorizer integration
-selects DCR after pre-registration/CIMD and uses issued credentials for native
-token exchange and refresh.
+```sh
+python3 scripts/ci.py --skip-bootstrap --package-home .racket
+```
 
-The pinned conformance registration fixture has a reproducible local correction.
-See [preparation, boundaries, and validation](CONFORMANCE-FIXTURE.md). Prepared
-harness results remain explicitly distinct from unmodified conformance credit.
+It runs compilation, native tests, schema and regex suites, the manual build, and
+installed-package dependency checks. Logs and `report.json` are written to
+`.cache/ci/results`. To exercise an independent package bootstrap, use
+`python3 scripts/ci.py` with its default `.cache/ci/package-home`.
+
+Go is needed only for the separate interoperability probes:
+
+```sh
+sh scripts/check-interop.sh
+```
+
+HTTP tests bind ephemeral loopback ports. When using another package home, set
+`MCP_RACKET_USER_HOME` to that same directory for the shell check scripts and put
+the desired Racket installation's `bin` directory on `PATH`. The full MCP
+conformance harness is a separate development check; see the
+[validation record](test-artifacts/public-readiness-20261025/README.md) and
+[OAuth fixture preparation](CONFORMANCE-FIXTURE.md).
+
+<details>
+<summary>Update a checkout with the older language dependency</summary>
+
+The SDK requires the prepared `syntax-spec-v3` version `0.1.0.2`; the unpatched
+upstream `0.1` package does not satisfy that requirement. With the checkout
+environment sourced, prepare the dependency and update its existing registration:
+
+```sh
+. scripts/racket-env.sh
+python3 scripts/prepare-syntax-spec.py
+env -u PLTCOLLECTS raco pkg update --batch --no-setup --name syntax-spec-v3 \
+  --link "$PWD/.cache/patched-dependencies/syntax-spec-v3"
+```
+
+Then rebuild the distribution with `python3 scripts/package.py` and register its
+commands with `env -u PLTCOLLECTS raco setup --no-zo --no-docs --pkgs racket-mcp`.
+
+</details>
+
+Vendored commits and file hashes are recorded in [vendor/LOCK.json](vendor/LOCK.json).
+Updating them is an explicit networked maintenance operation through
+`scripts/fetch-inputs.py`; normal preparation uses the bundled source.
+
+## Status and limitations
+
+The October 25, 2026 validation passed on both Linux/Racket versions: **6,852 native
+tests, 1,301 schema cases, 86 regex cases, 14 Go interoperability probes, and 38
+selected installed-package checks per version**. Fresh installation, compilation,
+manual generation, and package dependency checks also passed. Detailed commands,
+source hashes, and archive comparisons are in the
+[validation record](test-artifacts/public-readiness-20261025/README.md).
+
+This remains an experimental SDK with **qualified MCP conformance**. Core, Tasks,
+and OAuth checks retain documented failures, warnings, or skips. One accepted
+Tasks limitation returns an unknown-task error before a missing-capability error
+when both conditions apply. The request is rejected in either case; the current
+version retains ownership protections and workflow-resumption fixes. Acceptance
+does not make the error ordering conformant, and a later fix must preserve those
+protections. See [current limitations and their rationale](REMAINING.md).
+
+Schema validation does not claim complete ECMAScript regex or optional
+format-assertion support. Hosted GitHub Actions are disabled; native macOS and
+Windows execution remains unverified. [IMPLEMENTATION.md](IMPLEMENTATION.md)
+preserves the development history; its older entries are not the current work list.
+
+## License
+
+Original code and documentation are [MIT-licensed](LICENSE). Bundled third-party
+material and derived extracts retain their own terms; see
+[third-party notices](THIRD-PARTY-NOTICES.md).
