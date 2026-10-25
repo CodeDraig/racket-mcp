@@ -11,7 +11,12 @@
   (define store (runtime-store rt))
   (define principal (principal-key (request-context-principal (current-request-context))))
   (define keyed (and store (not (current-workflow-state)) (current-workflow-invocation-key)
-                     (find-instance-by-key store principal (string-append "render:" method) (current-workflow-invocation-key))))
+                     (or (find-instance-by-key store principal (string-append "render:" method) (current-workflow-invocation-key))
+                         (and program
+                              (find-instance-by-key store principal
+                                (if (equal? method "tools/call") (workflow-descriptor-name program)
+                                    (string-append method ":" (workflow-descriptor-name program)))
+                                (current-workflow-invocation-key))))))
   (define token (or (current-workflow-state) (and keyed (stored-instance-handle keyed))))
   (define rendering? (render-continuation? store token))
   (define saved

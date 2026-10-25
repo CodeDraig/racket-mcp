@@ -1,5 +1,5 @@
 #lang racket/base
-(require rackunit racket/file mcp)
+(require rackunit racket/file db mcp)
 (define constructed 0)
 (define children '())
 (define request (hasheq 'mode "form" 'message "Continue?" 'requestedSchema (object-schema (hasheq 'ok Boolean))))
@@ -58,3 +58,69 @@
                                           'inputResponses (hasheq 'gate (hasheq 'action "decline")))))
 (check-equal? (map (lambda (content) (hash-ref (hash-ref content 'resource) 'text)) (hash-ref stage-result 'content)) '("one" "two"))
 (close-store! stage-store)
+
+(define default-calls 0)
+(resource (interrupted-default [n Integer #:default (begin (set! default-calls (add1 default-calls)) default-calls)])
+  #:uri "interruption:///defaults" #:workflow "1"
+  (await-input [answer Any] request)
+  (number->string n))
+(prompt (interrupted-parent)
+  (role "user" (embed (child "first")) (embed (interrupted-default 7))))
+
+(for ([mode '(resume expired incompatible version)])
+  (test-case (format "retained keyed child is checked before defaults: ~a" mode)
+    (set! default-calls 0)
+    (set! children '())
+    (define directory (make-temporary-file "interrupted-child-~a" 'directory))
+    (define state-path (build-path directory "state.sqlite"))
+    (define state (open-sqlite-store state-path))
+    (define interface (make-interface #:prompts (list interrupted-parent) #:resources (list child interrupted-default)))
+    (define runtime (make-runtime interface #:store state))
+    (define target (hash-set params 'name "interrupted-parent"))
+    (define (call params) (dispatch runtime "prompts/get" params #:principal "alice"))
+    (dynamic-wind void
+      (lambda ()
+        (define initial (call target))
+        (define parent-handle (hash-ref initial 'requestState))
+        (define pending (list-ref (hash-ref (stored-instance-state (load-instance state parent-handle)) 'children) 1))
+        (define retry (hash-set target 'requestState parent-handle))
+        (define waiting (call (hash-set retry 'inputResponses (hasheq 'e0/r0/answer (hasheq 'action "decline")))))
+        (check-equal? (hash-keys (hash-ref waiting 'inputRequests)) '(e1/r0/answer))
+        (check-equal? default-calls 1)
+        (define saved-child (find-instance-by-key state "alice" "resources/read:interrupted-default" (format "~a/1" parent-handle)))
+        (check-not-false saved-child)
+        ;; Model interruption after the child's commit and before its parent update.
+        ;; The first child and its response history have already committed.
+        (define parent (load-instance state parent-handle))
+        (define parent-state (stored-instance-state parent))
+        (update-instance! state parent (hash-set parent-state 'children
+          (map (lambda (c) (if (= (hash-ref c '$mcp/embedding) 1) pending c)) (hash-ref parent-state 'children))))
+        (case mode
+          [(expired) (query-exec (state-store-connection state) "UPDATE instances SET expires=0 WHERE handle=?" (stored-instance-handle saved-child))]
+          [(incompatible) (query-exec (state-store-connection state) "UPDATE instances SET fingerprint=? WHERE handle=?" "incompatible" (stored-instance-handle saved-child))]
+          [(version) (query-exec (state-store-connection state) "UPDATE instances SET version=? WHERE handle=?" "incompatible" (stored-instance-handle saved-child))])
+        (custodian-shutdown-all (runtime-custodian runtime))
+        (close-store! state)
+        (set! state (open-sqlite-store state-path))
+        (set! runtime (make-runtime interface #:store state))
+        (define before (list-instances state))
+        (cond [(eq? mode 'resume)
+               (define recovered (call retry))
+               (check-equal? (hash-keys (hash-ref recovered 'inputRequests)) '(e1/r0/answer))
+               (check-equal? (map stored-instance-handle (list-instances state)) (map stored-instance-handle before))
+               (check-equal? (stored-instance-handle
+                 (find-instance-by-key state "alice" "resources/read:interrupted-default" (format "~a/1" parent-handle)))
+                 (stored-instance-handle saved-child))
+               (define completed (call (hash-set retry 'inputResponses (hasheq 'e1/r0/answer (hasheq 'action "decline")))))
+               (define messages (hash-ref completed 'messages))
+               (check-equal? (hash-ref (hash-ref (hash-ref (cadr messages) 'content) 'resource) 'text) "1")]
+              [else
+               (check-exn (if (eq? mode 'expired)
+                             (lambda (e) (and (exn:fail:mcp? e) (= (exn:fail:mcp-code e) -32602)))
+                             exn:fail:recovery?)
+                 (lambda () (call retry)))
+               (check-equal? (list-instances state) before)])
+        (check-equal? default-calls 1)
+        (check-equal? children '("first")))
+      (lambda () (custodian-shutdown-all (runtime-custodian runtime)) (close-store! state)
+        (delete-directory/files directory)))))

@@ -3,6 +3,18 @@
 (provide dispatch-completion)
 (define (dispatch-completion iface params)
   (define ref (hash-ref params 'ref (hasheq))) (define arg (hash-ref params 'argument (hasheq)))
+  (define context (hash-ref params 'context (hasheq)))
+  (unless (and (hash? ref)
+               (case (hash-ref ref 'type #f)
+                 [("ref/prompt") (string? (hash-ref ref 'name #f))]
+                 [("ref/resource") (string? (hash-ref ref 'uri #f))]
+                 [else #f])
+               (hash? arg) (string? (hash-ref arg 'name #f)) (string? (hash-ref arg 'value #f))
+               (hash? context)
+               (or (not (hash-has-key? context 'arguments))
+                   (let ([arguments (hash-ref context 'arguments)])
+                     (and (hash? arguments) (for/and ([value (in-hash-values arguments)]) (string? value))))))
+    (mcp-error -32602 "Invalid completion parameters"))
   (define completion
     (findf (lambda (d)
              (define target (completion-descriptor-target d))
@@ -11,14 +23,14 @@
                         [(prompt-descriptor? target) (and (equal? (hash-ref ref 'type #f) "ref/prompt") (equal? (prompt-descriptor-name target) (hash-ref ref 'name #f)))] [else #f])))
            (interface-descriptor-completions iface)))
   (unless completion (mcp-error -32602 "Unknown completion target"))
-  (define supplied ((completion-descriptor-handler completion) (hash-ref arg 'value "") (hash-ref params 'context (hasheq))))
+  (define supplied ((completion-descriptor-handler completion) (hash-ref arg 'value) context))
   (define result
     (cond [(and (list? supplied) (andmap string? supplied))
            (hasheq 'values (take supplied (min 100 (length supplied))) 'total (length supplied) 'hasMore (> (length supplied) 100))]
           [(and (hash? supplied) (json-value? supplied)
                 (list? (hash-ref supplied 'values #f)) (andmap string? (hash-ref supplied 'values))
                 (<= (length (hash-ref supplied 'values)) 100)
-                (or (not (hash-has-key? supplied 'total)) (rational? (hash-ref supplied 'total)))
+                (or (not (hash-has-key? supplied 'total)) (integer? (hash-ref supplied 'total)))
                 (or (not (hash-has-key? supplied 'hasMore)) (boolean? (hash-ref supplied 'hasMore)))) supplied]
           [else (mcp-error -32603 "Invalid completion values")]))
   (hasheq 'resultType "complete" 'completion result)

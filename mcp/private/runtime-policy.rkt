@@ -97,7 +97,8 @@
 
 ;; Resolve ownership before operation identity, policy targets, or saved values.
 (define (inspect-owned-task store id principal)
-  (unless (and store (string? id)) (mcp-error -32602 "Unknown or foreign task"))
+  (unless store (mcp-error -32601 "Tasks are not configured"))
+  (unless (string? id) (mcp-error -32602 "Unknown or foreign task"))
   (owned store id (principal-key principal)))
 (define (check-task-ownership! store method params principal)
   (cond [(member method '("tasks/get" "tasks/update" "tasks/cancel"))

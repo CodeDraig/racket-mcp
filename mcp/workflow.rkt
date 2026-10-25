@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/persistent-json.rkt" "private/failure.rkt" "clock.rkt"
+(require "private/persistent-json.rkt" "private/json-equality.rkt" "private/failure.rkt" "clock.rkt"
          racket/list
          racket/match
          "storage.rkt"
@@ -119,7 +119,7 @@
           (for ([(id response) (in-hash responses)])
             (define saved (hash-ref (hash-ref state 'values) id missing))
             (cond [(not (missing? saved))
-                   (unless (equal? saved response) (mcp-error -32602 "Conflicting response for completed input"))]
+                   (unless (json-value=? saved response) (mcp-error -32602 "Conflicting response for completed input"))]
                   [else
                    (unless (and (< position (length (workflow-descriptor-stages workflow)))
                                 (let ([stage (list-ref (workflow-descriptor-stages workflow) position)])

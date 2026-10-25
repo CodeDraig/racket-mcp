@@ -78,4 +78,18 @@
   (check-regexp-match #rx"provenance" (hash-ref startup 'message))
   (check-false (hash-ref bypass 'raised))
   (close-store! store))
+(test-case "unconfigured tasks keep their unavailable-method error"
+  (define runtime (make-runtime (make-interface)))
+  (dynamic-wind void
+    (lambda ()
+      (for ([method '("tasks/get" "tasks/update" "tasks/cancel" "subscriptions/listen" "subscriptions/listen")]
+            [params (list (hasheq 'taskId "unknown") (hasheq 'taskId "unknown") (hasheq 'taskId "unknown")
+                          (hasheq 'notifications (hasheq 'taskIds '("unknown")))
+                          (hasheq 'notifications (hasheq 'taskIds '())))])
+        (define request (hash-set params '_meta meta))
+        (check-exn (lambda (e) (and (exn:fail:mcp? e) (= (exn:fail:mcp-code e) -32601)))
+          (lambda () (dispatch runtime method request #:principal "alice")))
+        (define response (dispatch-message runtime (hasheq 'jsonrpc "2.0" 'id 1 'method method 'params request) #:principal "alice"))
+        (check-equal? (hash-ref (hash-ref response 'error) 'code) -32601)))
+    (lambda () (custodian-shutdown-all (runtime-custodian runtime)))))
 (finish!)
