@@ -26,6 +26,6 @@
                     [(and defaults (argument-default a)) (hash-ref defaults (argument-name a) missing)]
                     [(argument-default a) ((argument-default a) bound)]
                     [(argument-optional? a) missing]
-                    [else (error 'bind-arguments "missing argument ~a" (argument-name a))]))
+                    [else (mcp-error -32602 (format "missing argument ~a" (argument-name a)))]))
     (unless (or (missing? v) (valid? (argument-schema a) v)) (error 'bind-arguments "invalid argument ~a" (argument-name a)))
     (hash-set bound (argument-name a) v)))
