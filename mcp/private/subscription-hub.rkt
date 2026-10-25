@@ -48,7 +48,7 @@
   (for ([sub (in-list subscribers)])
         (define filter (subscription-filter sub))
         (define matches?
-          (and (authorized? (subscription-principal sub)) (or (not principal) (equal? (principal-key principal) (principal-key (subscription-principal sub))))
+          (and (with-handlers ([(lambda (_) #t) (lambda (_) #f)]) (authorized? (subscription-principal sub))) (or (not principal) (equal? (principal-key principal) (principal-key (subscription-principal sub))))
                (case (string->symbol method)
                  [(notifications/tools/list_changed) (hash-ref filter 'toolsListChanged #f)]
                  [(notifications/prompts/list_changed) (hash-ref filter 'promptsListChanged #f)]

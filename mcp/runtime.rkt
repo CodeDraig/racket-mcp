@@ -20,7 +20,8 @@
          "private/runtime-state.rkt"
          "private/runtime-policy.rkt"
          "private/runtime-changes.rkt"
-         "private/runtime-tasks.rkt"
+         (rename-in "private/runtime-tasks.rkt" [recover-runtime-tasks! recover-tasks!] [retry-runtime-task! retry-task!])
+         "private/runtime-binding.rkt"
          "private/runtime-render.rkt"
          "private/runtime-workflow.rkt"
          "private/runtime-resource.rkt"
@@ -87,6 +88,7 @@
                         (subscription-policy-targets interface store params))
             '()))))
   (define (scope-authorize principal method params)
+    (check-task-ownership! store method params principal)
     (define needed (scopes method params))
     (and (or (null? needed) (scopes-allow? principal needed)) (authorize principal method params)))
   (define rt (clocked-runtime interface scope-authorize store (for/hasheq ([(name adapter) (in-hash adapters)]) (values name adapter)) (make-custodian) (make-subscription-hub) cache cache-context (gensym 'runtime-cache)
@@ -116,7 +118,9 @@
     (render-runtime-call rt method params context dispatch compute fingerprint))
   (define (run-domain program arguments)
     (run-domain-workflow rt method principal caps program arguments))
-  (parameterize ([current-request-context context]
+  (parameterize ([current-render-bindings (hasheq)]
+                 [current-render-arguments #f]
+                 [current-request-context context]
                  [current-progress-token (hash-ref meta 'progressToken #f)]
                  [current-interface iface]
                  [current-resource-resolver (make-runtime-resource-resolver rt meta context dispatch)]
@@ -127,10 +131,10 @@
     (case (string->symbol method)
       [(server/discover tools/list resources/list resources/templates/list prompts/list)
        (dispatch-discovery rt method params)]
-      [(tools/call) (dispatch-tool-call rt params render-call)]
+      [(tools/call) (dispatch-tool-call rt params render-call (task-executor rt dispatch))]
       [(completion/complete) (dispatch-completion iface params)]
       [(subscriptions/listen) (dispatch-subscription rt params)]
-      [(tasks/get tasks/update tasks/cancel) (dispatch-runtime-task rt method params)]
+      [(tasks/get tasks/update tasks/cancel) (dispatch-runtime-task rt method params (task-executor rt dispatch))]
       [(resources/read) (dispatch-resource-read rt params render-call run-domain)]
       [(prompts/get) (dispatch-prompt-get rt params render-call run-domain)]
       [else (mcp-error -32601 "Method not found")])))
@@ -145,3 +149,8 @@
     (check-client-message message)
     (if (missing? id) #f
         (hasheq 'jsonrpc "2.0" 'id id 'result (dispatch rt (hash-ref message 'method) (hash-ref message 'params (hasheq)) #:principal principal #:id id #:notify notify)))))
+
+(define (recover-runtime-tasks! rt #:restore-principal [restore-principal values])
+  (recover-tasks! rt #:dispatch dispatch #:restore-principal restore-principal))
+(define (retry-runtime-task! rt id #:principal principal #:capabilities caps)
+  (retry-task! rt id #:dispatch dispatch #:principal principal #:capabilities caps))

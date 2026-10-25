@@ -1,5 +1,5 @@
 #lang racket/base
-(require "../descriptor.rkt"
+(require "tool-result.rkt" "../descriptor.rkt"
          "../schema.rkt"
          "../json.rkt"
          "../workflow.rkt"
@@ -27,12 +27,7 @@
       (define (translate-task-detail result)
         (if (equal? (hash-ref result 'status #f) "completed")
             (let ([value (hash-ref result 'result)])
-              (unless (and (equal? (hash-ref value 'resultType #f) "complete")
-                           (list? (hash-ref value 'content #f))
-                           (or (hash-ref value 'isError #f) (not (hash-has-key? wire 'outputSchema))
-                               (and (hash-has-key? value 'structuredContent)
-                                    (valid? (hash-ref wire 'outputSchema) (hash-ref value 'structuredContent)))))
-                (mcp-error -32603 "Upstream task result failed its tool contract"))
+              (validate-complete-tool-result value (hash-ref wire 'outputSchema #f))
               (hash-set result 'result (hash-set value 'content (map remap-content (hash-ref value 'content))))) result))
       (define (task-dispatch method id params)
         (define context (current-request-context))
@@ -60,7 +55,10 @@
               #:verify (lambda () (verify-for credential)) #:cancelled? (request-context-cancelled? context)))))
         (translate-task-detail result))
       (make-tool (hash-ref wire 'name) '()
-                 (if tasks? (task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch)
+                 (if tasks? (bound-task-handler handler (lambda (instance) (upstream-task-matches? instance source)) task-dispatch
+                   (lambda (store id principal)
+                     (upstream-task-remote-id bridge store snapshot id (principal-key principal)
+                       ((upstream-bridge-credential-id bridge) principal) source)))
                      (durable-handler bridge handler))
                  #:description (hash-ref wire 'description "") #:output (hash-ref wire 'outputSchema missing)
                  #:annotations (hash-ref wire 'annotations (hasheq))

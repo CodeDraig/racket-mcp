@@ -15,7 +15,7 @@
          "../header-schema.rkt"
          "http-request.rkt"
          "http-headers.rkt"
-         "request-message.rkt")
+         "request-message.rkt" "failure.rkt" "runtime-policy.rkt")
 (provide serve-http make-http-handler)
 (define (json-response status body [headers '()])
   (response/full status #f (current-seconds) #"application/json" headers
@@ -69,6 +69,7 @@
   (lambda (req)
     (parameterize ([current-mcp-clock (runtime-clock rt)])
     (define id missing)
+    (define phase 'headers)
     (define headers (request-headers/raw req))
     (define (get-header key)
       (define found (filter (lambda (h) (string-ci=? (bytes->string/utf-8 (header-field h)) key)) headers))
@@ -82,7 +83,11 @@
                                     (json-response (if (= (exn:fail:mcp-code e) -32001) 403 400)
                                                    (if (request-id? id) (hash-set body 'id id) body)
                                                    (if scopes (list (challenge scopes "insufficient_scope")) '())))]
-                    [exn:fail? (lambda (_) (json-response 400 (hasheq 'jsonrpc "2.0" 'error (hasheq 'code -32700 'message "Invalid request body"))))])
+                    [non-break-failure? (lambda (failure)
+                      (eprintf "HTTP request failed: phase=~a category=~a\n" phase
+                        (cond [(exn:fail:contract? failure) 'contract] [(exn:fail? failure) 'failure]
+                              [(exn? failure) 'exception] [else 'raised-value]))
+                      (json-response 500 (hasheq 'jsonrpc "2.0" 'error (hasheq 'code -32603 'message "Internal error"))))])
       (define origin (get-header "Origin"))
       (cond [(and metadata-path (equal? (url-path (request-uri req)) metadata-path))
              (if (bytes=? (request-method req) #"GET")
@@ -91,6 +96,7 @@
             [(and origin (not (member origin (if (eq? origins ephemeral-origin-policy) (list (current-ephemeral-origin)) origins)))) (json-response 403 #f)]
             [(not (bytes=? (request-method req) #"POST")) (json-response 405 #f (list (header #"Allow" #"POST")))]
             [else
+             (set! phase 'authentication)
              (define principal (authenticate-request headers))
              (define accepted?
                (and principal
@@ -105,7 +111,11 @@
                     (unless (regexp-match? #px"^application/json(?:;|$)" (or (get-header "Content-Type") "")) (mcp-error -32600 "Expected application/json"))
                     (define raw (or (request-post-data/raw req) #""))
                     (when (> (bytes-length raw) max-bytes) (mcp-error -32600 "Request body limit exceeded"))
-                    (define message (string->json (bytes->string/utf-8 raw) #:max-bytes max-bytes))
+                    (set! phase 'decoding)
+                    (define message
+                      (with-handlers ([exn:fail? (lambda (_failure) (mcp-error -32700 "Invalid request body"))])
+                        (string->json (bytes->string/utf-8 raw) #:max-bytes max-bytes)))
+                    (set! phase 'request-validation)
                     (when (hash? message) (set! id (hash-ref message 'id missing)))
                     (check-client-message message)
                     (define method (hash-ref message 'method))
@@ -132,15 +142,17 @@
                             (mcp-error -32020 "Annotated parameter header does not match body")))))
                     ;; Scope preflight happens before starting SSE; runtime authorization
                     ;; enforces the same callback again for local and resumed execution.
+                    (set! phase 'authorization)
+                    (check-task-ownership! (runtime-store rt) method params principal)
                     (define needed ((runtime-required-scopes rt) method params))
                     (unless (or (null? needed) (scopes-allow? principal needed))
                       (mcp-error -32001 "Insufficient scope" (hasheq 'requiredScopes needed)))
                     (cond [(not (hash-has-key? message 'id)) (dispatch-message rt message #:principal principal) (json-response 202 #f)]
                           [else
-                           (request-response rt message principal
+                           (begin (set! phase 'dispatch) (request-response rt message principal
                              (or sse? (equal? method "subscriptions/listen")
                                  (hash-has-key? (hash-ref params '_meta (hasheq)) 'progressToken))
-                             keepalive response-limit stream-after)])])])))))
+                             keepalive response-limit stream-after))])])])))))
 (define (serve-http rt #:port [port 8000] #:host [host "127.0.0.1"] #:origins [origins #f]
                     #:authenticate [authenticate #f] #:sse? [sse? #f] #:confirmation [confirmation #f]
                     #:keepalive-seconds [keepalive 15] #:max-response-bytes [response-limit 1048576]

@@ -461,11 +461,18 @@ tasks and starts recovery workers. Awaiting-input and terminal tasks stay unchan
 Use @racket[#:recover-tasks? #f] to defer startup and @racket[recover-runtime-tasks!]
 to scan explicitly; the latter returns worker thread events. A missing executable
 is a startup error. Incompatible executable versions fail through the workflow
-compatibility check before execution.
+compatibility check before execution. A startup worker that encounters another
+owner's live claim skips that claim. If that owner subsequently dies, call
+@racket[recover-runtime-tasks!] again or explicitly resume the task. There is no
+continuous takeover scheduler. Expiry still prevents public access and resumption;
+a worker stopping at expiry may record a failed terminal state without extending
+the TTL.
 
 A workflow's @racket[#:key] callback also applies to immediate task execution.
 It runs once per initial invocation, outside SQLite transactions, using validated
-arguments. Captured workflows compute it under their sealed executable resolver.
+effective arguments, with absent entries removed and before persistence converts
+native numbers and objects to their stored representation. Captured workflows
+compute it under their sealed executable resolver.
 Task creation rejects a caller-owned transaction before key evaluation, so a
 returned task handle cannot depend on a subsequent caller commit or rollback.
 The key is scoped to the principal and workflow operation; reusing it with changed
@@ -514,7 +521,31 @@ work. The ordinary data API uses a @tt{workflow-stage} of kind @tt{'task-boundar
 with @racket[Any], a procedure returning @racket[json-null], and @racket[#f] adapter
 and policy fields. The boundary does not invoke that procedure or save a value.
 @tt{start-workflow-task} accepts @racket[#:state] and
-@racket[#:responses] for the preparation's MRTR retries.
+@racket[#:responses] for the preparation's MRTR retries. Adding Tasks capability
+to a continuation preserves its existing workflow and accepted responses. It
+continues MRTR until an explicit task boundary; without a boundary it completes
+that execution synchronously.
+
+@tt{bind-arguments} accepts optional @racket[#:defaults] containing saved effective
+bindings. Omitted defaulted arguments reuse that map, including saved absence;
+fresh calls retain left-to-right default evaluation. Rendering records retain
+these bindings through @tt{render-layout}'s optional @racket[#:bindings]. Older
+rendering records can resume with recoverable bindings or explicit arguments.
+An omitted default without retained evidence is a compatibility error and is not
+reevaluated.
+
+Managed tasks resolve embedded resources and input, expand content groups, and
+produce JSON presentations before checking completion shape, Boolean
+@tt{isError}, and the tool's output schema. The low-level @tt{mcp/tasks} start,
+resume, update, and replacement APIs accept @racket[#:output-schema]. Start
+defaults to no output contract; omitted values on later calls retain the stored
+contract, while explicit @racket[#f] disables that low-level contract. Runtime
+managed calls supply the declared tool contract. Polling rejects malformed
+retained completed results without changing or replaying their records.
+
+Records with missing rendering provenance or unverifiable executable identity
+require explicit recovery outside these APIs. The runtime does not guess old
+identity metadata or adopt unsupported storage layouts.
 
 @racket[#:restore-principal] maps the stored principal key to a current application
 principal. Its default returns the key itself, suitable for string identities.
@@ -1808,7 +1839,10 @@ uncertain mutation. An abandoned workflow cannot be resumed this way.
 The runtime resolves the original mounted operation and adapters, checks task and
 operation authorization before allocation and again in the worker, and requires
 Tasks plus any declared input capability. Expired, foreign, or incompatible
-workflow state is rejected. The replacement uses the existing workflow checkpoints
+workflow state is rejected. Embedded-child manual failures identify the actual
+child workflow. Retained parent, rendering and child compatibility and resource
+authority are checked before replacement allocation or accepting task input.
+The replacement uses the existing workflow checkpoints
 and effect keys and does not extend the original expiry. Current capabilities are
 persisted for subsequent worker recovery.
 

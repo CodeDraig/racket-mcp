@@ -1,0 +1,58 @@
+#lang racket/base
+(require rackunit racket/file mcp)
+(define calls 0)
+(define decodes 0)
+(define renders 0)
+(define number-text (make-string-codec "number-text" "1" Integer number->string
+  (lambda (wire) (set! decodes (add1 decodes)) (string->number wire))))
+(define form (hasheq 'mode "form" 'message "Continue?" 'requestedSchema (object-schema (hasheq))))
+(resource (child) #:uri "bindings:///child" #:workflow "1"
+  (await-input [child-answer Any] form) "child")
+(define (messages n)
+  (set! renders (add1 renders))
+  (append (role "user" (text-content (number->string n))) (role "user" (embed (child)))))
+(prompt (parent [n Integer #:codec number-text #:default (begin (set! calls (add1 calls)) 7)])
+  #:workflow "1"
+  (await-input [parent-answer Any] form)
+  (messages n))
+(prompt (direct [n Integer #:codec number-text #:default (begin (set! calls (add1 calls)) 7)])
+  (messages n))
+(define meta (request-meta #:capabilities (hasheq 'elicitation (hasheq))))
+(for ([mode '(new retained explicit missing)])
+  (test-case (format "rendering binding evidence: ~a" mode)
+    (set! calls 0) (set! renders 0) (set! decodes 0)
+    (define directory (make-temporary-file "render-bindings-~a" 'directory))
+    (define path (build-path directory "state.sqlite"))
+    (define store (open-sqlite-store path))
+    (define iface (make-interface #:prompts (list parent direct) #:resources (list child)))
+    (define rt (make-runtime iface #:store store))
+    (define target (hasheq '_meta meta 'name (if (memq mode '(explicit missing)) "direct" "parent")))
+    (define (call params) (dispatch rt "prompts/get" params #:principal "alice"))
+    (dynamic-wind void
+      (lambda ()
+        (define initial (call target))
+        (define pending
+          (if (memq mode '(explicit missing)) initial
+              (call (hash-set* target 'requestState (hash-ref initial 'requestState)
+                     'inputResponses (hasheq 'parent-answer (hasheq 'action "decline"))))))
+        (check-equal? calls 1) (check-equal? renders 1)
+        (define token (hash-ref pending 'requestState))
+        (define row (load-instance store token))
+        (unless (eq? mode 'new)
+          (update-instance! store row (hash-remove (stored-instance-state row) 'bindings)))
+        (custodian-shutdown-all (runtime-custodian rt)) (close-store! store)
+        (set! store (open-sqlite-store path)) (set! rt (make-runtime iface #:store store))
+        (define args (hash-set* target 'requestState token 'inputResponses
+          (for/hasheq ([key (in-hash-keys (hash-ref pending 'inputRequests))])
+            (values key (hasheq 'action "decline")))))
+        (define before (list-instances store))
+        (cond [(eq? mode 'missing)
+               (check-exn #rx"predates saved argument bindings" (lambda () (call args)))
+               (check-equal? (list-instances store) before)]
+              [else
+               (define result (call (if (eq? mode 'explicit) (hash-set args 'arguments (hasheq 'n "7")) args)))
+               (check-equal? (hash-ref result 'resultType) "complete")
+               (check-equal? (hash-ref (hash-ref (car (hash-ref result 'messages)) 'content) 'text) "7")])
+        (check-equal? calls 1) (check-equal? renders 1)
+        (check-equal? decodes (if (eq? mode 'explicit) 1 0)))
+      (lambda () (custodian-shutdown-all (runtime-custodian rt)) (close-store! store) (delete-directory/files directory)))))

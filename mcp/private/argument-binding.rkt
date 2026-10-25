@@ -16,12 +16,14 @@
     (define wire (if (prompt-argument? a) (encode-string-value (prompt-argument-codec a) value) value))
     (unless (string? wire) (error 'encode-prompt-arguments "non-string argument requires a codec"))
     (values name wire)))
-(define (bind-arguments arguments input)
+(define (bind-arguments arguments input #:defaults [defaults #f])
+  (unless (or (not defaults) (hash? defaults)) (raise-argument-error 'bind-arguments "hash? or #f for saved defaults" defaults))
   (unless (hash? input) (error 'bind-arguments "arguments must be an object"))
   (for/fold ([bound (hasheq)]) ([a (in-list arguments)])
     (define supplied (hash-ref input (argument-name a) missing))
     (define v (cond [(not (missing? supplied)) (if (prompt-argument? a) (with-handlers ([exn:fail? (lambda (e) (mcp-error -32602 (format "Invalid string argument ~a" (argument-name a))))])
                       (decode-string-value (prompt-argument-codec a) supplied)) supplied)]
+                    [(and defaults (argument-default a)) (hash-ref defaults (argument-name a) missing)]
                     [(argument-default a) ((argument-default a) bound)]
                     [(argument-optional? a) missing]
                     [else (error 'bind-arguments "missing argument ~a" (argument-name a))]))

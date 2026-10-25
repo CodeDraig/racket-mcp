@@ -72,8 +72,15 @@
 (define incompatible-task-rt (make-runtime
   (view task-base #:namespace "a/" #:adapters (hasheq 'writer (adapter "Changed" "a/2"))) #:store store))
 (define before seen)
-(void (call incompatible-task-rt "tasks/update" (hasheq 'taskId task-id 'inputResponses (hasheq 'answer (hasheq 'action "decline")))))
-(check-equal? (hash-ref (hash-ref (await-status incompatible-task-rt "failed") 'error) 'message) "Workflow requires manual recovery")
+(define saved-before (load-instance store task-id))
+;; Complete executable compatibility is checked before accepting input. This
+;; retains the pending row and does not misclassify code drift as an uncertain
+;; effect requiring manual recovery.
+(check-exn exn:fail:recovery?
+  (lambda () (call incompatible-task-rt "tasks/update"
+    (hasheq 'taskId task-id 'inputResponses (hasheq 'answer (hasheq 'action "decline"))))))
+(check-equal? (load-instance store task-id) saved-before)
+(check-equal? (hash-ref (call task-rt "tasks/get" (hasheq 'taskId task-id)) 'status) "input_required")
 (check-equal? seen before)
 ;; A legacy record with no published operation cannot select a sibling by order.
 (store-transaction store (lambda ()

@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list
+(require "runtime-binding.rkt" racket/list
          "runtime-state.rkt"
          "runtime-changes.rkt"
          "runtime-render.rkt"
@@ -29,12 +29,13 @@
                                    (define args ((resource-descriptor-matcher d) uri)) (and args (cons d args)))))
   (unless (= (length matches) 1) (mcp-error -32602 "Unknown or ambiguous resource URI" (hasheq 'uri uri)))
   (define d (caar matches))
-  (define args (bind-arguments (resource-descriptor-arguments d) (cdar matches)))
   (define renderer-version (renderer-fingerprint (resource-descriptor-renderer d)))
   (define program
     (and (resource-descriptor-workflow d)
          (workflow-add-fingerprint-suffix (resource-descriptor-workflow d)
                                           (string-append ":renderer:" renderer-version))))
+  (define args (bind-call-arguments rt "resources/read" params (resource-descriptor-arguments d) (cdar matches) program
+    (if program (workflow-executable-fingerprint program (current-workflow-adapters)) (string-append "render/1:renderer:" renderer-version))))
   (define dependencies (change-keys! ((resource-descriptor-depends-on d) args)))
   (define parent (current-resource-snapshots))
   (define bypass? (or program (current-workflow-state) (current-workflow-invocation-key)

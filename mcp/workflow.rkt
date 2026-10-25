@@ -1,5 +1,5 @@
 #lang racket/base
-(require "clock.rkt"
+(require "private/persistent-json.rkt" "private/failure.rkt" "clock.rkt"
          racket/list
          racket/match
          "storage.rkt"
@@ -46,6 +46,9 @@
   (when (eq? (current-store-connection) (state-store-connection store))
     (error 'run-workflow "workflow execution must own its storage transaction boundaries"))
   (unless (and (or (not handle) (string? handle)) (hash? responses)) (mcp-error -32602 "Invalid continuation parameters"))
+  (set! arguments (for/hasheq ([(key value) (in-hash arguments)] #:unless (missing? value)) (values key value)))
+  (define invocation-key (and (not handle) (workflow-invocation-key workflow arguments)))
+  (set! arguments (persistent-json arguments))
   ;; MRTR recommends ignoring unrecognized input-response fields. Known inputs
   ;; from another round are different: accepting those would bypass its boundary.
   (define (stage-inputs stage)
@@ -67,7 +70,7 @@
         (create-instance! store principal (workflow-descriptor-name workflow) arguments
                           (workflow-descriptor-version workflow) executable-fingerprint (+ (clock) ttl)
                           (hasheq 'position 0 'values arguments 'status "working" 'effects (hasheq))
-                          #:key (workflow-invocation-key workflow arguments))))
+                          #:key invocation-key)))
   (unless (and (equal? principal (stored-instance-principal instance))
                (equal? arguments (stored-instance-arguments instance))
                (equal? (workflow-descriptor-name workflow) (stored-instance-operation instance)))
@@ -301,6 +304,7 @@
   ;; The database transaction protects each transition; this separate claim
   ;; spans external adapter execution without holding a database transaction.
   (define result missing)
+  (define observer (current-workflow-failure-observer))
   (let claim-loop ()
     (when (cancelled?) (error 'run-workflow "execution cancelled"))
     (when (<= (stored-instance-expires instance) (clock)) (error 'run-workflow "continuation expired"))
@@ -310,8 +314,13 @@
                      (hash-has-key? (stored-instance-state (load-instance store (stored-instance-handle instance))) 'task-handoff))
                 (begin (set! result (execute)) #t)
                 (call-with-instance-worker store (stored-instance-handle instance)
-                  (lambda () (set! result (execute)))))
+                  (lambda () (with-handlers ([non-break-failure?
+                    (lambda (failure)
+                      (with-handlers ([non-break-failure? void])
+                        (observer workflow store (load-instance store (stored-instance-handle instance)) failure))
+                      (raise failure))]) (set! result (execute))))))
       (sync (alarm-evt (+ (current-inexact-milliseconds) 25)))
       (claim-loop)))
   result)
-(module+ private (provide workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))
+(define current-workflow-failure-observer (make-parameter (lambda (_workflow _store _flow _failure) (void))))
+(module+ private (provide workflow-rename current-workflow-failure-observer workflow-add-fingerprint-suffix current-workflow-task-handoff workflow-invocation-key))

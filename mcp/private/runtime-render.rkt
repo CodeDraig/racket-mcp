@@ -1,5 +1,5 @@
 #lang racket/base
-(require "runtime-state.rkt"
+(require "runtime-binding.rkt" "runtime-state.rkt"
          "../authorization.rkt"
          (submod "../build.rkt" private)
          "../descriptor.rkt"
@@ -34,7 +34,8 @@
   (define layout (if resumed? #f (parameterize ([current-render-capture (and store (box next))]) (compute))))
   (if (or resumed? (and store (layout-embeddings? layout)))
       (render-layout store layout #:operation method
-                     #:arguments (hash-remove (hash-remove (hash-remove params '_meta) 'requestState) 'inputResponses)
+                     #:arguments (or (current-render-arguments) (render-request-arguments params))
+                     #:bindings (current-render-bindings)
                      #:principal (principal-key principal) #:fingerprint (bind-build-identity fingerprint)
                      #:state (and resumed? token) #:responses (current-workflow-responses)
                      #:key render-key

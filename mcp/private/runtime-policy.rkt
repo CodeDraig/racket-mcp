@@ -1,7 +1,7 @@
 #lang racket/base
 (require racket/list "runtime-state.rkt" "adapter-policy.rkt" "handler-info.rkt"
-         "../descriptor.rkt" "../storage.rkt" "../workflow.rkt" "../error.rkt")
-(provide resolve-task-operation checked-subscription-filter subscription-policy-targets
+         "task-state.rkt" "../authorization.rkt" "../descriptor.rkt" "../storage.rkt" "../workflow.rkt" "../error.rkt")
+(provide inspect-owned-task check-task-ownership! resolve-task-operation checked-subscription-filter subscription-policy-targets
          operation-targets declaration-scopes operation-adapters request-adapters lookup-operation)
 (define (task-operation? d instance)
   (or (and (task-handler? (tool-descriptor-handler d))
@@ -94,3 +94,14 @@
 (define (lookup-operation declarations name-of params key)
   (or (findf (lambda (d) (equal? (name-of d) (hash-ref params key #f))) declarations)
       (mcp-error -32602 (format "Unknown ~a" key))))
+
+;; Resolve ownership before operation identity, policy targets, or saved values.
+(define (inspect-owned-task store id principal)
+  (unless (and store (string? id)) (mcp-error -32602 "Unknown or foreign task"))
+  (owned store id (principal-key principal)))
+(define (check-task-ownership! store method params principal)
+  (cond [(member method '("tasks/get" "tasks/update" "tasks/cancel"))
+         (inspect-owned-task store (hash-ref params 'taskId #f) principal)]
+        [(equal? method "subscriptions/listen")
+         (for ([id (in-list (hash-ref (checked-subscription-filter params) 'taskIds '()))])
+           (inspect-owned-task store id principal))]))

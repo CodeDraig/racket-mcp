@@ -1,0 +1,16 @@
+#lang racket/base
+(require rackunit mcp/schema mcp/json)
+
+(for ([case (list (list 1.0 90071992547409921/10 #f)
+                  (list 0.1 1 #f)
+                  (list 0.5 90071992547409921/10 #f)
+                  (list 1 9007199254740992.0 #t)
+                  (list 0.5 1 #t)
+                  (list 1.0 9007199254740992 #t))])
+  (test-case (format "multipleOf uses exact operand values: ~s" case)
+    (define schema (hasheq 'multipleOf (car case)))
+    (define value (cadr case))
+    (define expected (caddr case))
+    (check-equal? (valid? schema value) expected)
+    (check-equal? (valid? (string->json (json->string schema))
+                        (string->json (json->string value))) expected)))

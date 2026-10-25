@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list
+(require "json-equality.rkt" racket/list
          "runtime-state.rkt"
          "request-meta.rkt"
          "../clock.rkt"
@@ -12,7 +12,7 @@
 (provide change-keys! runtime-report-change! runtime-upstream-subscription-ended! runtime-drain-changes! runtime-reconcile-changes!)
 (define (change-keys! keys)
   (unless (and (list? keys) (json-value? keys)) (error 'freshness "dependency keys must be a JSON list"))
-  keys)
+  (map json-value-key keys))
 (define (resource-notification-authorized? rt principal uri)
   (and (or (not (verified-principal? principal)) (> (verified-principal-expiry principal) (mcp-current-seconds)))
        ((runtime-authorize rt) principal "resources/read" (hasheq 'uri uri '_meta (request-meta)))))
@@ -35,7 +35,7 @@
                             (ormap (lambda (key) (member key keys)) dependencies))))))
       uri))
 (define/clock (runtime-report-change! rt principal keys)
-  (change-keys! keys)
+  (set! keys (change-keys! keys))
   (define owner (principal-key principal))
   ;; Invalidation precedes publication, including changes arriving externally.
   (define cached (invalidate-keys! (runtime-cache rt) keys #:principal owner))
@@ -47,7 +47,7 @@
                      #:authorized? (lambda (reader) (resource-notification-authorized? rt reader uri))))
   (remove-duplicates (append cached affected)))
 (define/clock (runtime-upstream-subscription-ended! rt principal keys ids failed? fallback?)
-  (change-keys! keys)
+  (set! keys (change-keys! keys))
   (define owner (principal-key principal))
   ;; A missing feed makes cached reads uncertain; it is not a committed mutation
   ;; and must not fabricate resources/updated or task-state notifications.

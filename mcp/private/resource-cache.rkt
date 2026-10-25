@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/set "../clock.rkt")
+(require "json-equality.rkt" racket/set "../clock.rkt")
 (provide cache-clock (struct-out cache-partition) make-resource-cache cache-ref! invalidate-keys!)
 (struct cache-partition (owner authority) #:transparent)
 (struct cache-entry (value expires dependencies) #:transparent)
@@ -40,7 +40,7 @@
                  (when (>= (hash-count (resource-cache-entries cache)) (resource-cache-limit cache))
                    (hash-remove! (resource-cache-entries cache) (car (hash-keys (resource-cache-entries cache)))))
                  (hash-set! (resource-cache-entries cache) key
-                            (cache-entry value expiration (list->set keys))))
+                            (cache-entry value expiration (list->set (map json-value-key keys)))))
                unchanged?)))
          (if current? value (on-invalidated value))]))
 (define (invalidate-keys! cache keys #:principal [principal #f])
@@ -49,6 +49,6 @@
       (set-resource-cache-generation! cache (add1 (resource-cache-generation cache)))
       (define affected (for/list ([(key entry) (in-hash (resource-cache-entries cache))]
                                   #:when (and (or (not principal) (equal? principal (if (cache-partition? (car key)) (cache-partition-owner (car key)) (car key))))
-                                              (not (set-empty? (set-intersect (list->set keys) (cache-entry-dependencies entry)))))) key))
+                                              (not (set-empty? (set-intersect (list->set (map json-value-key keys)) (cache-entry-dependencies entry)))))) key))
       (for ([key (in-list affected)]) (hash-remove! (resource-cache-entries cache) key))
       (map cdr affected))))

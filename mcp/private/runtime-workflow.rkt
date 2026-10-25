@@ -1,5 +1,5 @@
 #lang racket/base
-(require "../workflow.rkt"
+(require "../workflow.rkt" (submod "../workflow.rkt" private)
          "../subscription.rkt"
          "../error.rkt"
          "../authorization.rkt"
@@ -11,7 +11,7 @@
   (when (and (ormap (lambda (s) (memq (workflow-stage-kind s) '(input input-group))) (workflow-descriptor-stages program))
              (not (hash-has-key? caps 'elicitation)))
     (mcp-error -32021 "Client elicitation capability is required" (hasheq 'requiredCapabilities (hasheq 'elicitation (hasheq)))))
-  (run-workflow (struct-copy workflow-descriptor program [name (string-append method ":" (workflow-descriptor-name program))])
+  (run-workflow (workflow-rename program (string-append method ":" (workflow-descriptor-name program)))
                 (runtime-store rt) (for/hasheq ([(key value) (in-hash arguments)] #:unless (missing? value)) (values key value))
                 #:principal (principal-key principal) #:state (current-workflow-state)
                 #:responses (current-workflow-responses) #:adapters (current-workflow-adapters)

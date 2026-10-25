@@ -19,7 +19,8 @@
 (provide make-http-client http-client-request http-client-call (struct-out http-client)
          (struct-out exn:fail:http:authorization) (struct-out exn:fail:http:timeout)
          (struct-out exn:fail:http:transport))
-(struct exn:fail:http:authorization exn:fail (status headers body challenges resource request-token) #:transparent)
+(struct exn:fail:http:authorization exn:fail (status headers body challenges resource request-token) #:transparent
+  #:property prop:custom-write (lambda (_value out _mode) (display "#<exn:fail:http:authorization>" out)))
 (struct exn:fail:http:timeout exn:fail (phase seconds) #:transparent)
 (struct exn:fail:http:transport exn:fail (cause) #:transparent)
 (define (check-timeout who v)
@@ -29,7 +30,8 @@
   (define body (port->bytes (make-limited-input-port in (add1 limit))))
   (when (> (bytes-length body) limit) (error 'http-client "Response byte limit exceeded"))
   body)
-(struct http-client (url token next-id lock schemas max-response-bytes max-header-bytes timeout header-timeout progress-tokens) #:mutable #:transparent)
+(struct http-client (url token next-id lock schemas max-response-bytes max-header-bytes timeout header-timeout progress-tokens) #:mutable #:transparent
+  #:property prop:custom-write (lambda (_value out _mode) (display "#<http-client>" out)))
 (define (make-http-client url #:token [token #f] #:schemas [schemas (hash)] #:max-response-bytes [limit 1048576] #:max-header-bytes [header-limit 65536]
                           #:timeout [timeout 30] #:header-timeout [header-timeout 30])
   (check-timeout 'make-http-client timeout)

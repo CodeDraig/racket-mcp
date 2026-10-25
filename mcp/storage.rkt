@@ -1,5 +1,5 @@
 #lang racket/base
-(require "private/storage-schema.rkt"
+(require "private/persistent-json.rkt" "private/storage-schema.rkt"
          "clock.rkt"
          "private/transaction.rkt"
          db
@@ -57,13 +57,15 @@
        (state-store-connection store) (state-store-lock store)
        (if (supervised-state-store? store) (supervised-state-store-custodian store) (current-custodian))
        (lambda () (parameterize ([current-store-connection (state-store-connection store)] [current-store-owner (current-thread)]) (proc))))))
-(define (decode-stored-json text marks)
+(define (decode-stored-json text marks [handle #f] [category 'event])
   (when (sql-null? marks)
-    (error 'load-instance "Stored JSON requires rendering provenance; explicit recovery is required"))
-  (restore-render-provenance (string->json text) (string->json marks)))
+    (error 'load-instance "Stored handle ~a requires rendering provenance for ~a; explicit recovery is required" handle category))
+  (with-handlers ([exn:fail? (lambda (_failure)
+                   (error 'load-instance "Stored handle ~a has unreadable ~a JSON or provenance; explicit recovery is required" handle category))])
+    (restore-render-provenance (string->json text) (string->json marks))))
 (define (row->instance row)
-  (stored-instance (vector-ref row 0) (vector-ref row 1) (vector-ref row 2) (decode-stored-json (vector-ref row 3) (vector-ref row 10))
-                   (vector-ref row 4) (vector-ref row 5) (vector-ref row 6) (vector-ref row 7) (decode-stored-json (vector-ref row 8) (vector-ref row 9))))
+  (stored-instance (vector-ref row 0) (vector-ref row 1) (vector-ref row 2) (decode-stored-json (vector-ref row 3) (vector-ref row 10) (vector-ref row 0) 'arguments)
+                   (vector-ref row 4) (vector-ref row 5) (vector-ref row 6) (vector-ref row 7) (decode-stored-json (vector-ref row 8) (vector-ref row 9) (vector-ref row 0) 'state)))
 (define (load-instance store handle)
   (store-transaction store
     (lambda () (define row (query-maybe-row (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances WHERE handle=?" handle))
@@ -95,6 +97,8 @@
                         (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances WHERE operation=?" operation)
                         (query-rows (state-store-connection store) "SELECT handle,principal,operation,arguments,version,fingerprint,expires,revision,state,state_marks,argument_marks FROM instances"))))))
 (define (create-instance! store principal operation arguments version fingerprint expires state #:key [key #f])
+  (set! arguments (persistent-json arguments))
+  (set! state (persistent-json state))
   (store-transaction store
     (lambda ()
       (define conn (state-store-connection store))
@@ -106,6 +110,7 @@
                               handle principal operation (json->string arguments) version fingerprint expires (json->string state) (or key sql-null) (json->string (render-provenance state)) (json->string (render-provenance arguments)))
                   (record-event! store handle (hasheq 'kind "created")) (load-instance store handle)]))))
 (define (update-instance! store instance state)
+  (set! state (persistent-json state))
   (store-transaction store
     (lambda ()
       (query-exec (state-store-connection store) "UPDATE instances SET state=?, state_marks=?, revision=revision+1 WHERE handle=? AND revision=?"
@@ -115,4 +120,4 @@
 (define (record-event! store handle event)
   (store-transaction store (lambda () (query-exec (state-store-connection store) "INSERT INTO journal(handle,event,recorded,event_marks) VALUES (?,?,?,?)" handle (json->string event) (mcp-current-seconds) (json->string (render-provenance event))))))
 (define (instance-events store handle)
-  (store-transaction store (lambda () (for/list ([row (in-list (query-rows (state-store-connection store) "SELECT event,event_marks FROM journal WHERE handle=? ORDER BY sequence" handle))]) (decode-stored-json (vector-ref row 0) (vector-ref row 1))))))
+  (store-transaction store (lambda () (for/list ([row (in-list (query-rows (state-store-connection store) "SELECT event,event_marks FROM journal WHERE handle=? ORDER BY sequence" handle))]) (decode-stored-json (vector-ref row 0) (vector-ref row 1) handle 'event)))))

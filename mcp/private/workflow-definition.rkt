@@ -1,13 +1,13 @@
 #lang racket/base
 (require racket/list "../build.rkt" (submod "../build.rkt" private) "workflow-types.rkt"
          "workflow-contract.rkt" "workflow-context.rkt" "executable-build.rkt" "../json.rkt" "../codec.rkt" "../effect.rkt")
-(provide make-workflow workflow-executable-fingerprint workflow-add-fingerprint-suffix workflow-invocation-key call-with-workflow-build)
+(provide make-workflow workflow-executable-fingerprint workflow-add-fingerprint-suffix workflow-rename workflow-invocation-key call-with-workflow-build)
 (struct identified-workflow workflow-descriptor (identity) #:transparent)
 (struct captured-workflow identified-workflow (build) #:transparent)
-(define (workflow-add-fingerprint-suffix workflow suffix)
+(define (workflow-rebuild workflow name fingerprint)
   (define updated
     (struct-copy workflow-descriptor workflow
-      [fingerprint (string-append (workflow-descriptor-fingerprint workflow) suffix)]))
+      [name name] [fingerprint fingerprint]))
   (define fields
     (list (workflow-descriptor-name updated) (workflow-descriptor-version updated)
           (workflow-descriptor-fingerprint updated) (workflow-descriptor-stages updated)
@@ -18,6 +18,11 @@
         [(identified-workflow? workflow)
          (apply identified-workflow (append fields (list (identified-workflow-identity workflow))))]
         [else updated]))
+(define (workflow-rename workflow name)
+  (workflow-rebuild workflow name (workflow-descriptor-fingerprint workflow)))
+(define (workflow-add-fingerprint-suffix workflow suffix)
+  (workflow-rebuild workflow (workflow-descriptor-name workflow)
+                    (string-append (workflow-descriptor-fingerprint workflow) suffix)))
 (define (workflow-invocation-key workflow arguments)
   (define (compute)
     (or (current-workflow-invocation-key)

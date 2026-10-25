@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list "runtime-state.rkt" "runtime-policy.rkt" "../clock.rkt" "../descriptor.rkt"
+(require racket/list "runtime-state.rkt" "runtime-policy.rkt" "runtime-tasks.rkt" "../clock.rkt" "../descriptor.rkt"
          "../tasks.rkt" "../authorization.rkt" "../subscription.rkt" "../error.rkt")
 (provide dispatch-subscription)
 (define (dispatch-subscription rt params)
@@ -34,6 +34,7 @@
       (mcp-error -32021 "Client Tasks capability is required"
         (hasheq 'requiredCapabilities (hasheq 'extensions (hasheq 'io.modelcontextprotocol/tasks (hasheq))))))
     (for ([task-id (in-list ids)])
+      (authorize-upstream-task! rt principal task-id)
       (unless ((runtime-authorize rt) principal "tasks/get" (hasheq 'taskId task-id))
         (mcp-error -32001 "Task subscription is not authorized"))
       (get-task (runtime-store rt) task-id (principal-key principal)))
@@ -41,7 +42,7 @@
   (define (notification-authorized? notice)
     (and (or (not (verified-principal? principal))
              (> (verified-principal-expiry principal) (mcp-current-seconds)))
-         (with-handlers ([exn:fail:mcp? (lambda (_) #f)])
+         (with-handlers ([(lambda (_) #t) (lambda (_) #f)])
            (define method (hash-ref notice 'method #f))
            (define values (hash-ref notice 'params (hasheq)))
            (define target
@@ -58,7 +59,7 @@
                         [else (hasheq '_meta meta)]))
                 (or (not (equal? target "tasks/get"))
                     (and (runtime-store rt)
-                         (get-task (runtime-store rt) (hash-ref values 'taskId #f) (principal-key principal))))))))
+                         (begin (authorize-upstream-task! rt principal (hash-ref values 'taskId #f)) #t)))))))
   (listen-subscription (runtime-subscriptions rt) id principal accepted
     (lambda (notice)
       (when (or (equal? (hash-ref notice 'method #f) "notifications/subscriptions/acknowledged")
