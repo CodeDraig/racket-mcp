@@ -1,0 +1,5 @@
+raco test: (file "tests/workflow-json-arguments.rkt")
+raco test: (file "tests/embedded-workflows.rkt")
+raco test: (file "tests/completion-references.rkt")
+raco test: (file "tests/prompt-codecs.rkt")
+104 tests passed

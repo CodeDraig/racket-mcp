@@ -1,0 +1,217 @@
+raco test: (file "tests/workflow-json-arguments.rkt")
+--------------------
+low-level completed input compares represented JSON numbers
+ERROR
+
+Conflicting response for completed input
+--------------------
+--------------------
+native numeric response survives restart: single
+ERROR
+
+Conflicting response for completed input
+--------------------
+--------------------
+native numeric response survives restart: group
+ERROR
+
+Conflicting response for completed input
+--------------------
+--------------------
+native numeric response survives restart: partial
+ERROR
+
+Conflicting response for completed input
+--------------------
+--------------------
+native numeric response survives restart: boundary
+ERROR
+
+Conflicting response for completed input
+--------------------
+raco test: (file "tests/embedded-workflows.rkt")
+--------------------
+retained keyed child is checked before defaults: resume
+ERROR
+
+create-instance!: invocation key reused with different arguments
+--------------------
+--------------------
+retained keyed child is checked before defaults: expired
+FAILURE
+name:         check-exn
+location:     tests/embedded-workflows.rkt:118:15
+params:
+  '(#<procedure:...edded-workflows.rkt:119:29>
+  #<procedure:...edded-workflows.rkt:121:17>)
+message:      "Wrong exception raised"
+exn-message:
+  "create-instance!: invocation key reused with different arguments"
+exn:
+  #(struct:exn:fail "create-instance!: invocation key reused with different arguments" #<continuation-mark-set>)
+--------------------
+--------------------
+retained keyed child is checked before defaults: incompatible
+FAILURE
+name:         check-exn
+location:     tests/embedded-workflows.rkt:118:15
+params:
+  '(#<procedure:exn:fail:recovery?> #<procedure:...edded-workflows.rkt:121:17>)
+message:      "Wrong exception raised"
+exn-message:
+  "create-instance!: invocation key reused with different arguments"
+exn:
+  #(struct:exn:fail "create-instance!: invocation key reused with different arguments" #<continuation-mark-set>)
+--------------------
+--------------------
+retained keyed child is checked before defaults: version
+FAILURE
+name:         check-exn
+location:     tests/embedded-workflows.rkt:118:15
+params:
+  '(#<procedure:exn:fail:recovery?> #<procedure:...edded-workflows.rkt:121:17>)
+message:      "Wrong exception raised"
+exn-message:
+  "create-instance!: invocation key reused with different arguments"
+exn:
+  #(struct:exn:fail "create-instance!: invocation key reused with different arguments" #<continuation-mark-set>)
+--------------------
+raco test: (file "tests/completion-references.rkt")
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id") (value . ""))) (ref . #f))
+FAILURE
+name:         check-exn
+location:     tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:      "Wrong exception raised"
+exn-message:
+  "hash-ref: contract violation\n  expected: hash?\n  given: #f\n  argument position: 1st\n  other arguments...:\n   'type"
+exn:
+  #(struct:exn:fail:contract "hash-ref: contract violation\n  expected: hash?\n  given: #f\n  argument position: 1st\n  other arguments...:\n   'type" #<continuation-mark-set>)
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #f) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:         check-exn
+location:     tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:      "Wrong exception raised"
+exn-message:
+  "hash-ref: contract violation\n  expected: hash?\n  given: #f\n  argument position: 1st\n  other arguments...:\n   'name"
+exn:
+  #(struct:exn:fail:contract "hash-ref: contract violation\n  expected: hash?\n  given: #f\n  argument position: 1st\n  other arguments...:\n   'name" #<continuation-mark-set>)
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id"))) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id") (value . 1))) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id") (value . ""))) (context . #f) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id") (value . ""))) (context . #hasheq((arguments . #f))) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion parameters are rejected before handler: #hasheq((argument . #hasheq((name . "id") (value . ""))) (context . #hasheq((arguments . #hasheq((other . 1))))) (ref . #hasheq((name . "choose") (type . "ref/prompt"))))
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:142:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:142:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion rejects fractional total before serialization: 1/2
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:156:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:156:38>)
+message:    "No exception raised"
+--------------------
+--------------------
+completion rejects fractional total before serialization: 1/3
+FAILURE
+name:       check-exn
+location:   tests/completion-references.rkt:156:8
+params:
+  '(#<procedure:...tion-references.rkt:121:2>
+  #<procedure:...tion-references.rkt:156:38>)
+message:    "No exception raised"
+--------------------
+raco test: (file "tests/prompt-codecs.rkt")
+--------------------
+FAILURE
+name:         check-exn
+location:     tests/prompt-codecs.rkt:28:0
+params:
+  '(#<procedure:...s/prompt-codecs.rkt:28:11>
+  #<procedure:...s/prompt-codecs.rkt:29:11>)
+message:      "Wrong exception raised"
+exn-message:  "bind-arguments: missing argument base"
+exn:
+  #(struct:exn:fail "bind-arguments: missing argument base" #<continuation-mark-set>)
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/prompt-codecs.rkt:35:2
+actual:     -32603
+expected:   -32602
+--------------------
+--------------------
+FAILURE
+name:       check-regexp-match
+location:   tests/prompt-codecs.rkt:36:2
+params:     '(#rx"base" "Internal error")
+--------------------
+--------------------
+FAILURE
+name:       check-equal?
+location:   tests/prompt-codecs.rkt:35:2
+actual:     -32603
+expected:   -32602
+--------------------
+--------------------
+FAILURE
+name:       check-regexp-match
+location:   tests/prompt-codecs.rkt:36:2
+params:     '(#rx"base" "Internal error")
+--------------------
+23/104 test failures

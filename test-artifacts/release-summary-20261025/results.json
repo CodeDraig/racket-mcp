@@ -1,0 +1,30 @@
+[
+  {
+    "revision": "d2d2372",
+    "exit": 1,
+    "seconds": 59.1,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/raco",
+      "test",
+      "tests/workflow-json-arguments.rkt",
+      "tests/embedded-workflows.rkt",
+      "tests/completion-references.rkt",
+      "tests/prompt-codecs.rkt"
+    ],
+    "log": "/srv/data/code/racket-mcp/.cache/recent-change-comparison-b_py2l3a/d2d2372.log"
+  },
+  {
+    "revision": "4ab93a8",
+    "exit": 0,
+    "seconds": 59.2,
+    "command": [
+      "/srv/data/code/racket-mcp/.cache/racket-9.3/bin/raco",
+      "test",
+      "tests/workflow-json-arguments.rkt",
+      "tests/embedded-workflows.rkt",
+      "tests/completion-references.rkt",
+      "tests/prompt-codecs.rkt"
+    ],
+    "log": "/srv/data/code/racket-mcp/.cache/recent-change-comparison-b_py2l3a/4ab93a8.log"
+  }
+]

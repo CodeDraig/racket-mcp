@@ -1,12 +1,14 @@
 # Implementation and evidence ledger
 
-Target: MCP 2026-07-28; Racket 9.2. Current scope status: 2026-09-08.
+Target: MCP 2026-07-28; Racket 9.2. Current scope status: 2026-10-25.
 **The approved implementation scope is complete.** The user removed native
 macOS/Windows testing from the plan; both platforms remain unverified.
 REMAINING.md is the authoritative current state. The dated ledger and initial
 milestone table below retain historical requirements, superseded by later entries.
 Completion of the approved scope is not an unqualified protocol-conformance claim.
 Passing a fixture does not establish every behavior of an advertised facility.
+The October 25 entry below records the latest full validation and the accepted
+Tasks error-ordering regression; September totals are historical evidence.
 
 ## Milestones
 
@@ -5876,3 +5878,66 @@ resolves local links from README and the notice documents, and checks ZIP
 integrity and exclusion of caches, compiled files, node_modules, Git data, and
 test-artifacts. Two consecutive builds produce identical archive bytes and a
 matching SHA256SUMS entry. Runtime code is unchanged; no runtime suite was rerun.
+
+### Full validation refresh and accepted Tasks limitation (2026-10-25)
+
+The full Linux x86_64 matrix passed on Racket CS 9.2 and 9.3: 6,852 native tests,
+1,301 schema cases, 86 regex cases, compilation, Scribble, installed-package
+dependency checks, all 14 official Go interoperability probes, and 38 selected
+installed-package checks per version. Fresh README and independent CI bootstrap
+runs passed after adding SDK command registration. The initial run's two failures
+caused by missing `raco mcp` registration remain in the evidence. The two archives
+built in that validation were byte-identical and passed ZIP integrity checks.
+See [commands, logs and source manifests](test-artifacts/public-readiness-20261025/README.md).
+The validated runtime is unchanged in `4ab93a8`; this later summary update does
+not rerun the runtime tests or rebuild the archives.
+
+Linux/Racket 9.3 conformance results supersede the September counts:
+
+- Core excluding Tasks against the core fixture: 144 successes, four excluded
+  roots/sampling fixture failures, one MRTR warning and one informational check.
+- Dedicated Tasks: 42 successes, two failures and one skip. The taskId/header
+  disagreement and notification skip persist; error ordering adds one failure.
+  The separate Tasks sweep against the core fixture is retained in the full
+  record and is not dedicated Tasks acceptance.
+- Twelve client scenarios: all processes exit zero; 91 successful checks, four
+  skips and 42 informational checks.
+- Twenty OAuth scenarios using the existing registration-fixture correction:
+  18 processes exit zero; 290 successful checks, six failures, one warning and
+  341 informational checks. `metadata-var2` retains the six failed checks and
+  `scope-step-up` retains its warning; `iss-not-advertised` now passes. These are
+  corrected-fixture results, not unmodified conformance credit.
+- Real loopback HTTPS offline access: 12/12 terminal checks pass. The raw checks
+  file precedes the final shutdown-time check, as explained in the full record.
+
+The new Tasks failure is `sep-2663-tasks-methods-non-declaring`. Requests to
+`tasks/get`, `tasks/update` and `tasks/cancel` without the Tasks capability and
+with an unknown task ID return `-32602` instead of the required `-32021`. All 195
+harness input hashes match the September 8 dedicated Tasks receipt, which had
+43 successes, one failure and one skip. The current source and commit diff point
+to the ownership preflight added in `d2d2372`, ahead of capability validation;
+no commit-by-commit bisect was run. The later documentation/bootstrap change did
+not introduce this runtime behavior.
+
+On 2026-10-25, the user accepted this diagnostic regression as a known limitation
+for now while retaining the ownership protection and other fixes. Both versions
+reject the affected request. No lost work, unauthorized access or real-client
+breakage due to this ordering was demonstrated; error-code-dependent client
+behavior remains a possible, unverified consequence. The ownership check prevents
+saved task arguments from reaching policy callbacks before ownership is checked.
+Workflow fixes address valid saved work failing to resume after restart or retry.
+
+A focused comparison ran the same four current test files against `d2d2372` and
+`4ab93a8`: the earlier source failed 23 of 104 tests; the current source passed
+all 104. It covers numeric replay, embedded saved defaults, completion validation
+and missing prompt arguments. The [retained comparison evidence](test-artifacts/release-summary-20261025/README.md)
+supports those improvements, not a blanket claim about every recent change.
+
+Acceptance does not make the ordering conformant, weaken the harness expectation,
+or establish that the protections require this regression. A future correction
+must preserve ownership-before-saved-argument-callback checks and cover HTTP and
+direct runtime dispatch. This limitation is not an additional publication gate.
+The repository remains private; no visibility change is authorized by this entry.
+Hosted Actions remain disabled, and native macOS/Windows remain unverified under
+the existing scope decision. The release summaries were synchronized; historical
+receipts and their source/archive hashes were preserved.

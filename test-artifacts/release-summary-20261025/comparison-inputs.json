@@ -1,0 +1,14 @@
+{
+  "test_source_commit": "4ab93a819af13d946a2aae0c0b47d5ce2cf6214a",
+  "source_revisions": {
+    "d2d2372": "d2d2372f841ab2c9335a05a78451f53e9b1f689f",
+    "4ab93a8": "4ab93a819af13d946a2aae0c0b47d5ce2cf6214a"
+  },
+  "test_sha256": {
+    "tests/workflow-json-arguments.rkt": "88c2ea9b5e9366f35053629e01c1c99096854806707cefd8cafec6d50c912b9d",
+    "tests/embedded-workflows.rkt": "b9364d5380d49078489297a9205e8af4a52bf7b4cb89c80267792d6806c0393e",
+    "tests/completion-references.rkt": "ec70d3010d23b6be2e58e6a58bd23a00741ba2f033c28e8f892aaa0eb917d285",
+    "tests/prompt-codecs.rkt": "ec55d0d50871e4317f36cecf573d79d843f7523ab8d23763c1e61dfd981c8ae7"
+  },
+  "environment": "Linux x86_64, Racket CS 9.3; same package home containing the prepared syntax-spec dependency; each source copy selected through PLTCOLLECTS."
+}

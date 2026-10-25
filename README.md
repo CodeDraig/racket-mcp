@@ -77,23 +77,37 @@ their reported platform/version and revision only; workflow presence is not a
 passing release claim. Go interoperability and the full MCP conformance harness
 remain separate checks.
 
-Final Linux x86_64 checks pass on Racket 9.2 (6,264 native tests) and 9.3 (6,268),
-with 1,301 schema cases, 86 regex cases and Scribble on each. Installed-package
-dependency validation and 22 selected installed checks also pass on both versions.
-Evidence, including the corrected adapter-guard regression and retained failed
-attempts, is in `test-artifacts/declared-build-20260908`. Reproducible source-archive
-evidence is in `test-artifacts/release-package-20260908`.
+The latest full validation, on 2026-10-25, passed on Linux x86_64 with both Racket
+9.2 and 9.3: 6,852 native tests, 1,301 schema cases, 86 regex cases, all 14 official
+Go interoperability probes, and 38 selected installed-package checks per version.
+Fresh README and CI bootstraps, compilation, Scribble, and package dependency
+validation also passed. The two source archives built during that validation
+were byte-identical. Commands, source hashes, and retained failed first attempts
+are in [the October validation record](test-artifacts/public-readiness-20261025/README.md).
+These results cover the runtime in `4ab93a8`; subsequent release-summary edits
+do not change runtime code or establish a new archive hash.
 
-All fourteen official Go interoperability probes passed after the identity integration.
-Core and Tasks conformance were refreshed with unchanged qualified outcomes in
-`test-artifacts/declared-core-20260908` and `test-artifacts/declared-tasks-corrected-20260908`.
-The qualified MCP results are in `test-artifacts/conformance-closure-20260908`:
-144 core successes with four excluded roots/sampling fixture failures and one
-recorded MRTR warning; 43 Tasks successes with a header-specification disagreement
-and a harness notification skip; 62 client successes and four expected skips;
-and a real HTTPS CIMD/offline-access run with a 12/12 terminal pass. These results
-are not an unqualified conformance claim. A later hosted retry was blocked before native jobs started by an Actions budget.
-macOS and Windows remain unverified; this is not a remaining release gate.
+The Linux/Racket 9.3 conformance rerun remains qualified: 144 core successes,
+four excluded roots/sampling fixture failures and one MRTR warning; 42 dedicated
+Tasks successes, two failures and one notification skip; and all twelve client
+scenario processes exiting zero (91 successful checks and four skips).
+With the documented OAuth registration-fixture correction, 18 of 20 scenario
+processes exited zero; six checks still fail in `metadata-var2`, and
+`scope-step-up` retains its warning. `iss-not-advertised` now passes. The real
+HTTPS offline-access run passed 12/12 terminal checks. Corrected-fixture results
+are not unmodified conformance credit. Hosted Actions and native macOS/Windows
+were not run; those platforms remain unverified and are not release gates.
+
+One Tasks failure is new relative to September 8: without the Tasks capability,
+requests for an unknown task return `-32602` before the capability check can
+return the required `-32021`. Both reject the request; no lost work, unauthorized
+access, or real-client breakage from this ordering was demonstrated. On
+2026-10-25 the user accepted this known limitation for now, retaining the
+ownership checks that protect saved arguments and the fixes that let valid
+workflows resume after retries or restart. This is acceptance of a bounded
+diagnostic regression, not a claim that the error is conformant or that the
+protections require it. A later correction must preserve those protections.
+See [current release status](REMAINING.md) and [the evidence ledger](IMPLEMENTATION.md).
 
 The CLI is also available without package registration:
 
@@ -180,9 +194,9 @@ development inputs only. The SDK runtime is Racket. `vendor/LOCK.json` records
 upstream commits and file hashes. Refreshing inputs is an explicit networked
 maintenance operation: `python3 scripts/fetch-inputs.py [source ...]`.
 
-Do not infer release completeness from the passing core tests. The implementation
-ledger records missing language semantics, recovery races still needing tests,
-conformance exclusions, and unavailable native platform verification.
+Passing native tests are not an unqualified conformance claim. See REMAINING.md
+for current limitations and accepted scope; dated implementation-ledger entries
+retain historical findings and are superseded by later evidence where stated.
 
 Explicit dynamic registration requests and response validation are available in
 `mcp/oauth-registration`; see [the API and supported metadata profile](OAUTH-REGISTRATION.md).
