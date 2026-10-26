@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "name": "racket-version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "install-archives",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/source/.cache/distribution/mcp-syntax-spec-v3.zip",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/source/.cache/distribution/racket-mcp-0.1.zip"
+      ],
+      "exit_code": 1,
+      "seconds": 1.31
+    }
+  ]
+}

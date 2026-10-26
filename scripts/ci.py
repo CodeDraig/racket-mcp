@@ -48,11 +48,12 @@ def main():
         run("racket-version", ["racket", "--version"])
         run("elicitation-pin", [sys.executable, "scripts/extract-elicitation-schema.py", "--check"])
         run("tasks-pin", [sys.executable, "scripts/extract-task-schema.py", "--check"])
+        run("verify-language", [sys.executable, "scripts/prepare-syntax-spec.py", "--check"])
+        run("language-package-tests", [sys.executable, "scripts/test-syntax-spec-package.py"])
         if not args.skip_bootstrap:
-            run("prepare-language", [sys.executable, "scripts/prepare-syntax-spec.py"])
             run("install-language", ["raco", "pkg", "install", "--scope", "user", "--skip-installed",
-                "--auto", "--batch", "--no-docs", "--name", "syntax-spec-v3", "--link",
-                str(ROOT / ".cache/patched-dependencies/syntax-spec-v3")], installed=True)
+                "--auto", "--batch", "--no-docs", "--name", "mcp-syntax-spec-v3", "--link",
+                str(ROOT / "packages/mcp-syntax-spec-v3")], installed=True)
         run("distribution", [sys.executable, "scripts/package.py"])
         if not args.skip_bootstrap:
             run("install-sdk", ["raco", "pkg", "install", "--scope", "user", "--skip-installed",

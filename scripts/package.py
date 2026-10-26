@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Build an isolated source distribution without caches or compiled artifacts."""
 from pathlib import Path
-import shutil, hashlib, zipfile
+import shutil, hashlib, zipfile, subprocess, sys
 root = Path(__file__).resolve().parents[1]
 destination = root / ".cache" / "distribution" / "racket-mcp"
+language_archive = destination.parent / "mcp-syntax-spec-v3.zip"
+subprocess.run([sys.executable, str(root / "scripts/prepare-syntax-spec.py"),
+                "--check", "--archive", str(language_archive)], check=True)
 if destination.exists():
     shutil.rmtree(destination)
 destination.mkdir(parents=True)
-for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev", "LICENSES"):
+for name in ("mcp", "examples", "tests", "scripts", "vendor", "dev", "LICENSES", "packages"):
     shutil.copytree(root / name, destination / name,
                     ignore=shutil.ignore_patterns("compiled", "node_modules", ".git", "results", "__pycache__", "*.pyc"))
 for name in ("info.rkt", "README.md", "IMPLEMENTATION.md", "REMAINING.md",
@@ -26,5 +29,7 @@ with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslev
         entry.compress_type = zipfile.ZIP_DEFLATED
         output.writestr(entry, path.read_bytes())
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-(destination.parent / "SHA256SUMS").write_text(f"{digest}  {archive.name}\n")
+(destination.parent / "SHA256SUMS").write_text(
+    f"{digest}  {archive.name}\n"
+    f"{hashlib.sha256(language_archive.read_bytes()).hexdigest()}  {language_archive.name}\n")
 print(archive)

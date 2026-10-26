@@ -1,5 +1,5 @@
 #lang racket/base
-(require syntax-spec-v3 (for-syntax racket/base syntax/parse "resource-binding.rkt" "prompt-binding.rkt"))
+(require mcp-syntax-spec-v3 (for-syntax racket/base syntax/parse "resource-binding.rkt" "prompt-binding.rkt"))
 (provide define-schema-value define-operation-value define-resource-value
          schema-reference operation-reference resource-reference effect-reference workflow-effects workflow-environment checked-schema-expression)
 ;; Public declarations retain ordinary Racket values through reference compilers.

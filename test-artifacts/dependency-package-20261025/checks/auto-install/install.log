@@ -1,0 +1,63 @@
+Downloading checksum for racket-mcp
+Downloading http://127.0.0.1:38229/racket-mcp.zip
+Downloading checksum for mcp-syntax-spec-v3
+Downloading http://127.0.0.1:38229/mcp-syntax-spec-v3.zip
+00: Resolving "version-case" via https://download.racket-lang.org/releases/9.3/catalog/
+00: Resolving "version-case" via https://download.rhombus-lang.org/releases/current/catalog/
+Resolving "syntax-classes-lib" via https://download.racket-lang.org/releases/9.3/catalog/
+Resolving "syntax-classes-lib" via https://download.rhombus-lang.org/releases/current/catalog/
+Resolving "syntax-classes-lib" via https://pkgs.racket-lang.org
+Downloading https://download.rhombus-lang.org/releases/current/pkgs/version-case.zip
+Downloading repository https://github.com/lexi-lambda/syntax-classes.git?path=syntax-classes-lib commit 4d64d35259d69ee8d5c90f475fe777c66d54c8fd
+Resolving "version-case-lib" via https://download.racket-lang.org/releases/9.3/catalog/
+Resolving "version-case-lib" via https://download.rhombus-lang.org/releases/current/catalog/
+Downloading https://download.rhombus-lang.org/releases/current/pkgs/version-case-lib.zip
+The following uninstalled packages were listed as dependencies
+and they were automatically installed:
+ dependencies of racket-mcp:
+   http://127.0.0.1:38229/mcp-syntax-spec-v3.zip
+ dependencies of mcp-syntax-spec-v3:
+   version-case
+   syntax-classes-lib
+ dependencies of version-case:
+   version-case-lib
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: collects paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/auto-install/home/.local/share/racket/9.3/collects
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: main pkgs: /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup: pkgs paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/auto-install/home/.local/share/racket/9.3/pkgs
+raco setup: links files: 
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/auto-install/home/.local/share/racket/9.3/links.rktd
+raco setup: --- updating info-domain tables ---                    [20:27:00]
+raco setup: updating: /srv/data/code/racket-mcp/.cache/patched-package-20261025/auto-install/home/.local/share/racket/9.3/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [20:27:00]
+raco setup: --- installing foreign libraries ---                   [20:27:00]
+raco setup: --- installing shared files ---                        [20:27:00]
+raco setup: --- compiling collections ---                          [20:27:00]
+raco setup: --- parallel build using 8 jobs ---                    [20:27:00]
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3 (mcp-syntax-spec-v3)
+raco setup: 6 making: <pkgs>/racket-mcp/mcp
+raco setup: 5 making: <pkgs>/syntax-classes-lib/syntax/parse/class
+raco setup: 4 making: <pkgs>/version-case (version-case)
+raco setup: 3 making: <pkgs>/version-case-lib (version-case-lib)
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/ee-lib
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/ee-lib/test
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/runtime
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/syntax
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/syntax/compile
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/private/test
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/tests
+raco setup: 7 making: <pkgs>/mcp-syntax-spec-v3/tests/basic-langs
+raco setup: --- creating launchers ---                             [20:27:26]
+raco setup: --- installing man pages ---                           [20:27:26]
+raco setup: --- installing collections ---                         [20:27:26]
+raco setup: --- post-installing collections ---                    [20:27:26]

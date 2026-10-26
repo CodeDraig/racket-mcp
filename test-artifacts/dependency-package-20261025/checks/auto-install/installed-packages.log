@@ -1,0 +1,6 @@
+Installation-wide:
+ [none]
+User-specific for installation "9.3":
+ Package[*=auto]      Checksum            Source
+ mcp-syntax-spec-v3*  fd32a0d3ebca989...  url...-spec-v3.zip
+ racket-mcp           6ec6ebe03c65593...  url...cket-mcp.zip

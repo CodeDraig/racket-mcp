@@ -1952,7 +1952,11 @@ zero can merge distinct same-spelled local arguments at higher phases, such as
 the @tt{id} arguments of unrelated resource and prompt declarations.
 
 @tt{scripts/prepare-syntax-spec.py} verifies the unchanged vendored snapshot and
-prepares the patched dependency at @tt{.cache/patched-dependencies/syntax-spec-v3}.
+reproduces the installable dependency at @tt{packages/mcp-syntax-spec-v3}.
+Its package and collection name is @tt{mcp-syntax-spec-v3}, so it can coexist
+with the upstream @tt{syntax-spec-v3} package. The SDK dependency declaration
+points to this repository's package subdirectory; consumers of the published
+source do not need to run the Python preparation script.
 The reference-compiler patch attaches each delayed default directly to its
 binding-class transformer, while retaining thread-local scoped overrides. A class first visited in
 one worker must remain usable when another worker or the main thread accesses
@@ -1961,10 +1965,13 @@ lost across that boundary. Defaults now travel with lexical bindings, without
 registration in a mutable table. The promise preserves forward references and
 evaluates a default only when it is first used. Scoped overrides take precedence.
 
-The patch has local version @tt{0.1.0.2}, required by the SDK package. Preparation
+The patch has version @tt{0.1.0.2}, required by the SDK package. Preparation
 performs no network access or package installation. The generated
 @tt{MCP-PATCH.json} records the upstream commit and original/patched compiler and
-binding-table, reference-compiler and binding-generator hashes. See the README for isolated installation and update commands.
+binding-table, reference-compiler and binding-generator hashes, plus hashes of
+the namespaced package files. Use @tt{--check} to verify the generated package
+without writing it, or @tt{--archive PATH} to produce a reproducible source ZIP.
+See the README for isolated installation and update commands.
 
 @tt{dev/check-phase-references.rkt} tests declarations and ordinary references at
 phases 0, 1 and 2 in both MCP and a minimal syntax-spec language that imports no

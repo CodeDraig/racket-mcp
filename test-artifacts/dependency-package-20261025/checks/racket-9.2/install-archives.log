@@ -1,0 +1,3 @@
+raco pkg install: invalid package source;
+ inferred package name includes disallowed characters
+  given: /srv/data/code/racket-mcp/.cache/patched-package-20261025/source/.cache/distribution/racket-mcp-0.1.zip

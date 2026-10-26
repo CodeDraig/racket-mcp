@@ -5,7 +5,7 @@
 ;; if any advertised phase case fails. The syntax-spec cases do not import MCP.
 (define language
   '(module checked racket/base
-     (require syntax-spec-v3 (for-syntax racket/base))
+     (require mcp-syntax-spec-v3 (for-syntax racket/base))
      (provide define-checked)
      (syntax-spec
        (binding-class checked-name #:reference-compiler immutable-reference-compiler)

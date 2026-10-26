@@ -5960,3 +5960,34 @@ conformance results, accepted Tasks error-ordering limitation, or Linux-only
 verification boundary. Hosted Actions remain manually disabled; native macOS
 and Windows remain unverified. No runtime code changed and no runtime tests or
 package builds were rerun for publication or this status update.
+
+## Installable patched language dependency (2026-10-25)
+
+The patched syntax-spec dependency is now an independently installable package
+and collection, `mcp-syntax-spec-v3` version `0.1.0.2`, under `packages/`.
+The distinct collection coexists with upstream `syntax-spec-v3`. The four compiler
+patches are unchanged; SDK imports and the isolated phase/reference probes use
+the new collection. The SDK metadata points directly to the GitHub package
+subdirectory, so a separate catalog listing is not required for this dependency.
+The generated package retains licenses and a hash manifest, and the preparation
+script reproduces or verifies it without changing the 224-file vendor snapshot.
+The source packager emits the standalone dependency ZIP and hashes both archives.
+
+Linux Racket CS 9.2 and 9.3 each passed 6,852 native tests, 1,301 schema cases,
+86 regex cases, compilation, and the SDK manual. The dependency passed 462
+upstream checks and four packaging integrity regressions. Fresh installs checked
+coexistence, phase imports, documentation, package dependencies, CLI registration,
+and greeting requests. A local HTTP fixture verified automatic installation of
+the dependency when only the SDK was requested. The actual GitHub source route
+remains to be checked after commit and push.
+
+Root-source package validation exposed historical probe sources being compiled
+from `test-artifacts/`. Its new collection-level `info.rkt` excludes archived
+probes from compilation and testing; a fresh root install and dependency check
+then passed with zero compiled archived probes. The original failure and the
+9.2 runner's archive-name and mixed-source setup failures are retained, along
+with their corrected checks, in
+`test-artifacts/dependency-package-20261025/README.md`. No runtime behavior or
+native test assertion was changed to address those packaging/test setup errors.
+Go and protocol conformance were not rerun. The changes are local pending commit
+and push; no catalog submission or repository-visibility change was made.

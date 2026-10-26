@@ -1,0 +1,60 @@
+{
+  "steps": [
+    {
+      "name": "racket-version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "install-archives",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/archive-install/mcp-syntax-spec-v3.zip",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/archive-install/racket-mcp.zip"
+      ],
+      "exit_code": 0,
+      "seconds": 43.34
+    },
+    {
+      "name": "cli",
+      "command": [
+        "raco",
+        "mcp",
+        "--help"
+      ],
+      "exit_code": 0,
+      "seconds": 0.99
+    },
+    {
+      "name": "focused-tests",
+      "command": [
+        "raco",
+        "test",
+        "tests/phases.rkt",
+        "tests/phase-exports.rkt",
+        "tests/reference-registration.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 23.07
+    },
+    {
+      "name": "native-tests",
+      "command": [
+        "raco",
+        "test",
+        "tests"
+      ],
+      "exit_code": 1,
+      "seconds": 185.65
+    }
+  ]
+}

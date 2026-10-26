@@ -1,0 +1,12 @@
+[
+  {
+    "version": "9.3",
+    "compared_racket_and_manual_sources": 706,
+    "differences": []
+  },
+  {
+    "version": "9.2",
+    "compared_racket_and_manual_sources": 706,
+    "differences": []
+  }
+]

@@ -26,8 +26,8 @@ These instructions assume a fresh checkout.
 ```sh
 . scripts/racket-env.sh
 python3 scripts/prepare-syntax-spec.py
-env -u PLTCOLLECTS raco pkg install --name syntax-spec-v3 --auto --batch --no-docs \
-  --link "$PWD/.cache/patched-dependencies/syntax-spec-v3"
+env -u PLTCOLLECTS raco pkg install --name mcp-syntax-spec-v3 --auto --batch --no-docs \
+  --link "$PWD/packages/mcp-syntax-spec-v3"
 python3 scripts/package.py
 env -u PLTCOLLECTS raco pkg install --name racket-mcp --no-setup \
   --link "$PWD/.cache/distribution/racket-mcp"
@@ -35,9 +35,14 @@ env -u PLTCOLLECTS raco setup --no-zo --no-docs --pkgs racket-mcp
 ```
 
 The environment script keeps package state in `.racket` and scratch files in
-`.cache`. Preparation verifies the bundled language dependency and patches a
-separate local copy; it does not alter the vendored source or global packages.
+`.cache`. Preparation reproduces the bundled, separately installable language
+dependency; it does not alter the vendored source or global packages. The package
+and collection are named `mcp-syntax-spec-v3` so upstream `syntax-spec-v3` can remain installed.
 The final setup command registers `raco mcp`.
+
+The dependency is also a [standalone Racket package](packages/mcp-syntax-spec-v3/MCP-PACKAGE.md).
+See the [package-installation checks](test-artifacts/dependency-package-20261025/README.md)
+for archive installation, coexistence with upstream, and automatic dependency resolution.
 
 ### 2. Read and start the server
 
@@ -142,19 +147,24 @@ conformance harness is a separate development check; see the
 <details>
 <summary>Update a checkout with the older language dependency</summary>
 
-The SDK requires the prepared `syntax-spec-v3` version `0.1.0.2`; the unpatched
-upstream `0.1` package does not satisfy that requirement. With the checkout
-environment sourced, prepare the dependency and update its existing registration:
+The SDK now uses the separate `mcp-syntax-spec-v3` package, version `0.1.0.2`.
+An older local `syntax-spec-v3` installation can remain in place. With the checkout
+environment sourced, install the new dependency:
 
 ```sh
 . scripts/racket-env.sh
 python3 scripts/prepare-syntax-spec.py
-env -u PLTCOLLECTS raco pkg update --batch --no-setup --name syntax-spec-v3 \
-  --link "$PWD/.cache/patched-dependencies/syntax-spec-v3"
+env -u PLTCOLLECTS raco pkg install --auto --batch --no-docs --name mcp-syntax-spec-v3 \
+  --link "$PWD/packages/mcp-syntax-spec-v3"
 ```
 
-Then rebuild the distribution with `python3 scripts/package.py` and register its
-commands with `env -u PLTCOLLECTS raco setup --no-zo --no-docs --pkgs racket-mcp`.
+Then rebuild the distribution with `python3 scripts/package.py` and run
+`env -u PLTCOLLECTS raco setup --no-docs --pkgs racket-mcp` to recompile imports
+and register its commands. If the new dependency is already installed from this
+checkout, use `raco pkg update` instead of `raco pkg install` above.
+
+If extension code directly imported the old patched `syntax-spec-v3` collection,
+change that import to `mcp-syntax-spec-v3` so it shares the SDK's binding classes.
 
 </details>
 

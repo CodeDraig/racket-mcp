@@ -1,5 +1,5 @@
 #lang racket/base
-(require syntax-spec-v3 (for-syntax racket/base))
+(require mcp-syntax-spec-v3 (for-syntax racket/base))
 (provide value)
 (syntax-spec
  (binding-class item #:reference-compiler immutable-reference-compiler)

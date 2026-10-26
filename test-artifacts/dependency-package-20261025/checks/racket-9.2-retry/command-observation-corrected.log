@@ -1,0 +1,29 @@
+raco test: (file "tests/command-observation.rkt")
+--------------------
+command captures ordinary dependencies: (#<path:/srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/bin/racket> #<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/racket-9.2-retry/source/racket-mcp/tests/../mcp/command.rkt>)
+FAILURE
+name:       check-equal?
+location:   tests/command-observation.rkt:29:8
+actual:
+  '("#<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/racket-9.2-retry/source/racket-mcp/mcp/private/kernel-observation.rkt>")
+expected:   '()
+--------------------
+--------------------
+command captures ordinary dependencies: (#<path:/srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/bin/racket> "-l" "mcp/command" "--")
+FAILURE
+name:       check-equal?
+location:   tests/command-observation.rkt:29:8
+actual:
+  '("#<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/racket-9.2-retry/source/racket-mcp/mcp/private/kernel-observation.rkt>")
+expected:   '()
+--------------------
+--------------------
+command captures ordinary dependencies: (#<path:/srv/data/code/racket-mcp/.cache/public-readiness-20261025/tools/racket-9.2/bin/raco> "mcp")
+FAILURE
+name:       check-equal?
+location:   tests/command-observation.rkt:29:8
+actual:
+  '("#<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/racket-9.2-retry/source/racket-mcp/mcp/private/kernel-observation.rkt>")
+expected:   '()
+--------------------
+3/3 test failures

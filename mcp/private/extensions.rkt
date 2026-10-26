@@ -1,5 +1,5 @@
 #lang racket/base
-(require syntax-spec-v3 (for-syntax racket/base syntax/parse))
+(require mcp-syntax-spec-v3 (for-syntax racket/base syntax/parse))
 (provide (for-syntax declaration-extension workflow-extension
                      expand-declaration-extension expand-workflow-extension))
 ;; Classes and expanders remain private. Public definitions select a supported

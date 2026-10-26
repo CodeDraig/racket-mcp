@@ -1,0 +1,372 @@
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: collects paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/collects
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/
+raco setup: main pkgs: /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup: pkgs paths: 
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs
+raco setup: links files: 
+raco setup:   /srv/data/code/racket-mcp/.cache/racket-9.3/share/links.rktd
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/links.rktd
+raco setup: --- updating info-domain tables ---                    [20:34:39]
+raco setup: updating: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [20:34:40]
+raco setup: --- installing foreign libraries ---                   [20:34:40]
+raco setup: --- installing shared files ---                        [20:34:40]
+raco setup: --- compiling collections ---                          [20:34:40]
+raco setup: --- parallel build using 8 jobs ---                    [20:34:40]
+raco setup: 7 making: <pkgs>/eli-tester/tests
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger
+raco setup: 5 making: <pkgs>/racket-mcp/examples
+raco setup: 4 making: <pkgs>/racket-mcp/mcp
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/automatic-provenance-probes-20260908
+raco setup: 2 making: <pkgs>/racket-mcp/tests
+/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/configure-runtime-application.rkt:2:9: cannot open module file
+  module path: #<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/helper.rkt>
+  path: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/helper.rkt
+  system error: no such file or directory; rkt_err=3
+  compilation context...:
+   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/configure-runtime-application.rkt
+  location...:
+   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/configure-runtime-application.rkt:2:9
+  context...:
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:717:0: compile-zo*
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:647:0: compile-zo*/cross-compile
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:461:15
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:447:12: build
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:418:0: maybe-compile-zo
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:221:0: compile-root
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/compiler/private/cm-minimal.rkt:109:4
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/setup/parallel-build.rkt:385:9
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/setup/parallel-do.rkt:482:25
+   /srv/data/code/racket-mcp/.cache/racket-9.3/collects/setup/parallel-do.rkt:468:20: loop
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/captured-submodules-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/collection-extension-20260907
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/compiled-identity-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/completion-identities-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/default-launch-capture-probe-20260908
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/lang
+raco setup: 4 making: <pkgs>/racket-mcp/mcp/private
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/check-requires
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/helper
+raco setup: 6 making: <pkgs>/macro-debugger/tests/macro-debugger/tests
+raco setup: 5 making: <pkgs>/racket-mcp/examples/extensions
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/elicitation-formats-probe-20260907
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/embedded-bootstrap-probe-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/kernel-command-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/kernel-handoff-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/module-build-context-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/oauth-conformance-readiness-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/reader-observation-20260908
+INSTALL
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reader-observation-20260908/language.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reader-observation-20260908/helper.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reader-observation-20260908/observer.rkt"> compiled=#t syntax=#f
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/reference-registration-20260908
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/main.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/interface.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/runtime/errors.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/define.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/main.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/lift-disappeareds.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/flip-intro-scope.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/persistent-id-table.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/syntax-datum.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/binding.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/syntax-serializer.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/datum-map.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/main.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/syntax-category.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/compile/nonterminal-expander.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/compile/pattern-var-reflection.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/compile/syntax-spec.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/runtime/syntax-classes.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/syntax-classes.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/env-reps.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/syntax/compile/binding-spec.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/runtime/binding-spec.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/runtime/compile.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/lift-trampoline.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/ee-lib/lift-trampoline.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/syntax-spec-v3/private/runtime/binding-operations.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/sc.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-classic.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/const-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/keyword.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/datum-to-expr.rkt"> compiled=#t syntax=#f
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/retained-capture-20260908
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/schema-regex-20260907
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/workflow-effect-query-20260908
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/extension.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/sc.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-classic.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/const-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/keyword.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/datum-to-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/workflow-effect-query-20260908/lang-marker.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/lang/reader.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/kernel-observation.rkt"> compiled=#f syntax=#t
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/language-reader.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/closure.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/util.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/web-cells.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/serial-lambda.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/labels.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/lang/stuff-url.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/serialize.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/stuffer.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/private/mod-map.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/gzip.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/private/gzip.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/base64.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/hash.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/store.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/managers/timeouts.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/managers/none.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/private/cache-table.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-pathprocedure.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-logresp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-log.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-log.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/19.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/19/time.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/8/receive.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/29.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/provider.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/29/localization.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/srfi-lite-lib/srfi/optional.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/private/log.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-host.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-filter.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/dispatchers/dispatch-lift.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/http/request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/managers/lru.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/share/pkgs/web-server-lib/web-server/stuffers/hmac-sha1.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/http-request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/http-headers.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/http-client.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/http-wire.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/sse.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/scenario-session.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/scenario-local-request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/interaction.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/extension-form.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/workflow-form.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/composition.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/cli.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/scenario.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/task-schema.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-resources.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-invocation.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-snapshot.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-content.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-prompts.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-completions.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-tools.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-serving.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/serving-options.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-diagram.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-docs.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-diff.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/module-compiler.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-manifest.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-check.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-description.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-ir.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-target.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-manifest.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-binding.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-view.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/composition-literal.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-identities.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-references.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/workflow-effect-query-20260908/lang-marker.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/extension.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/sc.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-classic.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/const-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/keyword.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/datum-to-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/tests/workflow-effect-bindings.rkt"> compiled=#t syntax=#f
+(found #f #(struct:mcp-binding-info workflow-value #f #f))
+(found #t #(struct:mcp-binding-info workflow-value #f #f))
+(found #f #f)
+raco setup: 3 making: <pkgs>/racket-mcp/test-artifacts/workflow-match-20260907
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/examples/extensions/checkpoint-copy.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/extension.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/workflow-match-20260907/lang-marker.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/lang/reader.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/kernel-observation.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/language-reader.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/lang.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/cli.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/task-schema.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-resources.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-invocation.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-snapshot.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-content.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-prompts.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-completions.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-tools.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-serving.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/serving-options.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-diagram.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-docs.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-diff.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/module-compiler.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-manifest.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-check.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-description.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-ir.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/declaration-target.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-manifest.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/interface-binding.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-view.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/composition-literal.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-identities.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/manifest-references.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-request.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-bridge.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-recovery.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-bridge-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/task-schema.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-resources.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-invocation.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-snapshot.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-content.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-prompts.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-completions.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-tools.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/upstream-subscription.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-resource-subscription.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-subscription-core.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-subscription-state.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/runtime.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/private/upstream-task-subscription.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/scenario.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/examples/extensions/checkpoint-copy.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/mcp/extension.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/sc.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-classic.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/const-expr.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/parse-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/opt-interp.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/keyword.rkt"> compiled=#t syntax=#f
+EVAL #<resolved-module-path:"/srv/data/code/racket-mcp/.cache/racket-9.3/collects/syntax/parse/private/datum-to-expr.rkt"> compiled=#t syntax=#f
+raco setup: --- creating launchers ---                             [20:35:20]
+raco setup: --- installing man pages ---                           [20:35:20]
+raco setup: --- building documentation ---                         [20:35:20]
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/family.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: running: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: skipping: <pkgs>/mcp-syntax-spec-v3/scribblings/main.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: skipping: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: skipping: <pkgs>/syntax-spec-v3/scribblings/main.scrbl
+raco setup: rendering: <pkgs>/racket-mcp/mcp/scribblings/mcp.scrbl
+raco setup: --- installing collections ---                         [20:35:31]
+raco setup: --- post-installing collections ---                    [20:35:31]
+raco setup: --- checking package dependencies ---                  [20:35:31]
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/compiled-identity-20260908/compiled/racket-mcp-stamp-loading-probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/completion-identities-20260908/compiled/raw-completion-probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/elicitation-formats-probe-20260907/compiled/probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reader-observation-20260908/compiled/compiled-stamp-probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reader-observation-20260908/compiled/racket-mcp-compiled-identity-probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "syntax-spec-v3"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/reference-registration-20260908/compiled/provider_rkt.zo
+raco setup:   used module: (lib "syntax-spec-v3/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/workflow-effect-query-20260908/compiled/lang-check_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: found undeclared dependency:
+raco setup:   mode: run
+raco setup:   for package: "racket-mcp"
+raco setup:   on package: "rackunit-lib"
+raco setup:   dependent source: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/workflow-match-20260907/compiled/replay-probe_rkt.zo
+raco setup:   used module: (lib "rackunit/main.rkt")
+raco setup: --- summary of package problems ---                    [20:35:33]
+raco setup: undeclared dependency detected
+raco setup:   for package: "racket-mcp"
+raco setup:   on packages:
+raco setup:    "rackunit-lib"
+raco setup:    "syntax-spec-v3"
+raco setup: --- summary of errors ---                              [20:35:33]
+raco setup: error: during making for <pkgs>/racket-mcp/test-artifacts/automatic-provenance-probes-20260908
+raco setup:   /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/configure-runtime-application.rkt:2:9: cannot open module file
+raco setup:     module path: #<path:/srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/helper.rkt>
+raco setup:     path: /srv/data/code/racket-mcp/.cache/patched-package-20261025/home/.local/share/racket/9.3/pkgs/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/helper.rkt
+raco setup:     system error: no such file or directory; rkt_err=3
+raco setup:     compiling: <pkgs>/racket-mcp/test-artifacts/automatic-provenance-probes-20260908/configure-runtime-application.rkt

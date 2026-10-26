@@ -1,0 +1,32 @@
+{
+  "responses": [
+    {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "text": "Hello, Ada",
+            "type": "text"
+          }
+        ],
+        "resultType": "complete"
+      }
+    },
+    {
+      "id": 2,
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "text": "Hello, Grace",
+            "type": "text"
+          }
+        ],
+        "resultType": "complete"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+{
+  "changes_since_runtime_test_snapshot": [
+    "README.md",
+    "MCP-PATCH.json"
+  ],
+  "reason": "Add fork-specific installation notice above retained upstream README; regenerate manifest. All Racket source and metadata bytes unchanged.",
+  "final_archive_sha256": "e72cfaa1f6bddf3f58f5cfe7a3aad1894f23d26170781fd7275acbc21bd92374"
+}

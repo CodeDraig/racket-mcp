@@ -1,0 +1,116 @@
+{
+  "steps": [
+    {
+      "name": "racket-version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "install-upstream",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 24.39
+    },
+    {
+      "name": "install-patched",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "--copy",
+        "--name",
+        "mcp-syntax-spec-v3",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/source/packages/mcp-syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 18.86
+    },
+    {
+      "name": "coexistence",
+      "command": [
+        "racket",
+        "-e",
+        "(require (prefix-in upstream: syntax-spec-v3) (prefix-in patched: mcp-syntax-spec-v3)) (displayln \"Both collections load\")"
+      ],
+      "exit_code": 0,
+      "seconds": 0.42
+    },
+    {
+      "name": "upstream-tests",
+      "command": [
+        "raco",
+        "test",
+        "-p",
+        "mcp-syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 64.87
+    },
+    {
+      "name": "install-sdk",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "--copy",
+        "--name",
+        "racket-mcp",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/source"
+      ],
+      "exit_code": 0,
+      "seconds": 32.89
+    },
+    {
+      "name": "cli",
+      "command": [
+        "raco",
+        "mcp",
+        "--help"
+      ],
+      "exit_code": 0,
+      "seconds": 1.05
+    },
+    {
+      "name": "focused-tests",
+      "command": [
+        "raco",
+        "test",
+        "tests/phases.rkt",
+        "tests/phase-exports.rkt",
+        "tests/reference-registration.rkt"
+      ],
+      "exit_code": 0,
+      "seconds": 21.62
+    },
+    {
+      "name": "ci",
+      "command": [
+        "python3",
+        "scripts/ci.py",
+        "--skip-bootstrap",
+        "--package-home",
+        "/srv/data/code/racket-mcp/.cache/patched-package-20261025/home"
+      ],
+      "exit_code": 1,
+      "seconds": 1111.74
+    }
+  ]
+}

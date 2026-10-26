@@ -1,0 +1,29 @@
+{
+  "command": [
+    "raco",
+    "pkg",
+    "install",
+    "--auto",
+    "--batch",
+    "--no-docs",
+    "http://127.0.0.1:38229/racket-mcp.zip"
+  ],
+  "exit_code": 0,
+  "seconds": 42.44,
+  "substitution": {
+    "from": "https://github.com/CodeDraig/racket-mcp.git?path=packages/mcp-syntax-spec-v3#main",
+    "to": "http://127.0.0.1:38229/mcp-syntax-spec-v3.zip",
+    "scope": "Only dependency source URL in test SDK archive; all dependency ZIP bytes and SDK code unchanged."
+  },
+  "requests": [
+    "code 404, message File not found",
+    "\"GET /racket-mcp.zip.CHECKSUM HTTP/1.1\" 404 -",
+    "\"GET /racket-mcp.zip HTTP/1.1\" 200 -",
+    "\"GET /racket-mcp.zip HTTP/1.1\" 200 -",
+    "code 404, message File not found",
+    "\"GET /mcp-syntax-spec-v3.zip.CHECKSUM HTTP/1.1\" 404 -",
+    "\"GET /mcp-syntax-spec-v3.zip HTTP/1.1\" 200 -",
+    "\"GET /mcp-syntax-spec-v3.zip HTTP/1.1\" 200 -"
+  ],
+  "dependency_sha256": "e72cfaa1f6bddf3f58f5cfe7a3aad1894f23d26170781fd7275acbc21bd92374"
+}

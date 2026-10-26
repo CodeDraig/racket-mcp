@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/stxparam "registration.rkt" syntax-spec-v3 "domain-bindings.rkt" "handler-info.rkt"
+(require racket/stxparam "registration.rkt" mcp-syntax-spec-v3 "domain-bindings.rkt" "handler-info.rkt"
          (for-syntax racket/base syntax/parse))
 (provide mcp-handler mcp-bound-handler mcp-owned-handler)
 (define-syntax-parameter current-handler-owner (lambda (_) #'#f))

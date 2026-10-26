@@ -1,0 +1,21 @@
+usage: raco mcp [ <option> ... ] [<args>] ...
+
+<option> is one of
+
+  --transport <value>
+     stdio or http
+  --state <value>
+     SQLite state file
+  --port <value>
+     HTTP port
+  --build-id <value>
+     Declared application/runtime identity for ordinary loading
+  --runtime-build-id <value>
+     Immutable SDK/runtime build identity for captured loading
+  --help, -h
+     Show this help
+  --
+     Do not treat any remaining argument as a switch (at this level)
+
+ Multiple single-letter switches can be combined after
+ one `-`. For example, `-h-` is the same as `-h --`.

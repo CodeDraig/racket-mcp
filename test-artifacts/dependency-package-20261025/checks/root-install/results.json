@@ -1,0 +1,42 @@
+[
+  {
+    "name": "install",
+    "command": [
+      "raco",
+      "pkg",
+      "install",
+      "--auto",
+      "--batch",
+      "--no-docs",
+      "--copy",
+      "--name",
+      "racket-mcp",
+      "/srv/data/code/racket-mcp/.cache/patched-package-20261025/root-install/source"
+    ],
+    "exit_code": 0,
+    "seconds": 29.1
+  },
+  {
+    "name": "dependencies",
+    "command": [
+      "raco",
+      "setup",
+      "--check-pkg-deps",
+      "--pkgs",
+      "racket-mcp",
+      "mcp-syntax-spec-v3"
+    ],
+    "exit_code": 0,
+    "seconds": 57.06
+  },
+  {
+    "name": "cli",
+    "command": [
+      "raco",
+      "mcp",
+      "--help"
+    ],
+    "exit_code": 0,
+    "seconds": 1.05
+  }
+]
