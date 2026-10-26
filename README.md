@@ -164,6 +164,9 @@ Updating them is an explicit networked maintenance operation through
 
 ## Status and limitations
 
+The [repository](https://github.com/CodeDraig/racket-mcp) has been public since
+October 25, 2026 as an experimental source release.
+
 The October 25, 2026 validation passed on both Linux/Racket versions: **6,852 native
 tests, 1,301 schema cases, 86 regex cases, 14 Go interoperability probes, and 38
 selected installed-package checks per version**. Fresh installation, compilation,

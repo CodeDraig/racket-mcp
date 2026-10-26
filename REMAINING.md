@@ -9,8 +9,11 @@ without a regression or a dependency of a remaining requirement. Historical
 
 Current status: 2026-10-25. No remaining requirements in the approved release
 scope. The Tasks error-ordering regression below is an explicitly accepted
-known limitation, not an additional publication gate. Repository visibility
-remains private; this acceptance does not authorize making it public.
+known limitation, not an additional publication gate. The
+[repository](https://github.com/CodeDraig/racket-mcp) became public on 2026-10-25
+with explicit user authorization, at commit `076b74b`. Unauthenticated access to
+the repository and its README was verified. This is an experimental source
+release; the validation boundaries and accepted limitations below still apply.
 
 On 2026-09-08, the user removed native macOS/Windows testing from the plan
 because no immediate verification route is available. This removes the PLATFORM

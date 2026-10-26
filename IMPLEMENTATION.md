@@ -9,6 +9,8 @@ Completion of the approved scope is not an unqualified protocol-conformance clai
 Passing a fixture does not establish every behavior of an advertised facility.
 The October 25 entry below records the latest full validation and the accepted
 Tasks error-ordering regression; September totals are historical evidence.
+The repository became public on October 25 as an experimental source release;
+the publication entry at the end records the visibility and access checks.
 
 ## Milestones
 
@@ -5937,7 +5939,24 @@ Acceptance does not make the ordering conformant, weaken the harness expectation
 or establish that the protections require this regression. A future correction
 must preserve ownership-before-saved-argument-callback checks and cover HTTP and
 direct runtime dispatch. This limitation is not an additional publication gate.
-The repository remains private; no visibility change is authorized by this entry.
+At the time of this acceptance, the repository was still private. The separately
+authorized publication is recorded in the following entry.
 Hosted Actions remain disabled, and native macOS/Windows remain unverified under
 the existing scope decision. The release summaries were synchronized; historical
 receipts and their source/archive hashes were preserved.
+
+### Experimental source repository made public (2026-10-25)
+
+With explicit user authorization, the visibility of
+[CodeDraig/racket-mcp](https://github.com/CodeDraig/racket-mcp) changed from private
+to public at commit `076b74b45caf55af6d7b5112200336235a116461`. GitHub metadata
+confirmed public visibility. Unauthenticated requests could access the repository
+page and raw README; the public README matched the committed local file exactly.
+
+The README, current release status, and this ledger now reflect publication.
+The earlier validation and disclosure records retain the private status that
+applied when they were written. Publication does not change the qualified
+conformance results, accepted Tasks error-ordering limitation, or Linux-only
+verification boundary. Hosted Actions remain manually disabled; native macOS
+and Windows remain unverified. No runtime code changed and no runtime tests or
+package builds were rerun for publication or this status update.
