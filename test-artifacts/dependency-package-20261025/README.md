@@ -10,10 +10,11 @@ its dependency source is:
 https://github.com/CodeDraig/racket-mcp.git?path=packages/mcp-syntax-spec-v3#main
 ```
 
-This source path becomes available after the changes are pushed. No catalog
-listing, commit, push, or repository-visibility change was performed in this task.
-The automatic-install probe substituted a loopback HTTP ZIP URL for that one
-metadata value; it does not establish successful installation from GitHub.
+The original packaging task ended before commit and push. The subsequent
+[public GitHub installation receipt](../github-package-install-20261025/README.md)
+records publication and successful installation on Racket 9.2 and 9.3. The local
+automatic-install probe below substituted a loopback HTTP ZIP URL for one metadata
+value; its evidence is separate from that later GitHub verification.
 
 ## Completed checks
 
@@ -97,5 +98,6 @@ updates do not imply a rebuilt SDK archive.
 Go interoperability and MCP/OAuth conformance were not rerun for this packaging
 change. Existing qualified results and accepted limitations remain applicable;
 this receipt is not an unqualified protocol-conformance claim. macOS and Windows
-were not tested. The repository remains public; the changes in this receipt are
-local pending commit and push, followed by the actual GitHub installation check.
+were not tested. The repository remains public. This receipt records the local
+packaging checks; publication and actual GitHub installation are recorded in the
+linked follow-up receipt. No catalog submission was performed.

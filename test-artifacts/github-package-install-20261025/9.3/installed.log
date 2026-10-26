@@ -1,0 +1,6 @@
+Installation-wide:
+ [none]
+User-specific for installation "9.3":
+ Package[*=auto]        Checksum                                    Source
+ mcp-syntax-spec-v3*    917c1bfffbd81fbe0e72c6d9b769dd42352d66a6    (url "https://github.com/CodeDraig/racket-mcp.git?path=packages/mcp-syntax-spec-v3#main")
+ racket-mcp             917c1bfffbd81fbe0e72c6d9b769dd42352d66a6    (url "https://github.com/CodeDraig/racket-mcp.git#main")

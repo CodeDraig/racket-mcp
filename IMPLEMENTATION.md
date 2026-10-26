@@ -5991,3 +5991,19 @@ with their corrected checks, in
 native test assertion was changed to address those packaging/test setup errors.
 Go and protocol conformance were not rerun. The changes are local pending commit
 and push; no catalog submission or repository-visibility change was made.
+
+## Public GitHub package delivery verified (2026-10-25)
+
+Packaging commit `917c1bfffbd81fbe0e72c6d9b769dd42352d66a6` was pushed to `main`.
+Fresh isolated Racket CS 9.2 and 9.3 package homes installed the SDK from its
+actual public GitHub URL. Racket automatically resolved `mcp-syntax-spec-v3`
+from the repository subdirectory; both package checksums matched the pushed
+commit. CLI registration, documentation/dependency checks, all 226 manifest
+file hashes, and two installed greeter requests passed on both versions. The
+servers exited cleanly on EOF, and no archived probes were compiled.
+
+Commands, logs, checksums, and responses are recorded in
+`test-artifacts/github-package-install-20261025/README.md`. This closes the
+GitHub delivery check left pending in the preceding packaging entry. The full
+native and conformance suites were not repeated for publication. The repository
+remains public, and the Racket catalog form has not been submitted.

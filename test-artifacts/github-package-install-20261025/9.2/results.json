@@ -1,0 +1,104 @@
+{
+  "version": "9.2",
+  "tested_revision": "917c1bfffbd81fbe0e72c6d9b769dd42352d66a6",
+  "steps": [
+    {
+      "name": "version",
+      "command": [
+        "racket",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 0.072
+    },
+    {
+      "name": "install",
+      "command": [
+        "raco",
+        "pkg",
+        "install",
+        "--auto",
+        "--batch",
+        "--no-docs",
+        "--name",
+        "racket-mcp",
+        "https://github.com/CodeDraig/racket-mcp.git#main"
+      ],
+      "exit_code": 0,
+      "seconds": 47.603
+    },
+    {
+      "name": "installed",
+      "command": [
+        "raco",
+        "pkg",
+        "show",
+        "--all",
+        "--long",
+        "--full-checksum",
+        "racket-mcp",
+        "mcp-syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 0.477
+    },
+    {
+      "name": "cli",
+      "command": [
+        "raco",
+        "mcp",
+        "--help"
+      ],
+      "exit_code": 0,
+      "seconds": 1.003
+    },
+    {
+      "name": "dependencies",
+      "command": [
+        "raco",
+        "setup",
+        "--check-pkg-deps",
+        "--pkgs",
+        "racket-mcp",
+        "mcp-syntax-spec-v3"
+      ],
+      "exit_code": 0,
+      "seconds": 66.625
+    }
+  ],
+  "success": true,
+  "greeter": {
+    "responses": [
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "Hello, Ada",
+              "type": "text"
+            }
+          ],
+          "resultType": "complete"
+        }
+      },
+      {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "Hello, Grace",
+              "type": "text"
+            }
+          ],
+          "resultType": "complete"
+        }
+      }
+    ],
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "verified_manifest_files": 226,
+  "compiled_archived_probes": 0
+}
