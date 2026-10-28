@@ -124,3 +124,10 @@ Use the existing CLI runner (`npx @modelcontextprotocol/conformance client|serve
 - For non-trivial scenario changes, run against at least one real SDK (typescript-sdk or python-sdk) to see actual output. For changes to shared infrastructure (runner, tier-check), test against go-sdk or csharp-sdk too.
 - Scenario is registered in the right suite in `src/scenarios/index.ts`
 - If you changed a `sep-*.yaml` or scenario check IDs, `src/seps/traceability.json` will drift; the traceability workflow refreshes it via PR (or regenerate locally with `--results` from a suite run)
+
+## Backup and archive policy
+
+- Do not create additional backup or archive copies of content that can be recovered from Git history.
+- Any necessary backup or archive copies must be placed under the owning project's `tmp/` directory.
+- The project's `tmp/` directory and everything inside it must remain untracked and ignored by Git. Verify this before writing copies there; add `/tmp/` to the project's `.gitignore` if necessary. Never force-add these copies.
+- These rules take precedence over conflicting backup-location or duplicate-copy instructions in this file.
